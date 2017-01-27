@@ -2,6 +2,7 @@ package de.rototor.pdfbox.graphics2d;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
 import org.apache.pdfbox.util.Matrix;
@@ -53,11 +54,13 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		this.pixelHeight = pixelHeight;
 
 		appearanceStream = new PDAppearanceStream(document);
+		appearanceStream.setResources(new PDResources());
 		contentStream = new PDPageContentStream(document, appearanceStream);
 		contentStream.saveGraphicsState();
 
 		baseTransform = new AffineTransform();
-		baseTransform.translate(0, -pixelHeight);
+		baseTransform.translate(0, pixelHeight);
+		baseTransform.scale(1, -1);
 
 		calcImage = new BufferedImage(1, 1, BufferedImage.TYPE_4BYTE_ABGR);
 		calcGfx = calcImage.createGraphics();
@@ -91,6 +94,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		try {
 			contentStream.setStrokingColor(colorMapper.mapColor(document, color));
 			walkShape(s);
+			contentStream.stroke();
 		} catch (IOException e) {
 			throwIOException(e);
 		}
@@ -222,9 +226,12 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			tf.concatenate(transform);
 			tf.translate(x, y);
 			contentStream.transform(new Matrix(tf));
-			contentStream.setStrokingColor(colorMapper.mapColor(document, color));
+			contentStream.setNonStrokingColor(colorMapper.mapColor(document, color));
 
+			Matrix textMatrix = new Matrix();
+			textMatrix.scale(1, -1);
 			contentStream.beginText();
+			contentStream.setTextMatrix(textMatrix);
 			fontApplyer.applyFont(font, document, contentStream);
 			calcGfx.setFont(font);
 			boolean run = true;
@@ -239,8 +246,9 @@ public class PdfBoxGraphics2D extends Graphics2D {
 					fontApplyer.applyFont(attributeFont, document, contentStream);
 				}
 
-				while (charCount-- > 0) {
-					char c = iterator.next();
+				while (charCount-- >= 0) {
+					char c = iterator.current();
+					iterator.next();
 					if (c == AttributedCharacterIterator.DONE) {
 						run = false;
 						break;
@@ -348,7 +356,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	public Graphics create() {
-		throw new IllegalStateException("Not implemeted");
+		throw new IllegalStateException("Not implemented");
 	}
 
 	public void translate(int x, int y) {

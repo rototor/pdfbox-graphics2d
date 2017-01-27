@@ -29,11 +29,20 @@ public class PdfBoxGraphics2dTest {
 		PdfBoxGraphics2D pdfBoxGraphics2D = new PdfBoxGraphics2D(document, 200, 200);
 		pdfBoxGraphics2D.setColor(Color.YELLOW);
 		pdfBoxGraphics2D.drawRect(20, 20, 100, 100);
+		pdfBoxGraphics2D.setColor(Color.GREEN);
+		pdfBoxGraphics2D.fillRect(10, 10, 50, 50);
+
+		pdfBoxGraphics2D.setColor(Color.RED);
+		pdfBoxGraphics2D.drawString("Hello World!", 30, 120);
 		pdfBoxGraphics2D.dispose();
 
 		PDAppearanceStream appearanceStream = pdfBoxGraphics2D.getAppearanceStream();
 		Matrix matrix = new Matrix();
-		matrix.translate(0, -200);
+		matrix.translate(0, 20);
+		contentStream.transform(matrix);
+		contentStream.drawForm(appearanceStream);
+
+		matrix.scale(1.5f, 1.5f);
 		contentStream.transform(matrix);
 		contentStream.drawForm(appearanceStream);
 		contentStream.close();
