@@ -3,6 +3,8 @@ package de.rototor.pdfbox.graphics2d;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.PDResources;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
 import org.apache.pdfbox.util.Matrix;
@@ -24,7 +26,7 @@ import java.util.Map;
  * Graphics 2D Adapter for PDFBox.
  */
 public class PdfBoxGraphics2D extends Graphics2D {
-	private final PDAppearanceStream appearanceStream;
+	private final PDFormXObject xFormObject;
 	private final Graphics2D calcGfx;
 	private final PDPageContentStream contentStream;
 	private BufferedImage calcImage;
@@ -53,9 +55,11 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		this.pixelWidth = pixelWidth;
 		this.pixelHeight = pixelHeight;
 
-		appearanceStream = new PDAppearanceStream(document);
-		appearanceStream.setResources(new PDResources());
-		contentStream = new PDPageContentStream(document, appearanceStream);
+		PDAppearanceStream appearance = new PDAppearanceStream(document);
+		xFormObject = appearance;
+		xFormObject.setResources(new PDResources());
+		xFormObject.setBBox(new PDRectangle(pixelWidth, pixelHeight));
+		contentStream = new PDPageContentStream(document, appearance, xFormObject.getStream().createOutputStream());
 		contentStream.saveGraphicsState();
 
 		baseTransform = new AffineTransform();
@@ -71,10 +75,10 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 * 
 	 * @return the PDAppearanceStream which resulted in this graphics
 	 */
-	public PDAppearanceStream getAppearanceStream() {
+	public PDFormXObject getXFormObject() {
 		if (document != null)
-			throw new IllegalStateException("You can only get the appearanceStream after you disposed the Graphics2D!");
-		return appearanceStream;
+			throw new IllegalStateException("You can only get the xFormObject after you disposed the Graphics2D!");
+		return xFormObject;
 	}
 
 	public void dispose() {
@@ -109,8 +113,15 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		PDImageXObject pdImage = imageEncoder.encodeImage(document, img);
 		try {
 			contentStream.saveGraphicsState();
+			int imgHeight = img.getHeight(obs);
+			tf.translate(0, imgHeight);
+			tf.scale(1, -1);
 			contentStream.transform(new Matrix(tf));
-			contentStream.drawImage(pdImage, 0, 0, img.getWidth(obs), img.getHeight(obs));
+
+			if (RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR
+					.equals(renderingHints.get(RenderingHints.KEY_INTERPOLATION)))
+				pdImage.setInterpolate(false);
+			contentStream.drawImage(pdImage, 0, 0, img.getWidth(obs), imgHeight);
 			contentStream.restoreGraphicsState();
 		} catch (IOException e) {
 			throwIOException(e);
@@ -226,11 +237,12 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			tf.concatenate(transform);
 			tf.translate(x, y);
 			contentStream.transform(new Matrix(tf));
-			contentStream.setNonStrokingColor(colorMapper.mapColor(document, color));
 
 			Matrix textMatrix = new Matrix();
 			textMatrix.scale(1, -1);
 			contentStream.beginText();
+			contentStream.setStrokingColor(colorMapper.mapColor(document, color));
+			contentStream.setNonStrokingColor(colorMapper.mapColor(document, color));
 			contentStream.setTextMatrix(textMatrix);
 			fontApplyer.applyFont(font, document, contentStream);
 			calcGfx.setFont(font);
