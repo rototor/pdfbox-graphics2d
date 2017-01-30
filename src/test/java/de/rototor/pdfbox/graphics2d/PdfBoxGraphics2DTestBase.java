@@ -39,11 +39,11 @@ public class PdfBoxGraphics2DTestBase {
 
 		PDPageContentStream contentStream = new PDPageContentStream(document, page);
 
-		PdfBoxGraphics2D pdfBoxGraphics2D = new PdfBoxGraphics2D(document, 200, 200);
+		PdfBoxGraphics2D pdfBoxGraphics2D = new PdfBoxGraphics2D(document, 400, 400);
 		exporter.draw(pdfBoxGraphics2D);
 		pdfBoxGraphics2D.dispose();
 
-		BufferedImage image = new BufferedImage(200, 200, BufferedImage.TYPE_4BYTE_ABGR);
+		BufferedImage image = new BufferedImage(400, 400, BufferedImage.TYPE_4BYTE_ABGR);
 		Graphics2D imageGraphics = image.createGraphics();
 		exporter.draw(imageGraphics);
 		imageGraphics.dispose();

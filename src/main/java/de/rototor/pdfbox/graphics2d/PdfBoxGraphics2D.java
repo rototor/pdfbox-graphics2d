@@ -26,6 +26,7 @@ import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.graphics.shading.PDShading;
 import org.apache.pdfbox.pdmodel.graphics.shading.PDShadingType3;
+import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
 import org.apache.pdfbox.util.Matrix;
 
@@ -553,21 +554,32 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	private void applyAsStrokingColor(Color color) throws IOException {
 		contentStream.setStrokingColor(colorMapper.mapColor(document, color));
 		contentStream.setNonStrokingColor(colorMapper.mapColor(document, color));
+
+		int alpha = color.getAlpha();
+		if (alpha < 255) {
+			/*
+			 * This is semitransparent
+			 */
+			PDExtendedGraphicsState pdExtendedGraphicsState = new PDExtendedGraphicsState();
+			pdExtendedGraphicsState.setStrokingAlphaConstant((alpha / 255f));
+			pdExtendedGraphicsState.setNonStrokingAlphaConstant((alpha / 255f));
+			contentStream.setGraphicsStateParameters(pdExtendedGraphicsState);
+		}
 	}
 
 	public void fill(Shape s) {
 		try {
+			contentStream.saveGraphicsState();
 			PDShading shading = applyPaint();
 			if (shading != null) {
-				contentStream.saveGraphicsState();
 				walkShape(s);
 				contentStream.clip();
 				contentStream.shadingFill(shading);
-				contentStream.restoreGraphicsState();
 			} else {
 				walkShape(s);
 				contentStream.fill();
 			}
+			contentStream.restoreGraphicsState();
 		} catch (IOException e) {
 			throwIOException(e);
 		}

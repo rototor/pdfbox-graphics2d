@@ -19,6 +19,7 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase {
 		renderSVG("json.svg", 150);
 		renderSVG("heart.svg", 200);
 		renderSVG("displayWebStats.svg", 200);
+		renderSVG("compuserver_msn_Ford_Focus.svg", 0.7);
 	}
 
 	void renderSVG(String name, final double scale) throws IOException {
