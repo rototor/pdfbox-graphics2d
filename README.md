@@ -6,3 +6,5 @@ Using this library you can use any Graphics2D API based graph / chart library to
 TODO:
  - Sample Usage
  - Correct Textrendering
+
+Licenced using the Apache Licence 2.0.
