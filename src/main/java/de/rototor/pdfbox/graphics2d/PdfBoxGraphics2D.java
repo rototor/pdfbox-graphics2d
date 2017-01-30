@@ -162,6 +162,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 				contentStream.setLineJoinStyle(basicStroke.getLineJoin());
 
 				// Pending PDFBOX-3669 - to be replaced
+				// noinspection deprecation
 				contentStream.appendRawCommands(basicStroke.getMiterLimit() + " M ");
 
 				AffineTransform tf = new AffineTransform();
@@ -403,8 +404,44 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		if (paint instanceof Color) {
 			Color color = (Color) paint;
 			applyAsStrokingColor(color);
-		}
-		if (paint.getClass().getSimpleName().equals("RadialGradientPaint")) {
+		} else if (paint.getClass().getSimpleName().equals("LinearGradientPaint")) {
+			/*
+			 * Batik has a copy of RadialGradientPaint, but it has the same
+			 * structure as the AWT RadialGradientPaint. So we use Reflection to
+			 * access the fields of both these classes.
+			 */
+			Color[] colors = getPropertyValue(paint, "getColors");
+			Color firstColor = colors[0];
+			PDColor firstColorMapped = colorMapper.mapColor(document, firstColor);
+			applyAsStrokingColor(firstColor);
+
+			PDShadingType3 shading = new PDShadingType3(new COSDictionary());
+			shading.setShadingType(PDShading.SHADING_TYPE2);
+			shading.setColorSpace(firstColorMapped.getColorSpace());
+			Point2D startPoint = getPropertyValue(paint, "getStartPoint");
+			Point2D endPoint = getPropertyValue(paint, "getEndPoint");
+			AffineTransform gradientTransform = getPropertyValue(paint, "getTransform");
+			tf.concatenate(gradientTransform);
+
+			tf.transform(startPoint, startPoint);
+			tf.transform(endPoint, endPoint);
+
+			COSArray coords = new COSArray();
+			coords.add(new COSFloat((float) startPoint.getX()));
+			coords.add(new COSFloat((float) startPoint.getY()));
+			coords.add(new COSFloat((float) endPoint.getX()));
+			coords.add(new COSFloat((float) endPoint.getY()));
+			shading.setCoords(coords);
+
+			PDFunctionType3 type3 = buildType3Function(colors);
+
+			COSArray extend = new COSArray();
+			extend.add(COSBoolean.TRUE);
+			extend.add(COSBoolean.TRUE);
+			shading.setFunction(type3);
+			shading.setExtend(extend);
+			return shading;
+		} else if (paint.getClass().getSimpleName().equals("RadialGradientPaint")) {
 			/*
 			 * Batik has a copy of RadialGradientPaint, but it has the same
 			 * structure as the AWT RadialGradientPaint. So we use Reflection to
@@ -420,6 +457,8 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			shading.setColorSpace(firstColorMapped.getColorSpace());
 			Point2D centerPoint = getPropertyValue(paint, "getCenterPoint");
 			Point2D focusPoint = getPropertyValue(paint, "getFocusPoint");
+			AffineTransform gradientTransform = getPropertyValue(paint, "getTransform");
+			tf.concatenate(gradientTransform);
 			tf.transform(centerPoint, centerPoint);
 			tf.transform(focusPoint, focusPoint);
 
@@ -437,68 +476,79 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			coords.add(new COSFloat(radius));
 			shading.setCoords(coords);
 
-			COSDictionary function = new COSDictionary();
-			function.setInt(COSName.FUNCTION_TYPE, 3);
+			PDFunctionType3 type3 = buildType3Function(colors);
 
 			COSArray extend = new COSArray();
 			extend.add(COSBoolean.TRUE);
 			extend.add(COSBoolean.TRUE);
-
-			COSArray domain = new COSArray();
-			domain.add(new COSFloat(0));
-			domain.add(new COSFloat(1));
-
-			COSArray encode = new COSArray();
-
-			COSArray range = new COSArray();
-			range.add(new COSFloat(0));
-			range.add(new COSFloat(1));
-			COSArray bounds = new COSArray();
-
-			Color prevColor = firstColor;
-			float boundInc = 1.0f / (colors.length - 1);
-			float bound = 0;
-
-			COSArray functions = new COSArray();
-			for (int i = 1; i < colors.length; i++) {
-				Color color = colors[i];
-				PDColor prevPdColor = colorMapper.mapColor(document, prevColor);
-				PDColor pdColor = colorMapper.mapColor(document, color);
-				COSArray c0 = new COSArray();
-				COSArray c1 = new COSArray();
-				for (float component : prevPdColor.getComponents())
-					c0.add(new COSFloat(component));
-				for (float component : pdColor.getComponents())
-					c1.add(new COSFloat(component));
-
-				COSDictionary type2Function = new COSDictionary();
-				type2Function.setInt(COSName.FUNCTION_TYPE, 2);
-				type2Function.setItem(COSName.C0, c0);
-				type2Function.setItem(COSName.C1, c1);
-				type2Function.setInt(COSName.N, 1);
-				type2Function.setItem(COSName.DOMAIN, domain);
-				functions.add(type2Function);
-
-				encode.add(new COSFloat(0));
-				encode.add(new COSFloat(1));
-				if (i != 1)
-					bounds.add(new COSFloat(bound));
-				bound += boundInc;
-				prevColor = color;
-			}
-
-			function.setItem(COSName.FUNCTIONS, functions);
-			function.setItem(COSName.BOUNDS, bounds);
-			function.setItem(COSName.ENCODE, encode);
-
-			PDFunctionType3 type3 = new PDFunctionType3(function);
-			type3.setDomainValues(domain);
-
 			shading.setFunction(type3);
 			shading.setExtend(extend);
 			return shading;
+		} else {
+			System.err.println("Don't know paint " + paint.getClass().getName());
 		}
 		return null;
+	}
+
+	private PDFunctionType3 buildType3Function(Color[] colors) {
+		COSDictionary function = new COSDictionary();
+		function.setInt(COSName.FUNCTION_TYPE, 3);
+
+		COSArray domain = new COSArray();
+		domain.add(new COSFloat(0));
+		domain.add(new COSFloat(1));
+
+		COSArray encode = new COSArray();
+
+		COSArray range = new COSArray();
+		range.add(new COSFloat(0));
+		range.add(new COSFloat(1));
+		COSArray bounds = new COSArray();
+
+		COSArray functions = buildType2Functions(colors, domain, encode, bounds);
+
+		function.setItem(COSName.FUNCTIONS, functions);
+		function.setItem(COSName.BOUNDS, bounds);
+		function.setItem(COSName.ENCODE, encode);
+
+		PDFunctionType3 type3 = new PDFunctionType3(function);
+		type3.setDomainValues(domain);
+		return type3;
+	}
+
+	private COSArray buildType2Functions(Color[] colors, COSArray domain, COSArray encode, COSArray bounds) {
+		Color prevColor = colors[0];
+		float boundInc = 1.0f / (colors.length - 1);
+		float bound = 0;
+
+		COSArray functions = new COSArray();
+		for (int i = 1; i < colors.length; i++) {
+			Color color = colors[i];
+			PDColor prevPdColor = colorMapper.mapColor(document, prevColor);
+			PDColor pdColor = colorMapper.mapColor(document, color);
+			COSArray c0 = new COSArray();
+			COSArray c1 = new COSArray();
+			for (float component : prevPdColor.getComponents())
+				c0.add(new COSFloat(component));
+			for (float component : pdColor.getComponents())
+				c1.add(new COSFloat(component));
+
+			COSDictionary type2Function = new COSDictionary();
+			type2Function.setInt(COSName.FUNCTION_TYPE, 2);
+			type2Function.setItem(COSName.C0, c0);
+			type2Function.setItem(COSName.C1, c1);
+			type2Function.setInt(COSName.N, 1);
+			type2Function.setItem(COSName.DOMAIN, domain);
+			functions.add(type2Function);
+
+			encode.add(new COSFloat(0));
+			encode.add(new COSFloat(1));
+			if (i != 1)
+				bounds.add(new COSFloat(bound));
+			bound += boundInc;
+			prevColor = color;
+		}
+		return functions;
 	}
 
 	private void applyAsStrokingColor(Color color) throws IOException {
