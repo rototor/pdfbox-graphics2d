@@ -296,7 +296,37 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	public void drawGlyphVector(GlyphVector g, float x, float y) {
-		throw new IllegalStateException("Not implemeted yet");
+		try {
+			contentStream.saveGraphicsState();
+			AffineTransform tf = new AffineTransform(baseTransform);
+			tf.concatenate(transform);
+			tf.translate(x, y);
+			contentStream.transform(new Matrix(tf));
+
+			contentStream.setStrokingColor(colorMapper.mapColor(document, color));
+			contentStream.setNonStrokingColor(colorMapper.mapColor(document, color));
+
+			for (int i = 0; i < g.getNumGlyphs(); i++) {
+				contentStream.saveGraphicsState();
+				Point2D glyphPosition = g.getGlyphPosition(i);
+				AffineTransform afGlyph = new AffineTransform(baseTransform);
+				afGlyph.translate(glyphPosition.getX(), glyphPosition.getY());
+				AffineTransform glyphTransform = g.getGlyphTransform(i);
+				if (glyphTransform != null)
+					afGlyph.concatenate(glyphTransform);
+
+				contentStream.transform(new Matrix(tf));
+
+				walkShape(g.getGlyphOutline(i));
+				contentStream.fillAndStroke();
+
+				contentStream.restoreGraphicsState();
+			}
+
+			contentStream.restoreGraphicsState();
+		} catch (IOException e) {
+			throwIOException(e);
+		}
 	}
 
 	public void fill(Shape s) {
@@ -353,6 +383,8 @@ public class PdfBoxGraphics2D extends Graphics2D {
 
 	public void setPaint(Paint paint) {
 		this.paint = paint;
+		if (paint instanceof Color)
+			this.color = (Color) paint;
 	}
 
 	public void setStroke(Stroke stroke) {

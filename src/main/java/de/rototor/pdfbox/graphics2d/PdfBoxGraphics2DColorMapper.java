@@ -24,6 +24,8 @@ import java.awt.*;
 public class PdfBoxGraphics2DColorMapper implements IPdfBoxGraphics2DColorMapper {
 	@Override
 	public PDColor mapColor(PDDocument doc, Color color) {
+		if (color == null)
+			return new PDColor(new float[] { 1f, 1f, 1f }, PDDeviceRGB.INSTANCE);
 		float[] components = new float[] { color.getRed() / 255f, color.getGreen() / 255f, color.getBlue() / 255f };
 		PDColor pdColor = new PDColor(components, PDDeviceRGB.INSTANCE);
 		return pdColor;
