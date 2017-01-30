@@ -135,11 +135,12 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	public void drawRenderedImage(RenderedImage img, AffineTransform xform) {
-
+		WritableRaster data = img.copyData(null);
+		drawImage(new BufferedImage(img.getColorModel(), data, false, null), xform, null);
 	}
 
 	public void drawRenderableImage(RenderableImage img, AffineTransform xform) {
-
+		drawRenderedImage(img.createDefaultRendering(), xform);
 	}
 
 	public void drawString(String str, int x, int y) {
@@ -241,10 +242,11 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			Matrix textMatrix = new Matrix();
 			textMatrix.scale(1, -1);
 			contentStream.beginText();
+			fontApplyer.applyFont(font, document, contentStream);
 			contentStream.setStrokingColor(colorMapper.mapColor(document, color));
 			contentStream.setNonStrokingColor(colorMapper.mapColor(document, color));
 			contentStream.setTextMatrix(textMatrix);
-			fontApplyer.applyFont(font, document, contentStream);
+
 			calcGfx.setFont(font);
 			boolean run = true;
 			while (run) {
