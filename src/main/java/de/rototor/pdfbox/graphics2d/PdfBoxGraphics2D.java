@@ -15,12 +15,17 @@
  */
 package de.rototor.pdfbox.graphics2d;
 
+import org.apache.pdfbox.cos.*;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.common.function.PDFunctionType0;
+import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import org.apache.pdfbox.pdmodel.graphics.shading.PDShading;
+import org.apache.pdfbox.pdmodel.graphics.shading.PDShadingType3;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
 import org.apache.pdfbox.util.Matrix;
 
@@ -32,6 +37,8 @@ import java.awt.geom.*;
 import java.awt.image.*;
 import java.awt.image.renderable.RenderableImage;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.util.HashMap;
@@ -110,9 +117,25 @@ public class PdfBoxGraphics2D extends Graphics2D {
 
 	public void draw(Shape s) {
 		try {
+			contentStream.saveGraphicsState();
 			applyPaint();
+			if (stroke instanceof BasicStroke) {
+				BasicStroke basicStroke = (BasicStroke) this.stroke;
+
+				// Cap Style maps 1:1 between Java and PDF Spec
+				contentStream.setLineCapStyle(basicStroke.getEndCap());
+				// Line Join Style maps 1:1 between Java and PDF Spec
+				contentStream.setLineJoinStyle(basicStroke.getLineJoin());
+
+				contentStream.appendRawCommands(basicStroke.getMiterLimit() + " M ");
+
+				contentStream.setLineWidth(basicStroke.getLineWidth());
+				if (basicStroke.getDashArray() != null)
+					contentStream.setLineDashPattern(basicStroke.getDashArray(), basicStroke.getDashPhase());
+			}
 			walkShape(s);
 			contentStream.stroke();
+			contentStream.restoreGraphicsState();
 		} catch (IOException e) {
 			throwIOException(e);
 		}
@@ -296,29 +319,14 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	public void drawGlyphVector(GlyphVector g, float x, float y) {
 		try {
 			contentStream.saveGraphicsState();
+			applyPaint();
 			AffineTransform tf = new AffineTransform(baseTransform);
 			tf.concatenate(transform);
 			tf.translate(x, y);
 			contentStream.transform(new Matrix(tf));
 
-			applyPaint();
-
-			for (int i = 0; i < g.getNumGlyphs(); i++) {
-				contentStream.saveGraphicsState();
-				Point2D glyphPosition = g.getGlyphPosition(i);
-				AffineTransform afGlyph = new AffineTransform(baseTransform);
-				afGlyph.translate(glyphPosition.getX(), glyphPosition.getY());
-				AffineTransform glyphTransform = g.getGlyphTransform(i);
-				if (glyphTransform != null)
-					afGlyph.concatenate(glyphTransform);
-
-				contentStream.transform(new Matrix(tf));
-
-				walkShape(g.getGlyphOutline(i));
-				contentStream.fillAndStroke();
-
-				contentStream.restoreGraphicsState();
-			}
+			walkShape(g.getOutline());
+			contentStream.fillAndStroke();
 
 			contentStream.restoreGraphicsState();
 		} catch (IOException e) {
@@ -326,19 +334,115 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		}
 	}
 
-	private void applyPaint() throws IOException {
+	@SuppressWarnings("unchecked")
+	private <T> T getPropertyValue(Object obj, String propertyGetter) {
+		try {
+			Class c = obj.getClass();
+			while (c != null) {
+				try {
+					Method m = c.getMethod(propertyGetter, null);
+					return (T) m.invoke(obj);
+				} catch (NoSuchMethodException ignored) {
+				}
+				c = c.getSuperclass();
+			}
+			return null;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private PDShading applyPaint() throws IOException {
 		if (paint instanceof Color) {
 			Color color = (Color) paint;
-			contentStream.setStrokingColor(colorMapper.mapColor(document, color));
-			contentStream.setNonStrokingColor(colorMapper.mapColor(document, color));
+			applyAsStrokingColor(color);
 		}
+		if (paint.getClass().getSimpleName().equals("RadialGradientPaint")) {
+			/*
+			 * Batik has a copy of RadialGradientPaint, but it has the same
+			 * structure as the AWT RadialGradientPaint. So we use Reflection to
+			 * access the fields of both these classes.
+			 */
+			Color[] colors = getPropertyValue(paint, "getColors");
+			Color firstColor = colors[0];
+			PDColor firstColorMapped = colorMapper.mapColor(document, firstColor);
+			applyAsStrokingColor(firstColor);
+
+			PDShadingType3 shading = new PDShadingType3(new COSDictionary());
+			shading.setShadingType(PDShading.SHADING_TYPE3);
+			shading.setColorSpace(firstColorMapped.getColorSpace());
+			Point2D centerPoint = getPropertyValue(paint, "getCenterPoint");
+			Point2D focusPoint = getPropertyValue(paint, "getFocusPoint");
+			@SuppressWarnings("ConstantConditions")
+			float radius = getPropertyValue(paint, "getRadius");
+			COSArray coords = new COSArray();
+			coords.add(new COSFloat((float) centerPoint.getX()));
+			coords.add(new COSFloat((float) centerPoint.getY()));
+			coords.add(new COSFloat(radius));
+			coords.add(new COSFloat((float) focusPoint.getX()));
+			coords.add(new COSFloat((float) focusPoint.getY()));
+			coords.add(new COSFloat(radius));
+			shading.setCoords(coords);
+
+			COSStream function = new COSStream();
+			function.setInt(COSName.FUNCTION_TYPE, 0);
+
+			COSArray size = new COSArray();
+
+			COSArray domain = new COSArray();
+			COSArray range = new COSArray();
+			for (int i = 0; i < firstColorMapped.getComponents().length; i++) {
+				domain.add(new COSFloat(0));
+				domain.add(new COSFloat(1));
+				range.add(new COSFloat(0));
+				range.add(new COSFloat(1));
+			}
+
+			OutputStream outputStream = function.createOutputStream();
+			for (Color color : colors) {
+				PDColor pdColor = colorMapper.mapColor(document, color);
+				float[] components = pdColor.getComponents();
+				for (float component : components) {
+					int val = (int) (component * Short.MAX_VALUE * 2);
+					outputStream.write((val & 0xFF));
+					outputStream.write(((val & 0xFF) << 16));
+				}
+				size.add(COSInteger.get(components.length));
+			}
+			outputStream.close();
+
+			function.setItem(COSName.SIZE, size);
+
+			PDFunctionType0 type0 = new PDFunctionType0(function);
+			type0.setBitsPerSample(16);
+			type0.setDomainValues(domain);
+			type0.setRangeValues(range);
+
+			shading.setDomain(domain);
+			shading.setFunction(type0);
+			return shading;
+		}
+		return null;
+	}
+
+	private void applyAsStrokingColor(Color color) throws IOException {
+		contentStream.setStrokingColor(colorMapper.mapColor(document, color));
+		contentStream.setNonStrokingColor(colorMapper.mapColor(document, color));
 	}
 
 	public void fill(Shape s) {
 		try {
-			applyPaint();
-			walkShape(s);
-			contentStream.fill();
+			PDShading shading = applyPaint();
+			if (shading != null) {
+				contentStream.saveGraphicsState();
+				walkShape(s);
+				contentStream.clip();
+				contentStream.shadingFill(shading);
+				contentStream.restoreGraphicsState();
+			} else {
+				walkShape(s);
+				contentStream.fill();
+			}
 		} catch (IOException e) {
 			throwIOException(e);
 		}

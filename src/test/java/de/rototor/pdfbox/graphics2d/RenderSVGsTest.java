@@ -14,13 +14,18 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase {
 
 	@Test
 	public void testSVGs() throws IOException {
-		String svg_URI_input = RenderSVGsTest.class.getResource("barChart.svg").toString();
-		String uri = svg_URI_input;
+		renderSVG("barChart.svg", 0.45);
+		renderSVG("gump-bench.svg", 1);
+		renderSVG("json.svg", 150);
+	}
+
+	void renderSVG(String name, final double scale) throws IOException {
+		String uri = RenderSVGsTest.class.getResource(name).toString();
 
 		// create the document
 		String parser = XMLResourceDescriptor.getXMLParserClassName();
 		SAXSVGDocumentFactory f = new SAXSVGDocumentFactory(parser);
-		Document document = f.createDocument(uri, RenderSVGsTest.class.getResourceAsStream("barChart.svg"));
+		Document document = f.createDocument(uri, RenderSVGsTest.class.getResourceAsStream(name));
 
 		// create the GVT
 		UserAgent userAgent = new UserAgentAdapter();
@@ -30,10 +35,10 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase {
 		GVTBuilder builder = new GVTBuilder();
 		final GraphicsNode gvtRoot = builder.build(bctx, document);
 
-		this.exportGraphic("svg", "barChart", new GraphicsExporter() {
+		this.exportGraphic("svg", name.replace(".svg", ""), new GraphicsExporter() {
 			@Override
 			public void draw(Graphics2D gfx) throws IOException {
-				gfx.scale(0.4, 0.4);
+				gfx.scale(scale, scale);
 				gvtRoot.paint(gfx);
 			}
 		});
