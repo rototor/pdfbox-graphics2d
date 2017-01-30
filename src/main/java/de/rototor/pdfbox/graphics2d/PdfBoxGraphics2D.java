@@ -66,6 +66,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	private Composite composite;
 	private Shape clipShape;
 	private Color backgroundColor;
+	private boolean isClone = false;
 
 	/**
 	 * Create a PDfBox Graphics2D. When this is disposed
@@ -91,6 +92,30 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		font = calcGfx.getFont();
 	}
 
+	private PdfBoxGraphics2D(PdfBoxGraphics2D gfx) throws IOException {
+		this.document = gfx.document;
+		this.pixelWidth = gfx.pixelWidth;
+		this.pixelHeight = gfx.pixelHeight;
+		this.xFormObject = gfx.xFormObject;
+		this.contentStream = gfx.contentStream;
+		this.baseTransform = gfx.baseTransform;
+		this.transform = (AffineTransform) gfx.transform.clone();
+		this.calcGfx = gfx.calcGfx;
+		this.calcImage = gfx.calcImage;
+		this.font = gfx.font;
+		this.stroke = gfx.stroke;
+		this.paint = gfx.paint;
+		this.clipShape = gfx.clipShape;
+		this.backgroundColor = gfx.backgroundColor;
+		this.colorMapper = gfx.colorMapper;
+		this.fontApplyer = gfx.fontApplyer;
+		this.imageEncoder = gfx.imageEncoder;
+		this.xorColor = gfx.xorColor;
+
+		this.isClone = true;
+		this.contentStream.saveGraphicsState();
+	}
+
 	/**
 	 * 
 	 * @return the PDAppearanceStream which resulted in this graphics
@@ -98,10 +123,20 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	public PDFormXObject getXFormObject() {
 		if (document != null)
 			throw new IllegalStateException("You can only get the xFormObject after you disposed the Graphics2D!");
+		if (isClone)
+			throw new IllegalStateException("You can not get the xform stream from the clone");
 		return xFormObject;
 	}
 
 	public void dispose() {
+		if (isClone) {
+			try {
+				this.contentStream.restoreGraphicsState();
+			} catch (IOException e) {
+				throwIOException(e);
+			}
+			return;
+		}
 		try {
 			contentStream.restoreGraphicsState();
 			contentStream.close();
@@ -126,11 +161,21 @@ public class PdfBoxGraphics2D extends Graphics2D {
 				// Line Join Style maps 1:1 between Java and PDF Spec
 				contentStream.setLineJoinStyle(basicStroke.getLineJoin());
 
+				// Pending PDFBOX-3669 - to be replaced
 				contentStream.appendRawCommands(basicStroke.getMiterLimit() + " M ");
 
-				contentStream.setLineWidth(basicStroke.getLineWidth());
-				if (basicStroke.getDashArray() != null)
-					contentStream.setLineDashPattern(basicStroke.getDashArray(), basicStroke.getDashPhase());
+				AffineTransform tf = new AffineTransform();
+				tf.concatenate(baseTransform);
+				tf.concatenate(transform);
+
+				double scaleX = tf.getScaleX();
+				contentStream.setLineWidth((float) Math.abs(basicStroke.getLineWidth() * scaleX));
+				float[] dashArray = basicStroke.getDashArray();
+				if (dashArray != null) {
+					for (int i = 0; i < dashArray.length; i++)
+						dashArray[i] = (float) Math.abs(dashArray[i] * scaleX);
+					contentStream.setLineDashPattern(dashArray, (float) Math.abs(basicStroke.getDashPhase() * scaleX));
+				}
 			}
 			walkShape(s);
 			contentStream.stroke();
@@ -484,37 +529,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	public GraphicsConfiguration getDeviceConfiguration() {
-		return new GraphicsConfiguration() {
-			@Override
-			public GraphicsDevice getDevice() {
-				return null;
-			}
-
-			@Override
-			public ColorModel getColorModel() {
-				return null;
-			}
-
-			@Override
-			public ColorModel getColorModel(int transparency) {
-				return null;
-			}
-
-			@Override
-			public AffineTransform getDefaultTransform() {
-				return transform;
-			}
-
-			@Override
-			public AffineTransform getNormalizingTransform() {
-				return transform;
-			}
-
-			@Override
-			public Rectangle getBounds() {
-				return new Rectangle(0, 0, pixelWidth, pixelHeight);
-			}
-		};
+		return null;
 	}
 
 	public void setComposite(Composite comp) {
@@ -555,7 +570,11 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	public Graphics create() {
-		throw new IllegalStateException("Not implemented");
+		try {
+			return new PdfBoxGraphics2D(this);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	public void translate(int x, int y) {

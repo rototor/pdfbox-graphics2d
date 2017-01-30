@@ -17,6 +17,8 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase {
 		renderSVG("barChart.svg", 0.45);
 		renderSVG("gump-bench.svg", 1);
 		renderSVG("json.svg", 150);
+		renderSVG("heart.svg", 200);
+		renderSVG("displayWebStats.svg", 200);
 	}
 
 	void renderSVG(String name, final double scale) throws IOException {
