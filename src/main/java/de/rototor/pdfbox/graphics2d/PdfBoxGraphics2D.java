@@ -418,6 +418,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			PDShadingType3 shading = new PDShadingType3(new COSDictionary());
 			shading.setShadingType(PDShading.SHADING_TYPE2);
 			shading.setColorSpace(firstColorMapped.getColorSpace());
+			float[] fractions = getPropertyValue(paint, "getFractions");
 			Point2D startPoint = getPropertyValue(paint, "getStartPoint");
 			Point2D endPoint = getPropertyValue(paint, "getEndPoint");
 			AffineTransform gradientTransform = getPropertyValue(paint, "getTransform");
@@ -433,7 +434,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			coords.add(new COSFloat((float) endPoint.getY()));
 			shading.setCoords(coords);
 
-			PDFunctionType3 type3 = buildType3Function(colors);
+			PDFunctionType3 type3 = buildType3Function(colors, fractions);
 
 			COSArray extend = new COSArray();
 			extend.add(COSBoolean.TRUE);
@@ -455,6 +456,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			PDShadingType3 shading = new PDShadingType3(new COSDictionary());
 			shading.setShadingType(PDShading.SHADING_TYPE3);
 			shading.setColorSpace(firstColorMapped.getColorSpace());
+			float[] fractions = getPropertyValue(paint, "getFractions");
 			Point2D centerPoint = getPropertyValue(paint, "getCenterPoint");
 			Point2D focusPoint = getPropertyValue(paint, "getFocusPoint");
 			AffineTransform gradientTransform = getPropertyValue(paint, "getTransform");
@@ -476,7 +478,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			coords.add(new COSFloat(radius));
 			shading.setCoords(coords);
 
-			PDFunctionType3 type3 = buildType3Function(colors);
+			PDFunctionType3 type3 = buildType3Function(colors, fractions);
 
 			COSArray extend = new COSArray();
 			extend.add(COSBoolean.TRUE);
@@ -490,7 +492,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		return null;
 	}
 
-	private PDFunctionType3 buildType3Function(Color[] colors) {
+	private PDFunctionType3 buildType3Function(Color[] colors, float[] fractions) {
 		COSDictionary function = new COSDictionary();
 		function.setInt(COSName.FUNCTION_TYPE, 3);
 
@@ -504,8 +506,10 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		range.add(new COSFloat(0));
 		range.add(new COSFloat(1));
 		COSArray bounds = new COSArray();
+		for (int i = 2; i < colors.length; i++)
+			bounds.add(new COSFloat((1.0f / colors.length) * (i - 1)));
 
-		COSArray functions = buildType2Functions(colors, domain, encode, bounds);
+		COSArray functions = buildType2Functions(colors, domain, encode);
 
 		function.setItem(COSName.FUNCTIONS, functions);
 		function.setItem(COSName.BOUNDS, bounds);
@@ -516,10 +520,8 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		return type3;
 	}
 
-	private COSArray buildType2Functions(Color[] colors, COSArray domain, COSArray encode, COSArray bounds) {
+	private COSArray buildType2Functions(Color[] colors, COSArray domain, COSArray encode) {
 		Color prevColor = colors[0];
-		float boundInc = 1.0f / (colors.length - 1);
-		float bound = 0;
 
 		COSArray functions = new COSArray();
 		for (int i = 1; i < colors.length; i++) {
@@ -543,9 +545,6 @@ public class PdfBoxGraphics2D extends Graphics2D {
 
 			encode.add(new COSFloat(0));
 			encode.add(new COSFloat(1));
-			if (i != 1)
-				bounds.add(new COSFloat(bound));
-			bound += boundInc;
 			prevColor = color;
 		}
 		return functions;
