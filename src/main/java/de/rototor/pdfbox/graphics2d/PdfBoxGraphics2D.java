@@ -20,7 +20,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.common.function.PDFunctionType0;
+import org.apache.pdfbox.pdmodel.common.function.PDFunctionType3;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
@@ -37,7 +37,6 @@ import java.awt.geom.*;
 import java.awt.image.*;
 import java.awt.image.renderable.RenderableImage;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
@@ -340,19 +339,22 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			Class c = obj.getClass();
 			while (c != null) {
 				try {
-					Method m = c.getMethod(propertyGetter, null);
+					Method m = c.getMethod(propertyGetter, (Class<?>[]) null);
 					return (T) m.invoke(obj);
 				} catch (NoSuchMethodException ignored) {
 				}
 				c = c.getSuperclass();
 			}
-			return null;
+			throw new NullPointerException("Method " + propertyGetter + " not found!");
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	private PDShading applyPaint() throws IOException {
+		AffineTransform tf = new AffineTransform(baseTransform);
+		tf.concatenate(transform);
+
 		if (paint instanceof Color) {
 			Color color = (Color) paint;
 			applyAsStrokingColor(color);
@@ -373,53 +375,82 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			shading.setColorSpace(firstColorMapped.getColorSpace());
 			Point2D centerPoint = getPropertyValue(paint, "getCenterPoint");
 			Point2D focusPoint = getPropertyValue(paint, "getFocusPoint");
+			tf.transform(centerPoint, centerPoint);
+			tf.transform(focusPoint, focusPoint);
+
 			@SuppressWarnings("ConstantConditions")
 			float radius = getPropertyValue(paint, "getRadius");
+			radius = (float) Math.abs(radius * tf.getScaleX());
+
 			COSArray coords = new COSArray();
+
 			coords.add(new COSFloat((float) centerPoint.getX()));
 			coords.add(new COSFloat((float) centerPoint.getY()));
-			coords.add(new COSFloat(radius));
+			coords.add(new COSFloat(0));
 			coords.add(new COSFloat((float) focusPoint.getX()));
 			coords.add(new COSFloat((float) focusPoint.getY()));
 			coords.add(new COSFloat(radius));
 			shading.setCoords(coords);
 
-			COSStream function = new COSStream();
-			function.setInt(COSName.FUNCTION_TYPE, 0);
+			COSDictionary function = new COSDictionary();
+			function.setInt(COSName.FUNCTION_TYPE, 3);
 
-			COSArray size = new COSArray();
+			COSArray extend = new COSArray();
+			extend.add(COSBoolean.TRUE);
+			extend.add(COSBoolean.TRUE);
 
 			COSArray domain = new COSArray();
+			domain.add(new COSFloat(0));
+			domain.add(new COSFloat(1));
+
+			COSArray encode = new COSArray();
+
 			COSArray range = new COSArray();
-			for (int i = 0; i < firstColorMapped.getComponents().length; i++) {
-				domain.add(new COSFloat(0));
-				domain.add(new COSFloat(1));
-				range.add(new COSFloat(0));
-				range.add(new COSFloat(1));
-			}
+			range.add(new COSFloat(0));
+			range.add(new COSFloat(1));
+			COSArray bounds = new COSArray();
 
-			OutputStream outputStream = function.createOutputStream();
-			for (Color color : colors) {
+			Color prevColor = firstColor;
+			float boundInc = 1.0f / (colors.length - 1);
+			float bound = 0;
+
+			COSArray functions = new COSArray();
+			for (int i = 1; i < colors.length; i++) {
+				Color color = colors[i];
+				PDColor prevPdColor = colorMapper.mapColor(document, prevColor);
 				PDColor pdColor = colorMapper.mapColor(document, color);
-				float[] components = pdColor.getComponents();
-				for (float component : components) {
-					int val = (int) (component * Short.MAX_VALUE * 2);
-					outputStream.write((val & 0xFF));
-					outputStream.write(((val & 0xFF) << 16));
-				}
-				size.add(COSInteger.get(components.length));
+				COSArray c0 = new COSArray();
+				COSArray c1 = new COSArray();
+				for (float component : prevPdColor.getComponents())
+					c0.add(new COSFloat(component));
+				for (float component : pdColor.getComponents())
+					c1.add(new COSFloat(component));
+
+				COSDictionary type2Function = new COSDictionary();
+				type2Function.setInt(COSName.FUNCTION_TYPE, 2);
+				type2Function.setItem(COSName.C0, c0);
+				type2Function.setItem(COSName.C1, c1);
+				type2Function.setInt(COSName.N, 1);
+				type2Function.setItem(COSName.DOMAIN, domain);
+				functions.add(type2Function);
+
+				encode.add(new COSFloat(0));
+				encode.add(new COSFloat(1));
+				if (i != 1)
+					bounds.add(new COSFloat(bound));
+				bound += boundInc;
+				prevColor = color;
 			}
-			outputStream.close();
 
-			function.setItem(COSName.SIZE, size);
+			function.setItem(COSName.FUNCTIONS, functions);
+			function.setItem(COSName.BOUNDS, bounds);
+			function.setItem(COSName.ENCODE, encode);
 
-			PDFunctionType0 type0 = new PDFunctionType0(function);
-			type0.setBitsPerSample(16);
-			type0.setDomainValues(domain);
-			type0.setRangeValues(range);
+			PDFunctionType3 type3 = new PDFunctionType3(function);
+			type3.setDomainValues(domain);
 
-			shading.setDomain(domain);
-			shading.setFunction(type0);
+			shading.setFunction(type3);
+			shading.setExtend(extend);
 			return shading;
 		}
 		return null;
