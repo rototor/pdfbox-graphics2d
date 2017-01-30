@@ -55,7 +55,6 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	private IPdfBoxGraphics2DFontApplyer fontApplyer = new PdfBoxGraphics2DFontApplyer();
 	private Paint paint;
 	private Stroke stroke;
-	private Color color;
 	private Color xorColor;
 	private Font font;
 	private Composite composite;
@@ -111,7 +110,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 
 	public void draw(Shape s) {
 		try {
-			contentStream.setStrokingColor(colorMapper.mapColor(document, color));
+			applyPaint();
 			walkShape(s);
 			contentStream.stroke();
 		} catch (IOException e) {
@@ -258,8 +257,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			textMatrix.scale(1, -1);
 			contentStream.beginText();
 			fontApplyer.applyFont(font, document, contentStream);
-			contentStream.setStrokingColor(colorMapper.mapColor(document, color));
-			contentStream.setNonStrokingColor(colorMapper.mapColor(document, color));
+			applyPaint();
 			contentStream.setTextMatrix(textMatrix);
 
 			calcGfx.setFont(font);
@@ -303,8 +301,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			tf.translate(x, y);
 			contentStream.transform(new Matrix(tf));
 
-			contentStream.setStrokingColor(colorMapper.mapColor(document, color));
-			contentStream.setNonStrokingColor(colorMapper.mapColor(document, color));
+			applyPaint();
 
 			for (int i = 0; i < g.getNumGlyphs(); i++) {
 				contentStream.saveGraphicsState();
@@ -329,9 +326,17 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		}
 	}
 
+	private void applyPaint() throws IOException {
+		if (paint instanceof Color) {
+			Color color = (Color) paint;
+			contentStream.setStrokingColor(colorMapper.mapColor(document, color));
+			contentStream.setNonStrokingColor(colorMapper.mapColor(document, color));
+		}
+	}
+
 	public void fill(Shape s) {
 		try {
-			contentStream.setNonStrokingColor(colorMapper.mapColor(document, color));
+			applyPaint();
 			walkShape(s);
 			contentStream.fill();
 		} catch (IOException e) {
@@ -383,8 +388,6 @@ public class PdfBoxGraphics2D extends Graphics2D {
 
 	public void setPaint(Paint paint) {
 		this.paint = paint;
-		if (paint instanceof Color)
-			this.color = (Color) paint;
 	}
 
 	public void setStroke(Stroke stroke) {
@@ -425,11 +428,13 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	public Color getColor() {
-		return color;
+		if (paint instanceof Color)
+			return (Color) paint;
+		return null;
 	}
 
 	public void setColor(Color color) {
-		this.color = color;
+		this.paint = color;
 	}
 
 	public void setPaintMode() {
@@ -533,10 +538,10 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	public void clearRect(int x, int y, int width, int height) {
-		Color c = color;
-		color = backgroundColor;
+		Paint p = paint;
+		paint = backgroundColor;
 		fillRect(x, y, width, height);
-		color = c;
+		paint = p;
 	}
 
 	public void drawRoundRect(int x, int y, int width, int height, int arcWidth, int arcHeight) {
