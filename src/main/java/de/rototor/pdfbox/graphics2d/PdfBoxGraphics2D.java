@@ -88,7 +88,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		baseTransform.translate(0, pixelHeight);
 		baseTransform.scale(1, -1);
 
-		calcImage = new BufferedImage(1, 1, BufferedImage.TYPE_4BYTE_ABGR);
+		calcImage = new BufferedImage(100, 100, BufferedImage.TYPE_4BYTE_ABGR);
 		calcGfx = calcImage.createGraphics();
 		font = calcGfx.getFont();
 	}
@@ -363,21 +363,10 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	public void drawGlyphVector(GlyphVector g, float x, float y) {
-		try {
-			contentStream.saveGraphicsState();
-			applyPaint();
-			AffineTransform tf = new AffineTransform(baseTransform);
-			tf.concatenate(transform);
-			tf.translate(x, y);
-			contentStream.transform(new Matrix(tf));
-
-			walkShape(g.getOutline());
-			contentStream.fillAndStroke();
-
-			contentStream.restoreGraphicsState();
-		} catch (IOException e) {
-			throwIOException(e);
-		}
+		AffineTransform transformOrig = (AffineTransform) transform.clone();
+		transform.translate(x, y);
+		fill(g.getOutline());
+		transform = transformOrig;
 	}
 
 	@SuppressWarnings("unchecked")
