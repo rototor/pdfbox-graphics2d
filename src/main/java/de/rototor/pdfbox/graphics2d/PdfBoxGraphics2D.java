@@ -33,6 +33,7 @@ import org.apache.pdfbox.util.Matrix;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
+import java.awt.font.LineMetrics;
 import java.awt.font.TextAttribute;
 import java.awt.geom.*;
 import java.awt.image.*;
@@ -68,6 +69,19 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	private Shape clipShape;
 	private Color backgroundColor;
 	private boolean isClone = false;
+	private boolean vectoriseText = true;
+
+	/**
+	 * Determine if text should be drawn as text with embedded font in the PDF
+	 * or as vector shapes.
+	 * 
+	 * @param vectoriseText
+	 *            true if all text should be drawn as vector shapes. No fonts
+	 *            will be embedded in that case.
+	 */
+	public void setVectoriseText(boolean vectoriseText) {
+		this.vectoriseText = vectoriseText;
+	}
 
 	/**
 	 * Create a PDfBox Graphics2D. When this is disposed
@@ -316,50 +330,133 @@ public class PdfBoxGraphics2D extends Graphics2D {
 
 	public void drawString(AttributedCharacterIterator iterator, float x, float y) {
 		try {
-			contentStream.saveGraphicsState();
-			AffineTransform tf = new AffineTransform(baseTransform);
-			tf.concatenate(transform);
-			tf.translate(x, y);
-			contentStream.transform(new Matrix(tf));
-
-			Matrix textMatrix = new Matrix();
-			textMatrix.scale(1, -1);
-			contentStream.beginText();
-			fontApplyer.applyFont(font, document, contentStream);
-			applyPaint();
-			contentStream.setTextMatrix(textMatrix);
-
-			calcGfx.setFont(font);
-			boolean run = true;
-			while (run) {
-				StringBuilder sb = new StringBuilder();
-				int charCount = iterator.getRunLimit() - iterator.getRunStart();
-				Font attributeFont = (Font) iterator.getAttribute(TextAttribute.FONT);
-				Number fontSize = ((Number) iterator.getAttribute(TextAttribute.SIZE));
-				if (attributeFont != null) {
-					if (fontSize != null)
-						attributeFont = attributeFont.deriveFont(fontSize.floatValue());
-					fontApplyer.applyFont(attributeFont, document, contentStream);
-				}
-
-				while (charCount-- >= 0) {
-					char c = iterator.current();
-					iterator.next();
-					if (c == AttributedCharacterIterator.DONE) {
-						run = false;
-						break;
-					} else {
-						sb.append(c);
-					}
-				}
-				contentStream.showText(sb.toString());
-				sb.setLength(0);
-			}
-			contentStream.endText();
-			contentStream.restoreGraphicsState();
+			if (vectoriseText)
+				drawStringUsingShapes(iterator, x, y);
+			else
+				drawStringUsingText(iterator, x, y);
 		} catch (IOException e) {
 			throwIOException(e);
 		}
+	}
+
+	private void drawStringUsingShapes(AttributedCharacterIterator iterator, float x, float y) throws IOException {
+		float xOffset = 0;
+		boolean run = true;
+		Stroke originalStroke = stroke;
+		Paint originalPaint = paint;
+		while (run) {
+			StringBuilder sb = new StringBuilder();
+			Font attributeFont = (Font) iterator.getAttribute(TextAttribute.FONT);
+			if (attributeFont == null)
+				attributeFont = font;
+			Number fontSize = ((Number) iterator.getAttribute(TextAttribute.SIZE));
+			if (fontSize != null)
+				attributeFont = attributeFont.deriveFont(fontSize.floatValue());
+			Paint foreground = (Paint) iterator.getAttribute(TextAttribute.FOREGROUND);
+			if (foreground == null)
+				foreground = originalPaint;
+			Paint background = (Paint) iterator.getAttribute(TextAttribute.BACKGROUND);
+			boolean underline = TextAttribute.UNDERLINE_ON.equals(iterator.getAttribute(TextAttribute.UNDERLINE));
+			boolean strikethrough = TextAttribute.STRIKETHROUGH_ON
+					.equals(iterator.getAttribute(TextAttribute.STRIKETHROUGH));
+			boolean kerning = TextAttribute.KERNING_ON.equals(iterator.getAttribute(TextAttribute.KERNING));
+			boolean ligatures = TextAttribute.LIGATURES_ON.equals(iterator.getAttribute(TextAttribute.LIGATURES));
+
+			if (kerning || ligatures) {
+				Map<TextAttribute, Object> attributes = new HashMap<TextAttribute, Object>();
+				if (kerning)
+					attributes.put(TextAttribute.KERNING, TextAttribute.KERNING_ON);
+				if (ligatures)
+					attributes.put(TextAttribute.LIGATURES, TextAttribute.LIGATURES_ON);
+				attributeFont = attributeFont.deriveFont(attributes);
+			}
+
+			run = iterateRun(iterator, sb);
+			assert attributeFont != null;
+			GlyphVector glyphVector = attributeFont.createGlyphVector(getFontRenderContext(), sb.toString());
+
+			Rectangle2D visualBounds = glyphVector.getVisualBounds();
+			AffineTransform af = new AffineTransform();
+			af.translate(x + xOffset, y);
+
+			if (background != null) {
+				paint = background;
+				fill(af.createTransformedShape(visualBounds));
+			}
+
+			paint = foreground;
+			stroke = originalStroke;
+			drawGlyphVector(glyphVector, x + xOffset, y);
+
+			if (underline || strikethrough) {
+				double x1 = visualBounds.getMinX();
+				double x2 = visualBounds.getMaxX();
+				LineMetrics lineMetrics = attributeFont.getLineMetrics(sb.toString(), getFontRenderContext());
+				if (underline) {
+					double yPos = lineMetrics.getUnderlineOffset() + 1;
+					stroke = new BasicStroke(lineMetrics.getUnderlineThickness());
+					draw(af.createTransformedShape(new Line2D.Double(x1, yPos, x2, yPos)));
+				}
+				if (strikethrough) {
+					double yPos = lineMetrics.getStrikethroughOffset();
+					stroke = new BasicStroke(lineMetrics.getStrikethroughThickness());
+					draw(af.createTransformedShape(new Line2D.Double(x1, yPos, x2, yPos)));
+				}
+			}
+
+			xOffset += glyphVector.getLogicalBounds().getWidth();
+
+		}
+		paint = originalPaint;
+		stroke = originalStroke;
+	}
+
+	private boolean iterateRun(AttributedCharacterIterator iterator, StringBuilder sb) {
+		sb.setLength(0);
+		int charCount = iterator.getRunLimit() - iterator.getRunStart();
+		while (charCount-- >= 0) {
+			char c = iterator.current();
+			iterator.next();
+			if (c == AttributedCharacterIterator.DONE) {
+				return false;
+			} else {
+				sb.append(c);
+			}
+		}
+		return true;
+	}
+
+	private void drawStringUsingText(AttributedCharacterIterator iterator, float x, float y) throws IOException {
+		contentStream.saveGraphicsState();
+		AffineTransform tf = new AffineTransform(baseTransform);
+		tf.concatenate(transform);
+		tf.translate(x, y);
+		contentStream.transform(new Matrix(tf));
+
+		Matrix textMatrix = new Matrix();
+		textMatrix.scale(1, -1);
+		contentStream.beginText();
+		fontApplyer.applyFont(font, document, contentStream);
+		applyPaint();
+		contentStream.setTextMatrix(textMatrix);
+
+		calcGfx.setFont(font);
+		boolean run = true;
+		while (run) {
+			StringBuilder sb = new StringBuilder();
+			Font attributeFont = (Font) iterator.getAttribute(TextAttribute.FONT);
+			Number fontSize = ((Number) iterator.getAttribute(TextAttribute.SIZE));
+			if (attributeFont != null) {
+				if (fontSize != null)
+					attributeFont = attributeFont.deriveFont(fontSize.floatValue());
+				fontApplyer.applyFont(attributeFont, document, contentStream);
+			}
+
+			run = iterateRun(iterator, sb);
+			contentStream.showText(sb.toString());
+		}
+		contentStream.endText();
+		contentStream.restoreGraphicsState();
 	}
 
 	public void drawGlyphVector(GlyphVector g, float x, float y) {
@@ -473,6 +570,40 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			COSArray extend = new COSArray();
 			extend.add(COSBoolean.TRUE);
 			extend.add(COSBoolean.TRUE);
+			shading.setFunction(type3);
+			shading.setExtend(extend);
+			return shading;
+		} else if (paint instanceof GradientPaint) {
+			GradientPaint gradientPaint = (GradientPaint) paint;
+			Color[] colors = new Color[] { gradientPaint.getColor1(), gradientPaint.getColor2() };
+			Color firstColor = colors[0];
+			PDColor firstColorMapped = colorMapper.mapColor(document, firstColor);
+
+			applyAsStrokingColor(firstColor);
+
+			PDShadingType3 shading = new PDShadingType3(new COSDictionary());
+			shading.setShadingType(PDShading.SHADING_TYPE2);
+			shading.setColorSpace(firstColorMapped.getColorSpace());
+			float[] fractions = new float[] { 0, 1 };
+			Point2D startPoint = gradientPaint.getPoint1();
+			Point2D endPoint = gradientPaint.getPoint2();
+
+			tf.transform(startPoint, startPoint);
+			tf.transform(endPoint, endPoint);
+
+			COSArray coords = new COSArray();
+			coords.add(new COSFloat((float) startPoint.getX()));
+			coords.add(new COSFloat((float) startPoint.getY()));
+			coords.add(new COSFloat((float) endPoint.getX()));
+			coords.add(new COSFloat((float) endPoint.getY()));
+			shading.setCoords(coords);
+
+			PDFunctionType3 type3 = buildType3Function(colors, fractions);
+
+			COSArray extend = new COSArray();
+			extend.add(COSBoolean.TRUE);
+			extend.add(COSBoolean.TRUE);
+
 			shading.setFunction(type3);
 			shading.setExtend(extend);
 			return shading;

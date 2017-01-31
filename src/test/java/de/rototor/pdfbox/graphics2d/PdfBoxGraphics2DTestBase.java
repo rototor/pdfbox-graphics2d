@@ -29,43 +29,47 @@ import java.io.File;
 import java.io.IOException;
 
 public class PdfBoxGraphics2DTestBase {
-	protected void exportGraphic(String dir, String name, GraphicsExporter exporter) throws IOException {
-		PDDocument document = new PDDocument();
+	protected void exportGraphic(String dir, String name, GraphicsExporter exporter) {
+		try {
+			PDDocument document = new PDDocument();
 
-		PDPage page = new PDPage(PDRectangle.A4);
-		document.addPage(page);
-		File parentDir = new File("target/test/" + dir);
-		parentDir.mkdirs();
+			PDPage page = new PDPage(PDRectangle.A4);
+			document.addPage(page);
+			File parentDir = new File("target/test/" + dir);
+			parentDir.mkdirs();
 
-		PDPageContentStream contentStream = new PDPageContentStream(document, page);
+			PDPageContentStream contentStream = new PDPageContentStream(document, page);
 
-		PdfBoxGraphics2D pdfBoxGraphics2D = new PdfBoxGraphics2D(document, 400, 400);
-		exporter.draw(pdfBoxGraphics2D);
-		pdfBoxGraphics2D.dispose();
+			PdfBoxGraphics2D pdfBoxGraphics2D = new PdfBoxGraphics2D(document, 400, 400);
+			exporter.draw(pdfBoxGraphics2D);
+			pdfBoxGraphics2D.dispose();
 
-		BufferedImage image = new BufferedImage(400, 400, BufferedImage.TYPE_4BYTE_ABGR);
-		Graphics2D imageGraphics = image.createGraphics();
-		exporter.draw(imageGraphics);
-		imageGraphics.dispose();
-		ImageIO.write(image, "PNG", new File(parentDir, name + ".png"));
+			BufferedImage image = new BufferedImage(400, 400, BufferedImage.TYPE_4BYTE_ABGR);
+			Graphics2D imageGraphics = image.createGraphics();
+			exporter.draw(imageGraphics);
+			imageGraphics.dispose();
+			ImageIO.write(image, "PNG", new File(parentDir, name + ".png"));
 
-		PDFormXObject appearanceStream = pdfBoxGraphics2D.getXFormObject();
-		Matrix matrix = new Matrix();
-		matrix.translate(0, 20);
-		contentStream.transform(matrix);
-		contentStream.drawForm(appearanceStream);
+			PDFormXObject appearanceStream = pdfBoxGraphics2D.getXFormObject();
+			Matrix matrix = new Matrix();
+			matrix.translate(0, 20);
+			contentStream.transform(matrix);
+			contentStream.drawForm(appearanceStream);
 
-		matrix.scale(1.5f, 1.5f);
-		matrix.translate(0, 100);
-		contentStream.transform(matrix);
-		contentStream.drawForm(appearanceStream);
-		contentStream.close();
+			matrix.scale(1.5f, 1.5f);
+			matrix.translate(0, 100);
+			contentStream.transform(matrix);
+			contentStream.drawForm(appearanceStream);
+			contentStream.close();
 
-		document.save(new File(parentDir, name + ".pdf"));
-		document.close();
+			document.save(new File(parentDir, name + ".pdf"));
+			document.close();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	interface GraphicsExporter {
-		void draw(Graphics2D gfx) throws IOException;
+		void draw(Graphics2D gfx) throws IOException, FontFormatException;
 	}
 }
