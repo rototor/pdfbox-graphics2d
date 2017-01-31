@@ -35,9 +35,7 @@ The following features are not supported:
 
 ## Example Usage
 
-See [manual drawing](src/test/java/de/rototor/pdfbox/graphics2d/PdfBoxGraphics2dTest.java) 
-and [drawing SVGs](src/test/java/de/rototor/pdfbox/graphics2d/RenderSVGsTest.java).
-**TODO:** Add some inline code how to use this library.
+**TODO:** Maven dependency.
 
 ```java
 public class PDFGraphics2DSample {
@@ -51,9 +49,16 @@ public class PDFGraphics2DSample {
 		 * So everything drawn outside (0x0)-(width,height) will be clipped.
 		 */
 		PdfBoxGraphics2D pdfBoxGraphics2D = new PdfBoxGraphics2D(document, 400, 400);
+		
 		/*
 		 * Now do your drawing
 		 */ 
+		
+		/* ... */
+		
+		/* 
+		 * Dispose when finished
+		 */
 		pdfBoxGraphics2D.dispose();
 		
 		/*
@@ -65,8 +70,12 @@ public class PDFGraphics2DSample {
 		 * Build a matrix to place the form
 		 */
 		Matrix matrix = new Matrix();
+		/*
+		 *  Note: As PDF coordinates start at the bottom left corner, we move up from there.
+		 */
 		matrix.translate(0, 20);
 		contentStream.transform(matrix);
+		
 		/*
 		 * Now finally draw the form. As we not do any scaling, the form drawn has a size of 5,5 x 5,5 inches, 
 		 * because PDF uses 72 DPI for its lengths by default. If you want to scale, skew or rotate the form you can 
@@ -81,6 +90,10 @@ public class PDFGraphics2DSample {
 	}
 }
 ```
+
+See also [manual drawing](src/test/java/de/rototor/pdfbox/graphics2d/PdfBoxGraphics2dTest.java) 
+and [drawing SVGs](src/test/java/de/rototor/pdfbox/graphics2d/RenderSVGsTest.java).
+
 ## Rendering text using fonts vs vectors
 
 When rendering a text in a PDF file you can choose two methods:
