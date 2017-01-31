@@ -21,6 +21,6 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import java.awt.*;
 import java.io.IOException;
 
-public interface IPdfBoxGraphics2DFontApplyer {
+public interface IPdfBoxGraphics2DFontApplier {
 	void applyFont(Font font, PDDocument document, PDPageContentStream contentStream) throws IOException;
 }

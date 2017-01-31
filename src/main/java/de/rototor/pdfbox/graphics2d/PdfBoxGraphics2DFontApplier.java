@@ -22,7 +22,7 @@ import org.apache.pdfbox.pdmodel.font.PDFontFactory;
 import java.awt.*;
 import java.io.IOException;
 
-public class PdfBoxGraphics2DFontApplyer implements IPdfBoxGraphics2DFontApplyer {
+public class PdfBoxGraphics2DFontApplier implements IPdfBoxGraphics2DFontApplier {
 
 	@Override
 	public void applyFont(Font font, PDDocument document, PDPageContentStream contentStream) throws IOException {

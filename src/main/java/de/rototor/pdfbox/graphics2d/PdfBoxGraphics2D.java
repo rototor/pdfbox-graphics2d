@@ -60,7 +60,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	private AffineTransform transform = new AffineTransform();
 	private IPdfBoxGraphics2DImageEncoder imageEncoder = new PdfBoxGraphics2DLosslessImageEncoder();
 	private IPdfBoxGraphics2DColorMapper colorMapper = new PdfBoxGraphics2DColorMapper();
-	private IPdfBoxGraphics2DFontApplyer fontApplyer = new PdfBoxGraphics2DFontApplyer();
+	private IPdfBoxGraphics2DFontApplier fontApplier = new PdfBoxGraphics2DFontApplier();
 	private Paint paint;
 	private Stroke stroke;
 	private Color xorColor;
@@ -72,12 +72,52 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	private boolean vectoriseText = true;
 
 	/**
+	 * Set a new font applier.
+	 * 
+	 * @param fontApplier
+	 *            the font applier which has to map Font objects to PDFont
+	 *            objects.
+	 */
+	@SuppressWarnings({ "WeakerAccess", "unused" })
+	public void setFontApplier(IPdfBoxGraphics2DFontApplier fontApplier) {
+		this.fontApplier = fontApplier;
+	}
+
+	/**
+	 * Set a new color mapper.
+	 * 
+	 * @param colorMapper
+	 *            the color mapper which maps Color to PDColor.
+	 */
+	@SuppressWarnings({ "WeakerAccess", "unused" })
+	public void setColorMapper(IPdfBoxGraphics2DColorMapper colorMapper) {
+		this.colorMapper = colorMapper;
+	}
+
+	/**
+	 * Set a new image encoder
+	 * 
+	 * @param imageEncoder
+	 *            the image encoder, which encodes a image as PDImageXForm.
+	 */
+	@SuppressWarnings({ "WeakerAccess", "unused" })
+	public void setImageEncoder(IPdfBoxGraphics2DImageEncoder imageEncoder) {
+		this.imageEncoder = imageEncoder;
+	}
+
+	/**
 	 * Determine if text should be drawn as text with embedded font in the PDF
 	 * or as vector shapes.
 	 * 
+	 * The default value is true.
+	 * 
 	 * @param vectoriseText
 	 *            true if all text should be drawn as vector shapes. No fonts
-	 *            will be embedded in that case.
+	 *            will be embedded in that case. If false then the text will be
+	 *            drawn using a font. You have to provide the FontApplyer which
+	 *            maps the font to the PDFont.
+	 * 
+	 * @see #setFontApplier(IPdfBoxGraphics2DFontApplier)
 	 */
 	@SuppressWarnings({ "WeakerAccess", "unused" })
 	public void setVectoriseText(boolean vectoriseText) {
@@ -85,7 +125,20 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	/**
-	 * Create a PDfBox Graphics2D. When this is disposed
+	 * Create a PDfBox Graphics2D. This size is used for the BBox of the XForm.
+	 * So everything drawn outside the rectangle (0x0)-(pixelWidth,pixelHeight)
+	 * will be clipped.
+	 * 
+	 * Note: pixelWidth and pixelHeight only define the size of the coordinate
+	 * space within this Graphics2D. They do not affect how big the XForm is
+	 * finally displayed in the PDF.
+	 * 
+	 * @param document
+	 *            The document the graphics should be used to create a XForm in.
+	 * @param pixelWidth
+	 *            the width in pixel of the drawing area.
+	 * @param pixelHeight
+	 *            the height in pixel of the drawing area.
 	 */
 	@SuppressWarnings("WeakerAccess")
 	public PdfBoxGraphics2D(PDDocument document, int pixelWidth, int pixelHeight) throws IOException {
@@ -125,7 +178,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		this.clipShape = gfx.clipShape;
 		this.backgroundColor = gfx.backgroundColor;
 		this.colorMapper = gfx.colorMapper;
-		this.fontApplyer = gfx.fontApplyer;
+		this.fontApplier = gfx.fontApplier;
 		this.imageEncoder = gfx.imageEncoder;
 		this.xorColor = gfx.xorColor;
 
@@ -439,7 +492,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		Matrix textMatrix = new Matrix();
 		textMatrix.scale(1, -1);
 		contentStream.beginText();
-		fontApplyer.applyFont(font, document, contentStream);
+		fontApplier.applyFont(font, document, contentStream);
 		applyPaint();
 		contentStream.setTextMatrix(textMatrix);
 
@@ -452,7 +505,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			if (attributeFont != null) {
 				if (fontSize != null)
 					attributeFont = attributeFont.deriveFont(fontSize.floatValue());
-				fontApplyer.applyFont(attributeFont, document, contentStream);
+				fontApplier.applyFont(attributeFont, document, contentStream);
 			}
 
 			run = iterateRun(iterator, sb);
