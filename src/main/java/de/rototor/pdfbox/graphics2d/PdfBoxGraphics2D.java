@@ -79,6 +79,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 *            true if all text should be drawn as vector shapes. No fonts
 	 *            will be embedded in that case.
 	 */
+	@SuppressWarnings({ "WeakerAccess", "unused" })
 	public void setVectoriseText(boolean vectoriseText) {
 		this.vectoriseText = vectoriseText;
 	}
@@ -86,6 +87,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	/**
 	 * Create a PDfBox Graphics2D. When this is disposed
 	 */
+	@SuppressWarnings("WeakerAccess")
 	public PdfBoxGraphics2D(PDDocument document, int pixelWidth, int pixelHeight) throws IOException {
 		this.document = document;
 		this.pixelWidth = pixelWidth;
@@ -135,6 +137,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 * 
 	 * @return the PDAppearanceStream which resulted in this graphics
 	 */
+	@SuppressWarnings("WeakerAccess")
 	public PDFormXObject getXFormObject() {
 		if (document != null)
 			throw new IllegalStateException("You can only get the xFormObject after you disposed the Graphics2D!");
@@ -613,7 +616,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		return null;
 	}
 
-	private PDFunctionType3 buildType3Function(Color[] colors, float[] fractions) {
+	private PDFunctionType3 buildType3Function(Color[] colors, @SuppressWarnings("unused") float[] fractions) {
 		COSDictionary function = new COSDictionary();
 		function.setInt(COSName.FUNCTION_TYPE, 3);
 
