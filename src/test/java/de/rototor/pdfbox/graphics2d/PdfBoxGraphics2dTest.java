@@ -34,9 +34,13 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase {
 			public void draw(Graphics2D gfx) throws IOException, FontFormatException {
 				BufferedImage img1 = ImageIO.read(PdfBoxGraphics2dTest.class.getResourceAsStream("colortest.png"));
 				BufferedImage img2 = ImageIO.read(PdfBoxGraphics2dTest.class.getResourceAsStream("pixeltest.png"));
+				BufferedImage img3 = ImageIO
+						.read(PdfBoxGraphics2dTest.class.getResourceAsStream("Rose-ProPhoto.jpg"));
 
 				gfx.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
 				gfx.drawImage(img1, 70, 50, 100, 50, null);
+
+				gfx.drawImage(img3, 30, 200, 75, 50, null);
 
 				gfx.setColor(Color.YELLOW);
 				gfx.drawRect(20, 20, 100, 100);
