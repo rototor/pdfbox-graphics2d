@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
+	<name>PDFBox-Graphics2d</name>
+	<description>Graphics2D Bridge for Apache PDFBox</description>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
 	<version>0.2-SNAPSHOT</version>
@@ -16,11 +19,25 @@
 		</license>
 	</licenses>
 
+	<developers>
+		<developer>
+			<id>rototor</id>
+			<name>Emmeran Seehuber</name>
+			<email>rototor@rototor.de</email>
+			<url>http://www.rototor.de</url>
+			<roles>
+				<role>architect</role>
+				<role>developer</role>
+			</roles>
+			<timezone>Europe/Berlin</timezone>
+		</developer>
+	</developers>
+
 	<scm>
 		<url>https://github.com/rototor/pdfbox-graphics2d</url>
 		<connection>scm:git:https://github.com/rototor/pdfbox-graphics2d.git</connection>
-	  <tag>HEAD</tag>
-  </scm>
+		<tag>HEAD</tag>
+	</scm>
 
 	<distributionManagement>
 		<snapshotRepository>
@@ -106,7 +123,7 @@
 					<useReleaseProfile>false</useReleaseProfile>
 					<releaseProfiles>release</releaseProfiles>
 					<goals>deploy</goals>
-					<pushChanges>false</pushChanges>
+					<pushChanges>true</pushChanges>
 				</configuration>
 			</plugin>
 		</plugins>
