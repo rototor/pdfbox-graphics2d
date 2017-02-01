@@ -29,9 +29,19 @@ The following features are not supported:
 - copyArea(). This is not possible to implement.
 - hit(). Why would you want to use that?
 
-## Example Usage
+## Download
 
-**TODO:** Maven dependency.
+This library is available through Maven:
+
+```xml
+<dependency>
+	<groupId>de.rototor.pdfbox</groupId>
+	<artifactId>graphics2d</artifactId>
+	<version>0.1</version>
+</dependency>
+```
+
+## Example Usage
 
 ```java
 public class PDFGraphics2DSample {
