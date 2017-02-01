@@ -20,7 +20,7 @@
 
 	<scm>
 		<url>https://github.com/rototor/pdfbox-graphics2d</url>
-		<connection>https://github.com/rototor/pdfbox-graphics2d.git</connection>
+		<connection>scm:git:https://github.com/rototor/pdfbox-graphics2d.git</connection>
 	</scm>
 
 	<distributionManagement>
