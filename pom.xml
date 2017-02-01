@@ -123,7 +123,7 @@
 					<useReleaseProfile>false</useReleaseProfile>
 					<releaseProfiles>release</releaseProfiles>
 					<goals>deploy</goals>
-					<pushChanges>true</pushChanges>
+					<pushChanges>false</pushChanges>
 				</configuration>
 			</plugin>
 		</plugins>
