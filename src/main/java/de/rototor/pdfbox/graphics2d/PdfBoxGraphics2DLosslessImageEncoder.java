@@ -16,6 +16,7 @@
 package de.rototor.pdfbox.graphics2d;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.graphics.color.PDICCBased;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
@@ -30,7 +31,7 @@ import java.io.OutputStream;
 public class PdfBoxGraphics2DLosslessImageEncoder implements IPdfBoxGraphics2DImageEncoder {
 
 	@Override
-	public PDImageXObject encodeImage(PDDocument document, Image image) {
+	public PDImageXObject encodeImage(PDDocument document, PDPageContentStream contentStream, Image image) {
 		final BufferedImage bi;
 		if (image instanceof BufferedImage) {
 			bi = (BufferedImage) image;

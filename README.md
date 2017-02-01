@@ -22,11 +22,7 @@ The following features are supported:
 	  - LinearGradientPaint and RadialGradientPaint always assume even split fractions. 
 	  The actual given fractions are ignored at the moment.
 - Drawing text. At the moment all text is drawn as vector shapes, so no fonts are embedded. 
-  The following TextAttribute features are supported:
-   - Underline
-   - Strikethrough
-   - Kerning / Lignature
-   - Foreground/Background paint. Can be any of the paints supported.
+RTL languages are supported.
 
 The following features are not supported:
 
@@ -92,13 +88,15 @@ public class PDFGraphics2DSample {
 ```
 
 See also [manual drawing](src/test/java/de/rototor/pdfbox/graphics2d/PdfBoxGraphics2dTest.java) 
-and [drawing SVGs](src/test/java/de/rototor/pdfbox/graphics2d/RenderSVGsTest.java).
+and [drawing SVGs](src/test/java/de/rototor/pdfbox/graphics2d/RenderSVGsTest.java). The testdrivers are only
+smoke tests, i.e. they don't explicit test the result, they just run and test if the they are crashes. You have 
+to manually compare the PDF result of the testdriver with the also generated PNG compare image.
 
 ## Rendering text using fonts vs vectors
 
 When rendering a text in a PDF file you can choose two methods:
 - Render the text using a font as text.
-- Render the text using vector shapes through its GlyphVector.
+- Render the text using TextLayout as vector graphics.
 
 Rendering a text using a font is the normal and preferred way to display a text:
 - The text can be copied and is searchable.

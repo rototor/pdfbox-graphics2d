@@ -16,10 +16,25 @@
 package de.rototor.pdfbox.graphics2d;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 
 import java.awt.*;
 
+/**
+ * Map Color to PDColor
+ */
 public interface IPdfBoxGraphics2DColorMapper {
-	PDColor mapColor(PDDocument doc, Color color);
+	/**
+	 * Map the given Color to a PDColor
+	 * 
+	 * @param doc
+	 *            the PDF document
+	 * @param contentStream
+	 *            the content stream
+	 * @param color
+	 *            the color to map
+	 * @return the mapped color
+	 */
+	PDColor mapColor(PDDocument doc, PDPageContentStream contentStream, Color color);
 }

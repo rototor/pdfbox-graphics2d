@@ -25,7 +25,7 @@ import java.io.IOException;
 public class PdfBoxGraphics2DFontApplier implements IPdfBoxGraphics2DFontApplier {
 
 	@Override
-	public void applyFont(Font font, PDDocument document, PDPageContentStream contentStream) throws IOException {
+	public void applyFont(PDDocument document, PDPageContentStream contentStream, Font font) throws IOException {
 		contentStream.setFont(PDFontFactory.createDefaultFont(), font.getSize2D());
 	}
 }

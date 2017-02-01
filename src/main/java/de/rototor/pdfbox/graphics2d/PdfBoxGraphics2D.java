@@ -260,7 +260,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		tf.concatenate(transform);
 		tf.concatenate((AffineTransform) xform.clone());
 
-		PDImageXObject pdImage = imageEncoder.encodeImage(document, img);
+		PDImageXObject pdImage = imageEncoder.encodeImage(document, contentStream, img);
 		try {
 			contentStream.saveGraphicsState();
 			int imgHeight = img.getHeight(obs);
@@ -325,7 +325,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	public boolean drawImage(Image img, int x, int y, int width, int height, Color bgcolor, ImageObserver observer) {
 		try {
 			if (bgcolor != null) {
-				contentStream.setNonStrokingColor(colorMapper.mapColor(document, bgcolor));
+				contentStream.setNonStrokingColor(colorMapper.mapColor(document, contentStream, bgcolor));
 				walkShape(new Rectangle(x, y, width, height));
 				contentStream.fill();
 			}
@@ -358,7 +358,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			 * Maybe fill the background color
 			 */
 			if (bgcolor != null) {
-				contentStream.setNonStrokingColor(colorMapper.mapColor(document, bgcolor));
+				contentStream.setNonStrokingColor(colorMapper.mapColor(document, contentStream, bgcolor));
 				walkShape(new Rectangle(dx1, dy1, width, height));
 				contentStream.fill();
 			}
@@ -428,7 +428,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		Matrix textMatrix = new Matrix();
 		textMatrix.scale(1, -1);
 		contentStream.beginText();
-		fontApplier.applyFont(font, document, contentStream);
+		fontApplier.applyFont(document, contentStream, font);
 		applyPaint();
 		contentStream.setTextMatrix(textMatrix);
 
@@ -441,7 +441,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			if (attributeFont != null) {
 				if (fontSize != null)
 					attributeFont = attributeFont.deriveFont(fontSize.floatValue());
-				fontApplier.applyFont(attributeFont, document, contentStream);
+				fontApplier.applyFont(document, contentStream, attributeFont);
 			}
 
 			run = iterateRun(iterator, sb);
@@ -491,7 +491,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			 */
 			Color[] colors = getPropertyValue(paint, "getColors");
 			Color firstColor = colors[0];
-			PDColor firstColorMapped = colorMapper.mapColor(document, firstColor);
+			PDColor firstColorMapped = colorMapper.mapColor(document, contentStream, firstColor);
 			applyAsStrokingColor(firstColor);
 
 			PDShadingType3 shading = new PDShadingType3(new COSDictionary());
@@ -529,7 +529,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			 */
 			Color[] colors = getPropertyValue(paint, "getColors");
 			Color firstColor = colors[0];
-			PDColor firstColorMapped = colorMapper.mapColor(document, firstColor);
+			PDColor firstColorMapped = colorMapper.mapColor(document, contentStream, firstColor);
 			applyAsStrokingColor(firstColor);
 
 			PDShadingType3 shading = new PDShadingType3(new COSDictionary());
@@ -569,7 +569,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			GradientPaint gradientPaint = (GradientPaint) paint;
 			Color[] colors = new Color[] { gradientPaint.getColor1(), gradientPaint.getColor2() };
 			Color firstColor = colors[0];
-			PDColor firstColorMapped = colorMapper.mapColor(document, firstColor);
+			PDColor firstColorMapped = colorMapper.mapColor(document, contentStream, firstColor);
 
 			applyAsStrokingColor(firstColor);
 
@@ -639,8 +639,8 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		COSArray functions = new COSArray();
 		for (int i = 1; i < colors.length; i++) {
 			Color color = colors[i];
-			PDColor prevPdColor = colorMapper.mapColor(document, prevColor);
-			PDColor pdColor = colorMapper.mapColor(document, color);
+			PDColor prevPdColor = colorMapper.mapColor(document, contentStream, prevColor);
+			PDColor pdColor = colorMapper.mapColor(document, contentStream, color);
 			COSArray c0 = new COSArray();
 			COSArray c1 = new COSArray();
 			for (float component : prevPdColor.getComponents())
@@ -664,8 +664,8 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	private void applyAsStrokingColor(Color color) throws IOException {
-		contentStream.setStrokingColor(colorMapper.mapColor(document, color));
-		contentStream.setNonStrokingColor(colorMapper.mapColor(document, color));
+		contentStream.setStrokingColor(colorMapper.mapColor(document, contentStream, color));
+		contentStream.setNonStrokingColor(colorMapper.mapColor(document, contentStream, color));
 
 		int alpha = color.getAlpha();
 		if (alpha < 255) {
