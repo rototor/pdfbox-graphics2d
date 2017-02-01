@@ -36,7 +36,6 @@
 	<scm>
 		<url>https://github.com/rototor/pdfbox-graphics2d</url>
 		<connection>scm:git:https://github.com/rototor/pdfbox-graphics2d.git</connection>
-		<developerConnection>scm:git:ssh://rototor@github.com/rototor/pdfbox-graphics2d.git</developerConnection>
 		<tag>HEAD</tag>
 	</scm>
 
