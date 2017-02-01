@@ -31,10 +31,7 @@ import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
 import org.apache.pdfbox.util.Matrix;
 
 import java.awt.*;
-import java.awt.font.FontRenderContext;
-import java.awt.font.GlyphVector;
-import java.awt.font.LineMetrics;
-import java.awt.font.TextAttribute;
+import java.awt.font.*;
 import java.awt.geom.*;
 import java.awt.image.*;
 import java.awt.image.renderable.RenderableImage;
@@ -301,7 +298,9 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	public void drawString(String str, float x, float y) {
-		drawString(new AttributedString(str).getIterator(), x, y);
+		AttributedString attributedString = new AttributedString(str);
+		attributedString.addAttribute(TextAttribute.FONT, font);
+		drawString(attributedString.getIterator(), x, y);
 	}
 
 	public void drawString(AttributedCharacterIterator iterator, int x, int y) {
@@ -396,73 +395,10 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	private void drawStringUsingShapes(AttributedCharacterIterator iterator, float x, float y) throws IOException {
-		float xOffset = 0;
-		boolean run = true;
 		Stroke originalStroke = stroke;
 		Paint originalPaint = paint;
-		while (run) {
-			StringBuilder sb = new StringBuilder();
-			Font attributeFont = (Font) iterator.getAttribute(TextAttribute.FONT);
-			if (attributeFont == null)
-				attributeFont = font;
-			Number fontSize = ((Number) iterator.getAttribute(TextAttribute.SIZE));
-			if (fontSize != null)
-				attributeFont = attributeFont.deriveFont(fontSize.floatValue());
-			Paint foreground = (Paint) iterator.getAttribute(TextAttribute.FOREGROUND);
-			if (foreground == null)
-				foreground = originalPaint;
-			Paint background = (Paint) iterator.getAttribute(TextAttribute.BACKGROUND);
-			boolean underline = TextAttribute.UNDERLINE_ON.equals(iterator.getAttribute(TextAttribute.UNDERLINE));
-			boolean strikethrough = TextAttribute.STRIKETHROUGH_ON
-					.equals(iterator.getAttribute(TextAttribute.STRIKETHROUGH));
-			boolean kerning = TextAttribute.KERNING_ON.equals(iterator.getAttribute(TextAttribute.KERNING));
-			boolean ligatures = TextAttribute.LIGATURES_ON.equals(iterator.getAttribute(TextAttribute.LIGATURES));
-
-			if (kerning || ligatures) {
-				Map<TextAttribute, Object> attributes = new HashMap<TextAttribute, Object>();
-				if (kerning)
-					attributes.put(TextAttribute.KERNING, TextAttribute.KERNING_ON);
-				if (ligatures)
-					attributes.put(TextAttribute.LIGATURES, TextAttribute.LIGATURES_ON);
-				attributeFont = attributeFont.deriveFont(attributes);
-			}
-
-			run = iterateRun(iterator, sb);
-			assert attributeFont != null;
-			GlyphVector glyphVector = attributeFont.createGlyphVector(getFontRenderContext(), sb.toString());
-
-			Rectangle2D visualBounds = glyphVector.getVisualBounds();
-			AffineTransform af = new AffineTransform();
-			af.translate(x + xOffset, y);
-
-			if (background != null) {
-				paint = background;
-				fill(af.createTransformedShape(visualBounds));
-			}
-
-			paint = foreground;
-			stroke = originalStroke;
-			drawGlyphVector(glyphVector, x + xOffset, y);
-
-			if (underline || strikethrough) {
-				double x1 = visualBounds.getMinX();
-				double x2 = visualBounds.getMaxX();
-				LineMetrics lineMetrics = attributeFont.getLineMetrics(sb.toString(), getFontRenderContext());
-				if (underline) {
-					double yPos = lineMetrics.getUnderlineOffset() + 1;
-					stroke = new BasicStroke(lineMetrics.getUnderlineThickness());
-					draw(af.createTransformedShape(new Line2D.Double(x1, yPos, x2, yPos)));
-				}
-				if (strikethrough) {
-					double yPos = lineMetrics.getStrikethroughOffset();
-					stroke = new BasicStroke(lineMetrics.getStrikethroughThickness());
-					draw(af.createTransformedShape(new Line2D.Double(x1, yPos, x2, yPos)));
-				}
-			}
-
-			xOffset += glyphVector.getLogicalBounds().getWidth();
-
-		}
+		TextLayout textLayout = new TextLayout(iterator, getFontRenderContext());
+		textLayout.draw(this, x, y);
 		paint = originalPaint;
 		stroke = originalStroke;
 	}

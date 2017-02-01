@@ -34,8 +34,7 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase {
 			public void draw(Graphics2D gfx) throws IOException, FontFormatException {
 				BufferedImage img1 = ImageIO.read(PdfBoxGraphics2dTest.class.getResourceAsStream("colortest.png"));
 				BufferedImage img2 = ImageIO.read(PdfBoxGraphics2dTest.class.getResourceAsStream("pixeltest.png"));
-				BufferedImage img3 = ImageIO
-						.read(PdfBoxGraphics2dTest.class.getResourceAsStream("Rose-ProPhoto.jpg"));
+				BufferedImage img3 = ImageIO.read(PdfBoxGraphics2dTest.class.getResourceAsStream("Rose-ProPhoto.jpg"));
 
 				gfx.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
 				gfx.drawImage(img1, 70, 50, 100, 50, null);
@@ -78,6 +77,14 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase {
 				as1.addAttribute(TextAttribute.STRIKETHROUGH, TextAttribute.STRIKETHROUGH_ON, 20, 28);
 
 				gfx.drawString(as1.getIterator(), 15, 160);
+
+				// Hello World - in arabic and hebrew
+				Font font3 = new Font("SansSerif", Font.PLAIN, 40);
+				gfx.setFont(font3);
+				gfx.setColor(Color.BLACK);
+				gfx.drawString("مرحبا بالعالم", 200, 100);
+				gfx.drawString("שלום עולם", 200, 200);
+
 			}
 		});
 	}
