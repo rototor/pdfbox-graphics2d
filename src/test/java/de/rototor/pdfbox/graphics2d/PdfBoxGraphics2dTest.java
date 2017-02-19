@@ -32,12 +32,13 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase {
 		exportGraphic("simple", "simple", new GraphicsExporter() {
 			@Override
 			public void draw(Graphics2D gfx) throws IOException, FontFormatException {
-				BufferedImage img1 = ImageIO.read(PdfBoxGraphics2dTest.class.getResourceAsStream("colortest.png"));
+				BufferedImage imgColorTest = ImageIO
+						.read(PdfBoxGraphics2dTest.class.getResourceAsStream("colortest.png"));
 				BufferedImage img2 = ImageIO.read(PdfBoxGraphics2dTest.class.getResourceAsStream("pixeltest.png"));
 				BufferedImage img3 = ImageIO.read(PdfBoxGraphics2dTest.class.getResourceAsStream("Rose-ProPhoto.jpg"));
 
 				gfx.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-				gfx.drawImage(img1, 70, 50, 100, 50, null);
+				gfx.drawImage(imgColorTest, 70, 50, 100, 50, null);
 
 				gfx.drawImage(img3, 30, 200, 75, 50, null);
 
@@ -83,6 +84,8 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase {
 				gfx.setFont(font3);
 				gfx.setColor(Color.BLACK);
 				gfx.drawString("مرحبا بالعالم", 200, 100);
+				gfx.setPaint(new TexturePaint(imgColorTest, new Rectangle2D.Float(0f, 0f, 100f, 20f)));
+				gfx.drawString("مرحبا بالعالم", 200, 250);
 				gfx.drawString("שלום עולם", 200, 200);
 
 			}

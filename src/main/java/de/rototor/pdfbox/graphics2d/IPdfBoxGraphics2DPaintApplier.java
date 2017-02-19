@@ -1,6 +1,8 @@
 package de.rototor.pdfbox.graphics2d;
 
+import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.graphics.shading.PDShading;
 
 import java.awt.*;
@@ -21,10 +23,36 @@ public interface IPdfBoxGraphics2DPaintApplier {
 	 * @param currentTransform
 	 *            the current transform of the Graphics2D relative to the
 	 *            contentStream default coordinate space.
-	 * @param colorMapper
-	 *            the color mapper, to map the colors
+	 * @param env
+	 *            Environment for mapping the paint.
 	 * @return null or a PDShading which should be used to fill a shape.
 	 */
 	PDShading applyPaint(Paint paint, PDPageContentStream contentStream, AffineTransform currentTransform,
-			IPdfBoxGraphics2DColorMapper colorMapper) throws IOException;
+			IPaintEnv env) throws IOException;
+
+	/**
+	 * The different mappers used by the paint applier. This interface is
+	 * implemented internally by {@link PdfBoxGraphics2D}
+	 */
+	interface IPaintEnv {
+		/**
+		 * @return the color mapper
+		 */
+		IPdfBoxGraphics2DColorMapper getColorMapper();
+
+		/**
+		 * @return the image encoder
+		 */
+		IPdfBoxGraphics2DImageEncoder getImageEncoder();
+
+		/**
+		 * @return the document
+		 */
+		PDDocument getDocument();
+
+		/**
+		 * The resource of the content stream
+		 */
+		PDResources getResources();
+	}
 }

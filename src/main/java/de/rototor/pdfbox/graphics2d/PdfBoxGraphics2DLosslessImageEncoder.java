@@ -64,9 +64,7 @@ public class PdfBoxGraphics2DLosslessImageEncoder implements IPdfBoxGraphics2DIm
 			}
 
 			return imageXObject;
-		} catch (
-
-		IOException e) {
+		} catch (IOException e) {
 			throw new RuntimeException("Could not encode Image", e);
 		}
 	}

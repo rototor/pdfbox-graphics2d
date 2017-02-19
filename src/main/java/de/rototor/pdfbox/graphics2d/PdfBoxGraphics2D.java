@@ -106,7 +106,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 * 
 	 * The default value is true.
 	 * 
-	 * Note: The paint are only mapped corrently when the text is drawn as
+	 * Note: The paint are only mapped correctly when the text is drawn as
 	 * vector shapes. Especially shadings.
 	 * 
 	 * @param vectoringText
@@ -134,6 +134,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 * @param paintApplier
 	 *            the paint applier responsible for mapping the paint correctly
 	 */
+	@SuppressWarnings("unused")
 	public void setPaintApplier(IPdfBoxGraphics2DPaintApplier paintApplier) {
 		this.paintApplier = paintApplier;
 	}
@@ -496,7 +497,27 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	private PDShading applyPaint() throws IOException {
 		AffineTransform tf = new AffineTransform(baseTransform);
 		tf.concatenate(transform);
-		return paintApplier.applyPaint(paint, contentStream, tf, colorMapper);
+		return paintApplier.applyPaint(paint, contentStream, tf, new IPdfBoxGraphics2DPaintApplier.IPaintEnv() {
+			@Override
+			public IPdfBoxGraphics2DColorMapper getColorMapper() {
+				return colorMapper;
+			}
+
+			@Override
+			public IPdfBoxGraphics2DImageEncoder getImageEncoder() {
+				return imageEncoder;
+			}
+
+			@Override
+			public PDDocument getDocument() {
+				return document;
+			}
+
+			@Override
+			public PDResources getResources() {
+				return xFormObject.getResources();
+			}
+		});
 	}
 
 	public boolean hit(Rectangle rect, Shape s, boolean onStroke) {

@@ -1,16 +1,27 @@
 package de.rototor.pdfbox.graphics2d;
 
 import org.apache.pdfbox.cos.*;
+import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.PDResources;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.common.function.PDFunctionType3;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
+import org.apache.pdfbox.pdmodel.graphics.color.PDColorSpace;
+import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceRGB;
+import org.apache.pdfbox.pdmodel.graphics.color.PDPattern;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import org.apache.pdfbox.pdmodel.graphics.pattern.PDTilingPattern;
 import org.apache.pdfbox.pdmodel.graphics.shading.PDShading;
 import org.apache.pdfbox.pdmodel.graphics.shading.PDShadingType3;
 import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
+import org.apache.pdfbox.util.Matrix;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.io.IOException;
 import java.lang.reflect.Method;
 
@@ -21,15 +32,24 @@ import java.lang.reflect.Method;
  */
 public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintApplier {
 	@SuppressWarnings("WeakerAccess")
+	protected PDDocument document;
+	@SuppressWarnings("WeakerAccess")
 	protected PDPageContentStream contentStream;
 	@SuppressWarnings("WeakerAccess")
 	protected IPdfBoxGraphics2DColorMapper colorMapper;
+	@SuppressWarnings("WeakerAccess")
+	protected IPdfBoxGraphics2DImageEncoder imageEncoder;
+	@SuppressWarnings("WeakerAccess")
+	protected PDResources resources;
 
 	@Override
-	public PDShading applyPaint(Paint paint, PDPageContentStream contentStream, AffineTransform tf,
-			IPdfBoxGraphics2DColorMapper colorMapper) throws IOException {
+	public PDShading applyPaint(Paint paint, PDPageContentStream contentStream, AffineTransform tf, IPaintEnv env)
+			throws IOException {
+		this.document = env.getDocument();
+		this.resources = env.getResources();
 		this.contentStream = contentStream;
-		this.colorMapper = colorMapper;
+		this.colorMapper = env.getColorMapper();
+		this.imageEncoder = env.getImageEncoder();
 		return applyPaint(paint, tf);
 	}
 
@@ -171,6 +191,39 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 			shading.setFunction(type3);
 			shading.setExtend(extend);
 			return shading;
+		} else if (paint instanceof TexturePaint) {
+			TexturePaint texturePaint = (TexturePaint) paint;
+			Rectangle2D anchorRect = texturePaint.getAnchorRect();
+			PDTilingPattern pattern = new PDTilingPattern();
+			pattern.setPaintType(PDTilingPattern.PAINT_COLORED);
+			pattern.setTilingType(PDTilingPattern.TILING_CONSTANT_SPACING_FASTER_TILING);
+
+			pattern.setBBox(new PDRectangle((float) anchorRect.getX(), (float) anchorRect.getY(),
+					(float) anchorRect.getWidth(), (float) anchorRect.getHeight()));
+			pattern.setXStep((float) anchorRect.getWidth());
+			pattern.setYStep((float) anchorRect.getHeight());
+
+			PDAppearanceStream appearance = new PDAppearanceStream(document);
+			appearance.setResources(pattern.getResources());
+			appearance.setBBox(pattern.getBBox());
+
+			PDPageContentStream imageContentStream = new PDPageContentStream(document, appearance,
+					((COSStream) pattern.getCOSObject()).createOutputStream());
+			PDImageXObject imageXObject = imageEncoder.encodeImage(document, imageContentStream,
+					texturePaint.getImage());
+			Matrix m = new Matrix();
+			// m.translate(0, (float) anchorRect.getHeight());
+			//m.scale(1, -1);
+			imageContentStream.transform(m);
+			imageContentStream.drawImage(imageXObject, 0, 0);
+			imageContentStream.close();
+
+			PDColorSpace patternCS1 = new PDPattern(null, PDDeviceRGB.INSTANCE);
+			COSName tilingPatternName = resources.add(pattern);
+			PDColor patternColor = new PDColor(tilingPatternName, patternCS1);
+
+			contentStream.setNonStrokingColor(patternColor);
+			contentStream.setStrokingColor(patternColor);
 		} else {
 			System.err.println("Don't know paint " + paint.getClass().getName());
 		}
