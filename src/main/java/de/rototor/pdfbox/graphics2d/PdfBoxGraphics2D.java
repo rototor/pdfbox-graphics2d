@@ -15,28 +15,25 @@
  */
 package de.rototor.pdfbox.graphics2d;
 
-import org.apache.pdfbox.cos.*;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.common.function.PDFunctionType3;
-import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.graphics.shading.PDShading;
-import org.apache.pdfbox.pdmodel.graphics.shading.PDShadingType3;
-import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
 import org.apache.pdfbox.util.Matrix;
 
 import java.awt.*;
-import java.awt.font.*;
+import java.awt.font.FontRenderContext;
+import java.awt.font.GlyphVector;
+import java.awt.font.TextAttribute;
+import java.awt.font.TextLayout;
 import java.awt.geom.*;
 import java.awt.image.*;
 import java.awt.image.renderable.RenderableImage;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.util.HashMap;
@@ -58,6 +55,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	private IPdfBoxGraphics2DImageEncoder imageEncoder = new PdfBoxGraphics2DLosslessImageEncoder();
 	private IPdfBoxGraphics2DColorMapper colorMapper = new PdfBoxGraphics2DColorMapper();
 	private IPdfBoxGraphics2DFontApplier fontApplier = new PdfBoxGraphics2DFontApplier();
+	private IPdfBoxGraphics2DPaintApplier paintApplier = new PdfBoxGraphics2DPaintApplier();
 	private Paint paint;
 	private Stroke stroke;
 	private Color xorColor;
@@ -66,7 +64,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	private Shape clipShape;
 	private Color backgroundColor;
 	private boolean isClone = false;
-	private boolean vectoriseText = true;
+	private boolean vectoringText = true;
 
 	/**
 	 * Set a new font applier.
@@ -108,7 +106,10 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 * 
 	 * The default value is true.
 	 * 
-	 * @param vectoriseText
+	 * Note: The paint are only mapped corrently when the text is drawn as
+	 * vector shapes. Especially shadings.
+	 * 
+	 * @param vectoringText
 	 *            true if all text should be drawn as vector shapes. No fonts
 	 *            will be embedded in that case. If false then the text will be
 	 *            drawn using a font. You have to provide the FontApplyer which
@@ -117,8 +118,24 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 * @see #setFontApplier(IPdfBoxGraphics2DFontApplier)
 	 */
 	@SuppressWarnings({ "WeakerAccess", "unused" })
-	public void setVectoriseText(boolean vectoriseText) {
-		this.vectoriseText = vectoriseText;
+	public void setVectoringText(boolean vectoringText) {
+		this.vectoringText = vectoringText;
+	}
+
+	/**
+	 * Set a new paint applier. You should always derive your custom paint
+	 * applier from the {@link PdfBoxGraphics2DPaintApplier} and just extend the
+	 * paint mapping for custom paint.
+	 * 
+	 * If the paint you map is a paint from a standard library and you can
+	 * implement the mapping using reflection please feel free to send a pull
+	 * request to extend the default paint mapper.
+	 * 
+	 * @param paintApplier
+	 *            the paint applier responsible for mapping the paint correctly
+	 */
+	public void setPaintApplier(IPdfBoxGraphics2DPaintApplier paintApplier) {
+		this.paintApplier = paintApplier;
 	}
 
 	/**
@@ -325,7 +342,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	public boolean drawImage(Image img, int x, int y, int width, int height, Color bgcolor, ImageObserver observer) {
 		try {
 			if (bgcolor != null) {
-				contentStream.setNonStrokingColor(colorMapper.mapColor(document, contentStream, bgcolor));
+				contentStream.setNonStrokingColor(colorMapper.mapColor(contentStream, bgcolor));
 				walkShape(new Rectangle(x, y, width, height));
 				contentStream.fill();
 			}
@@ -358,7 +375,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			 * Maybe fill the background color
 			 */
 			if (bgcolor != null) {
-				contentStream.setNonStrokingColor(colorMapper.mapColor(document, contentStream, bgcolor));
+				contentStream.setNonStrokingColor(colorMapper.mapColor(contentStream, bgcolor));
 				walkShape(new Rectangle(dx1, dy1, width, height));
 				contentStream.fill();
 			}
@@ -385,7 +402,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 
 	public void drawString(AttributedCharacterIterator iterator, float x, float y) {
 		try {
-			if (vectoriseText)
+			if (vectoringText)
 				drawStringUsingShapes(iterator, x, y);
 			else
 				drawStringUsingText(iterator, x, y);
@@ -458,227 +475,6 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		transform = transformOrig;
 	}
 
-	@SuppressWarnings("unchecked")
-	private <T> T getPropertyValue(Object obj, String propertyGetter) {
-		try {
-			Class c = obj.getClass();
-			while (c != null) {
-				try {
-					Method m = c.getMethod(propertyGetter, (Class<?>[]) null);
-					return (T) m.invoke(obj);
-				} catch (NoSuchMethodException ignored) {
-				}
-				c = c.getSuperclass();
-			}
-			throw new NullPointerException("Method " + propertyGetter + " not found!");
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	private PDShading applyPaint() throws IOException {
-		AffineTransform tf = new AffineTransform(baseTransform);
-		tf.concatenate(transform);
-
-		if (paint instanceof Color) {
-			Color color = (Color) paint;
-			applyAsStrokingColor(color);
-		} else if (paint.getClass().getSimpleName().equals("LinearGradientPaint")) {
-			/*
-			 * Batik has a copy of RadialGradientPaint, but it has the same
-			 * structure as the AWT RadialGradientPaint. So we use Reflection to
-			 * access the fields of both these classes.
-			 */
-			Color[] colors = getPropertyValue(paint, "getColors");
-			Color firstColor = colors[0];
-			PDColor firstColorMapped = colorMapper.mapColor(document, contentStream, firstColor);
-			applyAsStrokingColor(firstColor);
-
-			PDShadingType3 shading = new PDShadingType3(new COSDictionary());
-			shading.setShadingType(PDShading.SHADING_TYPE2);
-			shading.setColorSpace(firstColorMapped.getColorSpace());
-			float[] fractions = getPropertyValue(paint, "getFractions");
-			Point2D startPoint = getPropertyValue(paint, "getStartPoint");
-			Point2D endPoint = getPropertyValue(paint, "getEndPoint");
-			AffineTransform gradientTransform = getPropertyValue(paint, "getTransform");
-			tf.concatenate(gradientTransform);
-
-			tf.transform(startPoint, startPoint);
-			tf.transform(endPoint, endPoint);
-
-			COSArray coords = new COSArray();
-			coords.add(new COSFloat((float) startPoint.getX()));
-			coords.add(new COSFloat((float) startPoint.getY()));
-			coords.add(new COSFloat((float) endPoint.getX()));
-			coords.add(new COSFloat((float) endPoint.getY()));
-			shading.setCoords(coords);
-
-			PDFunctionType3 type3 = buildType3Function(colors, fractions);
-
-			COSArray extend = new COSArray();
-			extend.add(COSBoolean.TRUE);
-			extend.add(COSBoolean.TRUE);
-			shading.setFunction(type3);
-			shading.setExtend(extend);
-			return shading;
-		} else if (paint.getClass().getSimpleName().equals("RadialGradientPaint")) {
-			/*
-			 * Batik has a copy of RadialGradientPaint, but it has the same
-			 * structure as the AWT RadialGradientPaint. So we use Reflection to
-			 * access the fields of both these classes.
-			 */
-			Color[] colors = getPropertyValue(paint, "getColors");
-			Color firstColor = colors[0];
-			PDColor firstColorMapped = colorMapper.mapColor(document, contentStream, firstColor);
-			applyAsStrokingColor(firstColor);
-
-			PDShadingType3 shading = new PDShadingType3(new COSDictionary());
-			shading.setShadingType(PDShading.SHADING_TYPE3);
-			shading.setColorSpace(firstColorMapped.getColorSpace());
-			float[] fractions = getPropertyValue(paint, "getFractions");
-			Point2D centerPoint = getPropertyValue(paint, "getCenterPoint");
-			Point2D focusPoint = getPropertyValue(paint, "getFocusPoint");
-			AffineTransform gradientTransform = getPropertyValue(paint, "getTransform");
-			tf.concatenate(gradientTransform);
-			tf.transform(centerPoint, centerPoint);
-			tf.transform(focusPoint, focusPoint);
-
-			@SuppressWarnings("ConstantConditions")
-			float radius = getPropertyValue(paint, "getRadius");
-			radius = (float) Math.abs(radius * tf.getScaleX());
-
-			COSArray coords = new COSArray();
-
-			coords.add(new COSFloat((float) centerPoint.getX()));
-			coords.add(new COSFloat((float) centerPoint.getY()));
-			coords.add(new COSFloat(0));
-			coords.add(new COSFloat((float) focusPoint.getX()));
-			coords.add(new COSFloat((float) focusPoint.getY()));
-			coords.add(new COSFloat(radius));
-			shading.setCoords(coords);
-
-			PDFunctionType3 type3 = buildType3Function(colors, fractions);
-
-			COSArray extend = new COSArray();
-			extend.add(COSBoolean.TRUE);
-			extend.add(COSBoolean.TRUE);
-			shading.setFunction(type3);
-			shading.setExtend(extend);
-			return shading;
-		} else if (paint instanceof GradientPaint) {
-			GradientPaint gradientPaint = (GradientPaint) paint;
-			Color[] colors = new Color[] { gradientPaint.getColor1(), gradientPaint.getColor2() };
-			Color firstColor = colors[0];
-			PDColor firstColorMapped = colorMapper.mapColor(document, contentStream, firstColor);
-
-			applyAsStrokingColor(firstColor);
-
-			PDShadingType3 shading = new PDShadingType3(new COSDictionary());
-			shading.setShadingType(PDShading.SHADING_TYPE2);
-			shading.setColorSpace(firstColorMapped.getColorSpace());
-			float[] fractions = new float[] { 0, 1 };
-			Point2D startPoint = gradientPaint.getPoint1();
-			Point2D endPoint = gradientPaint.getPoint2();
-
-			tf.transform(startPoint, startPoint);
-			tf.transform(endPoint, endPoint);
-
-			COSArray coords = new COSArray();
-			coords.add(new COSFloat((float) startPoint.getX()));
-			coords.add(new COSFloat((float) startPoint.getY()));
-			coords.add(new COSFloat((float) endPoint.getX()));
-			coords.add(new COSFloat((float) endPoint.getY()));
-			shading.setCoords(coords);
-
-			PDFunctionType3 type3 = buildType3Function(colors, fractions);
-
-			COSArray extend = new COSArray();
-			extend.add(COSBoolean.TRUE);
-			extend.add(COSBoolean.TRUE);
-
-			shading.setFunction(type3);
-			shading.setExtend(extend);
-			return shading;
-		} else {
-			System.err.println("Don't know paint " + paint.getClass().getName());
-		}
-		return null;
-	}
-
-	private PDFunctionType3 buildType3Function(Color[] colors, @SuppressWarnings("unused") float[] fractions) {
-		COSDictionary function = new COSDictionary();
-		function.setInt(COSName.FUNCTION_TYPE, 3);
-
-		COSArray domain = new COSArray();
-		domain.add(new COSFloat(0));
-		domain.add(new COSFloat(1));
-
-		COSArray encode = new COSArray();
-
-		COSArray range = new COSArray();
-		range.add(new COSFloat(0));
-		range.add(new COSFloat(1));
-		COSArray bounds = new COSArray();
-		for (int i = 2; i < colors.length; i++)
-			bounds.add(new COSFloat((1.0f / colors.length) * (i - 1)));
-
-		COSArray functions = buildType2Functions(colors, domain, encode);
-
-		function.setItem(COSName.FUNCTIONS, functions);
-		function.setItem(COSName.BOUNDS, bounds);
-		function.setItem(COSName.ENCODE, encode);
-
-		PDFunctionType3 type3 = new PDFunctionType3(function);
-		type3.setDomainValues(domain);
-		return type3;
-	}
-
-	private COSArray buildType2Functions(Color[] colors, COSArray domain, COSArray encode) {
-		Color prevColor = colors[0];
-
-		COSArray functions = new COSArray();
-		for (int i = 1; i < colors.length; i++) {
-			Color color = colors[i];
-			PDColor prevPdColor = colorMapper.mapColor(document, contentStream, prevColor);
-			PDColor pdColor = colorMapper.mapColor(document, contentStream, color);
-			COSArray c0 = new COSArray();
-			COSArray c1 = new COSArray();
-			for (float component : prevPdColor.getComponents())
-				c0.add(new COSFloat(component));
-			for (float component : pdColor.getComponents())
-				c1.add(new COSFloat(component));
-
-			COSDictionary type2Function = new COSDictionary();
-			type2Function.setInt(COSName.FUNCTION_TYPE, 2);
-			type2Function.setItem(COSName.C0, c0);
-			type2Function.setItem(COSName.C1, c1);
-			type2Function.setInt(COSName.N, 1);
-			type2Function.setItem(COSName.DOMAIN, domain);
-			functions.add(type2Function);
-
-			encode.add(new COSFloat(0));
-			encode.add(new COSFloat(1));
-			prevColor = color;
-		}
-		return functions;
-	}
-
-	private void applyAsStrokingColor(Color color) throws IOException {
-		contentStream.setStrokingColor(colorMapper.mapColor(document, contentStream, color));
-		contentStream.setNonStrokingColor(colorMapper.mapColor(document, contentStream, color));
-
-		int alpha = color.getAlpha();
-		if (alpha < 255) {
-			/*
-			 * This is semitransparent
-			 */
-			PDExtendedGraphicsState pdExtendedGraphicsState = new PDExtendedGraphicsState();
-			pdExtendedGraphicsState.setStrokingAlphaConstant((alpha / 255f));
-			pdExtendedGraphicsState.setNonStrokingAlphaConstant((alpha / 255f));
-			contentStream.setGraphicsStateParameters(pdExtendedGraphicsState);
-		}
-	}
-
 	public void fill(Shape s) {
 		try {
 			contentStream.saveGraphicsState();
@@ -695,6 +491,12 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		} catch (IOException e) {
 			throwIOException(e);
 		}
+	}
+
+	private PDShading applyPaint() throws IOException {
+		AffineTransform tf = new AffineTransform(baseTransform);
+		tf.concatenate(transform);
+		return paintApplier.applyPaint(paint, contentStream, tf, colorMapper);
 	}
 
 	public boolean hit(Rectangle rect, Shape s, boolean onStroke) {
