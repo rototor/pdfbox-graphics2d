@@ -7,7 +7,7 @@ to embed those graphics as vector drawing in a PDF.
 
 The following features are supported:
 
-- Drawing any shape using draw???() and fill???() methods from Graphics2D.
+- Drawing any shape using draw...() and fill...() methods from Graphics2D.
 - Drawing images. The default is to always lossless compress them. You could plugin 
   your own Image -> PDImageXObject conversion if you want to encode the images as jpeg. 
   **Note:** At the moment PDFBox only writes 8 bit images. So even if you draw 
@@ -100,7 +100,7 @@ public class PDFGraphics2DSample {
 
 See also [manual drawing](src/test/java/de/rototor/pdfbox/graphics2d/PdfBoxGraphics2dTest.java) 
 and [drawing SVGs](src/test/java/de/rototor/pdfbox/graphics2d/RenderSVGsTest.java). The testdrivers are only
-smoke tests, i.e. they don't explicit test the result, they just run and test if the they are crashes. You have 
+smoke tests, i.e. they don't explicit test the result, they just run and test if the their are crashes. You have 
 to manually compare the PDF result of the testdriver with the also generated PNG compare image.
 
 ## Rendering text using fonts vs vectors

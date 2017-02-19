@@ -8,7 +8,6 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.common.function.PDFunctionType3;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColorSpace;
-import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceRGB;
 import org.apache.pdfbox.pdmodel.graphics.color.PDPattern;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.graphics.pattern.PDTilingPattern;
@@ -71,168 +70,181 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 	}
 
 	private PDShading applyPaint(Paint paint, AffineTransform tf) throws IOException {
-
 		if (paint instanceof Color) {
-			Color color = (Color) paint;
-			applyAsStrokingColor(color);
+			applyAsStrokingColor((Color) paint);
 		} else if (paint.getClass().getSimpleName().equals("LinearGradientPaint")) {
-			/*
-			 * Batik has a copy of RadialGradientPaint, but it has the same
-			 * structure as the AWT RadialGradientPaint. So we use Reflection to
-			 * access the fields of both these classes.
-			 */
-			Color[] colors = getPropertyValue(paint, "getColors");
-			Color firstColor = colors[0];
-			PDColor firstColorMapped = colorMapper.mapColor(contentStream, firstColor);
-			applyAsStrokingColor(firstColor);
-
-			PDShadingType3 shading = new PDShadingType3(new COSDictionary());
-			shading.setShadingType(PDShading.SHADING_TYPE2);
-			shading.setColorSpace(firstColorMapped.getColorSpace());
-			float[] fractions = getPropertyValue(paint, "getFractions");
-			Point2D startPoint = getPropertyValue(paint, "getStartPoint");
-			Point2D endPoint = getPropertyValue(paint, "getEndPoint");
-			AffineTransform gradientTransform = getPropertyValue(paint, "getTransform");
-			tf.concatenate(gradientTransform);
-
-			tf.transform(startPoint, startPoint);
-			tf.transform(endPoint, endPoint);
-
-			COSArray coords = new COSArray();
-			coords.add(new COSFloat((float) startPoint.getX()));
-			coords.add(new COSFloat((float) startPoint.getY()));
-			coords.add(new COSFloat((float) endPoint.getX()));
-			coords.add(new COSFloat((float) endPoint.getY()));
-			shading.setCoords(coords);
-
-			PDFunctionType3 type3 = buildType3Function(colors, fractions);
-
-			COSArray extend = new COSArray();
-			extend.add(COSBoolean.TRUE);
-			extend.add(COSBoolean.TRUE);
-			shading.setFunction(type3);
-			shading.setExtend(extend);
-			return shading;
+			return buildLinearGradientShading(paint, tf);
 		} else if (paint.getClass().getSimpleName().equals("RadialGradientPaint")) {
-			/*
-			 * Batik has a copy of RadialGradientPaint, but it has the same
-			 * structure as the AWT RadialGradientPaint. So we use Reflection to
-			 * access the fields of both these classes.
-			 */
-			Color[] colors = getPropertyValue(paint, "getColors");
-			Color firstColor = colors[0];
-			PDColor firstColorMapped = colorMapper.mapColor(contentStream, firstColor);
-			applyAsStrokingColor(firstColor);
-
-			PDShadingType3 shading = new PDShadingType3(new COSDictionary());
-			shading.setShadingType(PDShading.SHADING_TYPE3);
-			shading.setColorSpace(firstColorMapped.getColorSpace());
-			float[] fractions = getPropertyValue(paint, "getFractions");
-			Point2D centerPoint = getPropertyValue(paint, "getCenterPoint");
-			Point2D focusPoint = getPropertyValue(paint, "getFocusPoint");
-			AffineTransform gradientTransform = getPropertyValue(paint, "getTransform");
-			tf.concatenate(gradientTransform);
-			tf.transform(centerPoint, centerPoint);
-			tf.transform(focusPoint, focusPoint);
-
-			@SuppressWarnings("ConstantConditions")
-			float radius = getPropertyValue(paint, "getRadius");
-			radius = (float) Math.abs(radius * tf.getScaleX());
-
-			COSArray coords = new COSArray();
-
-			coords.add(new COSFloat((float) centerPoint.getX()));
-			coords.add(new COSFloat((float) centerPoint.getY()));
-			coords.add(new COSFloat(0));
-			coords.add(new COSFloat((float) focusPoint.getX()));
-			coords.add(new COSFloat((float) focusPoint.getY()));
-			coords.add(new COSFloat(radius));
-			shading.setCoords(coords);
-
-			PDFunctionType3 type3 = buildType3Function(colors, fractions);
-
-			COSArray extend = new COSArray();
-			extend.add(COSBoolean.TRUE);
-			extend.add(COSBoolean.TRUE);
-			shading.setFunction(type3);
-			shading.setExtend(extend);
-			return shading;
+			return buildRadialGradientShading(paint, tf);
 		} else if (paint instanceof GradientPaint) {
-			GradientPaint gradientPaint = (GradientPaint) paint;
-			Color[] colors = new Color[] { gradientPaint.getColor1(), gradientPaint.getColor2() };
-			Color firstColor = colors[0];
-			PDColor firstColorMapped = colorMapper.mapColor(contentStream, firstColor);
-
-			applyAsStrokingColor(firstColor);
-
-			PDShadingType3 shading = new PDShadingType3(new COSDictionary());
-			shading.setShadingType(PDShading.SHADING_TYPE2);
-			shading.setColorSpace(firstColorMapped.getColorSpace());
-			float[] fractions = new float[] { 0, 1 };
-			Point2D startPoint = gradientPaint.getPoint1();
-			Point2D endPoint = gradientPaint.getPoint2();
-
-			tf.transform(startPoint, startPoint);
-			tf.transform(endPoint, endPoint);
-
-			COSArray coords = new COSArray();
-			coords.add(new COSFloat((float) startPoint.getX()));
-			coords.add(new COSFloat((float) startPoint.getY()));
-			coords.add(new COSFloat((float) endPoint.getX()));
-			coords.add(new COSFloat((float) endPoint.getY()));
-			shading.setCoords(coords);
-
-			PDFunctionType3 type3 = buildType3Function(colors, fractions);
-
-			COSArray extend = new COSArray();
-			extend.add(COSBoolean.TRUE);
-			extend.add(COSBoolean.TRUE);
-
-			shading.setFunction(type3);
-			shading.setExtend(extend);
-			return shading;
+			return buildGradientShading(tf, (GradientPaint) paint);
 		} else if (paint instanceof TexturePaint) {
-			TexturePaint texturePaint = (TexturePaint) paint;
-			Rectangle2D anchorRect = texturePaint.getAnchorRect();
-			PDTilingPattern pattern = new PDTilingPattern();
-			pattern.setPaintType(PDTilingPattern.PAINT_COLORED);
-			pattern.setTilingType(PDTilingPattern.TILING_CONSTANT_SPACING_FASTER_TILING);
-
-			pattern.setBBox(new PDRectangle((float) anchorRect.getX(), (float) anchorRect.getY(),
-					(float) anchorRect.getWidth(), (float) anchorRect.getHeight()));
-			pattern.setXStep((float) anchorRect.getWidth());
-			pattern.setYStep((float) anchorRect.getHeight());
-
-			AffineTransform patternTransform = new AffineTransform();
-			patternTransform.translate(0, anchorRect.getHeight());
-			patternTransform.scale(1f, -1f);
-			pattern.setMatrix(patternTransform);
-
-			PDAppearanceStream appearance = new PDAppearanceStream(document);
-			appearance.setResources(pattern.getResources());
-			appearance.setBBox(pattern.getBBox());
-
-			PDPageContentStream imageContentStream = new PDPageContentStream(document, appearance,
-					((COSStream) pattern.getCOSObject()).createOutputStream());
-			BufferedImage texturePaintImage = texturePaint.getImage();
-			PDImageXObject imageXObject = imageEncoder.encodeImage(document, imageContentStream, texturePaintImage);
-			float ratioW = (float) ((anchorRect.getWidth()) / texturePaintImage.getWidth());
-			float ratioH = (float) ((anchorRect.getHeight()) / texturePaintImage.getHeight());
-			float paintHeight = (texturePaintImage.getHeight()) * ratioH;
-			imageContentStream.drawImage(imageXObject, (float) anchorRect.getX(),
-					(float) (paintHeight + anchorRect.getY()), texturePaintImage.getWidth() * ratioW, -paintHeight);
-			imageContentStream.close();
-
-			PDColorSpace patternCS1 = new PDPattern(null, PDDeviceRGB.INSTANCE);
-			COSName tilingPatternName = resources.add(pattern);
-			PDColor patternColor = new PDColor(tilingPatternName, patternCS1);
-
-			contentStream.setNonStrokingColor(patternColor);
-			contentStream.setStrokingColor(patternColor);
+			applyTexturePaint((TexturePaint) paint);
 		} else {
 			System.err.println("Don't know paint " + paint.getClass().getName());
 		}
 		return null;
+	}
+
+	private PDShading buildLinearGradientShading(Paint paint, AffineTransform tf) throws IOException {
+		/*
+		 * Batik has a copy of RadialGradientPaint, but it has the same
+		 * structure as the AWT RadialGradientPaint. So we use Reflection to
+		 * access the fields of both these classes.
+		 */
+		Color[] colors = getPropertyValue(paint, "getColors");
+		Color firstColor = colors[0];
+		PDColor firstColorMapped = colorMapper.mapColor(contentStream, firstColor);
+		applyAsStrokingColor(firstColor);
+
+		PDShadingType3 shading = new PDShadingType3(new COSDictionary());
+		shading.setShadingType(PDShading.SHADING_TYPE2);
+		shading.setColorSpace(firstColorMapped.getColorSpace());
+		float[] fractions = getPropertyValue(paint, "getFractions");
+		Point2D startPoint = getPropertyValue(paint, "getStartPoint");
+		Point2D endPoint = getPropertyValue(paint, "getEndPoint");
+		AffineTransform gradientTransform = getPropertyValue(paint, "getTransform");
+		tf.concatenate(gradientTransform);
+
+		tf.transform(startPoint, startPoint);
+		tf.transform(endPoint, endPoint);
+
+		COSArray coords = new COSArray();
+		coords.add(new COSFloat((float) startPoint.getX()));
+		coords.add(new COSFloat((float) startPoint.getY()));
+		coords.add(new COSFloat((float) endPoint.getX()));
+		coords.add(new COSFloat((float) endPoint.getY()));
+		shading.setCoords(coords);
+
+		PDFunctionType3 type3 = buildType3Function(colors, fractions);
+
+		COSArray extend = new COSArray();
+		extend.add(COSBoolean.TRUE);
+		extend.add(COSBoolean.TRUE);
+		shading.setFunction(type3);
+		shading.setExtend(extend);
+		return shading;
+	}
+
+	private PDShading buildRadialGradientShading(Paint paint, AffineTransform tf) throws IOException {
+		/*
+		 * Batik has a copy of RadialGradientPaint, but it has the same
+		 * structure as the AWT RadialGradientPaint. So we use Reflection to
+		 * access the fields of both these classes.
+		 */
+		Color[] colors = getPropertyValue(paint, "getColors");
+		Color firstColor = colors[0];
+		PDColor firstColorMapped = colorMapper.mapColor(contentStream, firstColor);
+		applyAsStrokingColor(firstColor);
+
+		PDShadingType3 shading = new PDShadingType3(new COSDictionary());
+		shading.setShadingType(PDShading.SHADING_TYPE3);
+		shading.setColorSpace(firstColorMapped.getColorSpace());
+		float[] fractions = getPropertyValue(paint, "getFractions");
+		Point2D centerPoint = getPropertyValue(paint, "getCenterPoint");
+		Point2D focusPoint = getPropertyValue(paint, "getFocusPoint");
+		AffineTransform gradientTransform = getPropertyValue(paint, "getTransform");
+		tf.concatenate(gradientTransform);
+		tf.transform(centerPoint, centerPoint);
+		tf.transform(focusPoint, focusPoint);
+
+		@SuppressWarnings("ConstantConditions")
+		float radius = getPropertyValue(paint, "getRadius");
+		radius = (float) Math.abs(radius * tf.getScaleX());
+
+		COSArray coords = new COSArray();
+
+		coords.add(new COSFloat((float) centerPoint.getX()));
+		coords.add(new COSFloat((float) centerPoint.getY()));
+		coords.add(new COSFloat(0));
+		coords.add(new COSFloat((float) focusPoint.getX()));
+		coords.add(new COSFloat((float) focusPoint.getY()));
+		coords.add(new COSFloat(radius));
+		shading.setCoords(coords);
+
+		PDFunctionType3 type3 = buildType3Function(colors, fractions);
+
+		COSArray extend = new COSArray();
+		extend.add(COSBoolean.TRUE);
+		extend.add(COSBoolean.TRUE);
+		shading.setFunction(type3);
+		shading.setExtend(extend);
+		return shading;
+	}
+
+	private PDShading buildGradientShading(AffineTransform tf, GradientPaint gradientPaint) throws IOException {
+		Color[] colors = new Color[] { gradientPaint.getColor1(), gradientPaint.getColor2() };
+		Color firstColor = colors[0];
+		PDColor firstColorMapped = colorMapper.mapColor(contentStream, firstColor);
+
+		applyAsStrokingColor(firstColor);
+
+		PDShadingType3 shading = new PDShadingType3(new COSDictionary());
+		shading.setShadingType(PDShading.SHADING_TYPE2);
+		shading.setColorSpace(firstColorMapped.getColorSpace());
+		float[] fractions = new float[] { 0, 1 };
+		Point2D startPoint = gradientPaint.getPoint1();
+		Point2D endPoint = gradientPaint.getPoint2();
+
+		tf.transform(startPoint, startPoint);
+		tf.transform(endPoint, endPoint);
+
+		COSArray coords = new COSArray();
+		coords.add(new COSFloat((float) startPoint.getX()));
+		coords.add(new COSFloat((float) startPoint.getY()));
+		coords.add(new COSFloat((float) endPoint.getX()));
+		coords.add(new COSFloat((float) endPoint.getY()));
+		shading.setCoords(coords);
+
+		PDFunctionType3 type3 = buildType3Function(colors, fractions);
+
+		COSArray extend = new COSArray();
+		extend.add(COSBoolean.TRUE);
+		extend.add(COSBoolean.TRUE);
+
+		shading.setFunction(type3);
+		shading.setExtend(extend);
+		return shading;
+	}
+
+	private void applyTexturePaint(TexturePaint texturePaint) throws IOException {
+		Rectangle2D anchorRect = texturePaint.getAnchorRect();
+		PDTilingPattern pattern = new PDTilingPattern();
+		pattern.setPaintType(PDTilingPattern.PAINT_COLORED);
+		pattern.setTilingType(PDTilingPattern.TILING_CONSTANT_SPACING_FASTER_TILING);
+
+		pattern.setBBox(new PDRectangle((float) anchorRect.getX(), (float) anchorRect.getY(),
+				(float) anchorRect.getWidth(), (float) anchorRect.getHeight()));
+		pattern.setXStep((float) anchorRect.getWidth());
+		pattern.setYStep((float) anchorRect.getHeight());
+
+		AffineTransform patternTransform = new AffineTransform();
+		patternTransform.translate(0, anchorRect.getHeight());
+		patternTransform.scale(1f, -1f);
+		pattern.setMatrix(patternTransform);
+
+		PDAppearanceStream appearance = new PDAppearanceStream(document);
+		appearance.setResources(pattern.getResources());
+		appearance.setBBox(pattern.getBBox());
+
+		PDPageContentStream imageContentStream = new PDPageContentStream(document, appearance,
+				((COSStream) pattern.getCOSObject()).createOutputStream());
+		BufferedImage texturePaintImage = texturePaint.getImage();
+		PDImageXObject imageXObject = imageEncoder.encodeImage(document, imageContentStream, texturePaintImage);
+
+		float ratioW = (float) ((anchorRect.getWidth()) / texturePaintImage.getWidth());
+		float ratioH = (float) ((anchorRect.getHeight()) / texturePaintImage.getHeight());
+		float paintHeight = (texturePaintImage.getHeight()) * ratioH;
+		imageContentStream.drawImage(imageXObject, (float) anchorRect.getX(), (float) (paintHeight + anchorRect.getY()),
+				texturePaintImage.getWidth() * ratioW, -paintHeight);
+		imageContentStream.close();
+
+		PDColorSpace patternCS1 = new PDPattern(null, imageXObject.getColorSpace());
+		COSName tilingPatternName = resources.add(pattern);
+		PDColor patternColor = new PDColor(tilingPatternName, patternCS1);
+
+		contentStream.setNonStrokingColor(patternColor);
+		contentStream.setStrokingColor(patternColor);
 	}
 
 	@SuppressWarnings("WeakerAccess")
