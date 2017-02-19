@@ -20,8 +20,10 @@ import java.lang.reflect.Method;
  * NOTE: Objects of this class are stateful and *not* thread safe!
  */
 public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintApplier {
-	private PDPageContentStream contentStream;
-	private IPdfBoxGraphics2DColorMapper colorMapper;
+	@SuppressWarnings("WeakerAccess")
+	protected PDPageContentStream contentStream;
+	@SuppressWarnings("WeakerAccess")
+	protected IPdfBoxGraphics2DColorMapper colorMapper;
 
 	@Override
 	public PDShading applyPaint(Paint paint, PDPageContentStream contentStream, AffineTransform tf,
