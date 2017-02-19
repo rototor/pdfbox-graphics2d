@@ -21,6 +21,7 @@ The following features are supported:
 	  - GradientPaint always generates acyclic gradients. 
 	  - LinearGradientPaint and RadialGradientPaint always assume even split fractions. 
 	  The actual given fractions are ignored at the moment.
+	- TexturePaint. 
 - Drawing text. At the moment all text is drawn as vector shapes, so no fonts are embedded. 
 RTL languages are supported.
 

@@ -54,5 +54,12 @@ public interface IPdfBoxGraphics2DPaintApplier {
 		 * The resource of the content stream
 		 */
 		PDResources getResources();
+
+		/**
+		 * @return the base transform, which transforms the Graphics2D
+		 *         coordinate system into the page coordinate system. I.e. it
+		 *         ensure that (0,0) is the left upper corner.
+		 */
+		AffineTransform getBaseTransform();
 	}
 }

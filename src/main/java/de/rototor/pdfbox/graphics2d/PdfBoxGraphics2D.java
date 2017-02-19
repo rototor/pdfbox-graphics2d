@@ -517,6 +517,11 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			public PDResources getResources() {
 				return xFormObject.getResources();
 			}
+
+			@Override
+			public AffineTransform getBaseTransform() {
+				return new AffineTransform(baseTransform);
+			}
 		});
 	}
 

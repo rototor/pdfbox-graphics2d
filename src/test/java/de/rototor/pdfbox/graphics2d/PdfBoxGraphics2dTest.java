@@ -84,9 +84,11 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase {
 				gfx.setFont(font3);
 				gfx.setColor(Color.BLACK);
 				gfx.drawString("مرحبا بالعالم", 200, 100);
-				gfx.setPaint(new TexturePaint(imgColorTest, new Rectangle2D.Float(0f, 0f, 100f, 20f)));
+				gfx.setPaint(new TexturePaint(imgColorTest, new Rectangle2D.Float(5f, 7f, 100f, 20f)));
 				gfx.drawString("مرحبا بالعالم", 200, 250);
 				gfx.drawString("שלום עולם", 200, 200);
+
+				gfx.fillRect(300, 300, 100, 100);
 
 			}
 		});

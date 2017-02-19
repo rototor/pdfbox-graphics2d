@@ -16,12 +16,12 @@ import org.apache.pdfbox.pdmodel.graphics.shading.PDShading;
 import org.apache.pdfbox.pdmodel.graphics.shading.PDShadingType3;
 import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
-import org.apache.pdfbox.util.Matrix;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.lang.reflect.Method;
 
@@ -203,19 +203,26 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 			pattern.setXStep((float) anchorRect.getWidth());
 			pattern.setYStep((float) anchorRect.getHeight());
 
+			AffineTransform patternTransform = new AffineTransform();
+			patternTransform.translate(0, anchorRect.getHeight());
+			patternTransform.scale(1f, -1f);
+			pattern.setMatrix(patternTransform);
+
 			PDAppearanceStream appearance = new PDAppearanceStream(document);
 			appearance.setResources(pattern.getResources());
 			appearance.setBBox(pattern.getBBox());
 
 			PDPageContentStream imageContentStream = new PDPageContentStream(document, appearance,
 					((COSStream) pattern.getCOSObject()).createOutputStream());
-			PDImageXObject imageXObject = imageEncoder.encodeImage(document, imageContentStream,
-					texturePaint.getImage());
-			Matrix m = new Matrix();
-			// m.translate(0, (float) anchorRect.getHeight());
-			//m.scale(1, -1);
-			imageContentStream.transform(m);
-			imageContentStream.drawImage(imageXObject, 0, 0);
+			BufferedImage texturePaintImage = texturePaint.getImage();
+			PDImageXObject imageXObject = imageEncoder.encodeImage(document, imageContentStream, texturePaintImage);
+			AffineTransform tfImage = new AffineTransform();
+			if (false)
+				tfImage.scale((float) texturePaintImage.getWidth() / anchorRect.getWidth(),
+						(float) texturePaintImage.getHeight() / anchorRect.getHeight());
+			//imageContentStream.transform(new Matrix(tf));
+			imageContentStream.drawImage(imageXObject, 0, 0, texturePaintImage.getWidth(),
+					texturePaintImage.getHeight());
 			imageContentStream.close();
 
 			PDColorSpace patternCS1 = new PDPattern(null, PDDeviceRGB.INSTANCE);
