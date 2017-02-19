@@ -38,7 +38,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.1</version>
+	<version>0.2</version>
 </dependency>
 ```
 
@@ -128,13 +128,20 @@ On the other site rendering a text using vector shapes has the following propert
 - The text is not searchable and can not be copied.
 - Note: Vector shapes take more space than a embedded font.
 - Note: You may want to manually alter the color mapping to e.g. ensure a black text is printed using pure CMYK black. 
-If you not plan to print the PDF in offset or digital print you can ignore that. This will make no difference for 
+If you do not plan to print the PDF in offset or digital print you can ignore that. This will make no difference for 
 your normal desktop printer.
 
 At the moment only rendering text as vector shapes is implemented. To embed a text using its font into a PDF direct 
 access to the underling font file is required, because PDFBox needs to build the embedded font subset. Using the normal 
 Java font API it is not possible to access the underlying font file. So a mapping Font -> PDFont is needed. At the 
-moment there is a hook to implement that, but its not working yet.
+moment there is a hook to implement that, but its not working yet. Also note that PDFBox has 
+[problems](https://issues.apache.org/jira/browse/PDFBOX-3550) rendering RTL languages at the moment.
+
+## Changes
+
+Version 0.2:
+ - The paint applier (Mapping of java.awt.Paint to PDF) can be customized, so you can map special paints if needed.
+ - Support for TexturePaint
 
 ## Licence
 
