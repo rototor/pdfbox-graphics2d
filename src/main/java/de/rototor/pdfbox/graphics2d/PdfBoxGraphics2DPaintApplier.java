@@ -216,13 +216,11 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 					((COSStream) pattern.getCOSObject()).createOutputStream());
 			BufferedImage texturePaintImage = texturePaint.getImage();
 			PDImageXObject imageXObject = imageEncoder.encodeImage(document, imageContentStream, texturePaintImage);
-			AffineTransform tfImage = new AffineTransform();
-			if (false)
-				tfImage.scale((float) texturePaintImage.getWidth() / anchorRect.getWidth(),
-						(float) texturePaintImage.getHeight() / anchorRect.getHeight());
-			//imageContentStream.transform(new Matrix(tf));
-			imageContentStream.drawImage(imageXObject, 0, 0, texturePaintImage.getWidth(),
-					texturePaintImage.getHeight());
+			float ratioW = (float) ((anchorRect.getWidth()) / texturePaintImage.getWidth());
+			float ratioH = (float) ((anchorRect.getHeight()) / texturePaintImage.getHeight());
+			float paintHeight = (texturePaintImage.getHeight()) * ratioH;
+			imageContentStream.drawImage(imageXObject, (float) anchorRect.getX(),
+					(float) (paintHeight + anchorRect.getY()), texturePaintImage.getWidth() * ratioW, -paintHeight);
 			imageContentStream.close();
 
 			PDColorSpace patternCS1 = new PDPattern(null, PDDeviceRGB.INSTANCE);
