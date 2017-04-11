@@ -140,7 +140,7 @@ moment there is a hook to implement that, but its not working yet. Also note tha
 ## Changes
 
 Version 0.3:
- - Fix for a NPE when call setClip() with null.
+ - Fix for a NPE when calling setClip() with null.
 
 Version 0.2:
  - The paint applier (Mapping of java.awt.Paint to PDF) can be customized, so you can map special paints if needed.
