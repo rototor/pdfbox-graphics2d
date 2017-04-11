@@ -38,7 +38,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.2</version>
+	<version>0.3</version>
 </dependency>
 ```
 
@@ -141,6 +141,7 @@ moment there is a hook to implement that, but its not working yet. Also note tha
 
 Version 0.3:
  - Fix for a NPE when calling setClip() with null.
+ - Upgrade to PDFBox 2.0.5, replacing the usage of appendRawCommands() with setMiterLimit().
 
 Version 0.2:
  - The paint applier (Mapping of java.awt.Paint to PDF) can be customized, so you can map special paints if needed.
