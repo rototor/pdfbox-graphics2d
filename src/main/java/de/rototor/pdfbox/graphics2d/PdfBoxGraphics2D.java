@@ -246,10 +246,8 @@ public class PdfBoxGraphics2D extends Graphics2D {
 				contentStream.setLineCapStyle(basicStroke.getEndCap());
 				// Line Join Style maps 1:1 between Java and PDF Spec
 				contentStream.setLineJoinStyle(basicStroke.getLineJoin());
-
-				// Pending PDFBOX-3669 - to be replaced
-				// noinspection deprecation
-				contentStream.appendRawCommands(basicStroke.getMiterLimit() + " M ");
+				// Also Miter maps 1:1 between Java and PDF Spec
+				contentStream.setMiterLimit(basicStroke.getMiterLimit());
 
 				AffineTransform tf = new AffineTransform();
 				tf.concatenate(baseTransform);
