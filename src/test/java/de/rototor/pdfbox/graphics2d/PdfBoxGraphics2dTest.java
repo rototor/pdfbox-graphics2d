@@ -20,6 +20,7 @@ import org.junit.Test;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.font.TextAttribute;
+import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -88,7 +89,10 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase {
 				gfx.drawString("مرحبا بالعالم", 200, 250);
 				gfx.drawString("שלום עולם", 200, 200);
 
+				gfx.setClip(new Ellipse2D.Float(360, 360, 60, 80));
 				gfx.fillRect(300, 300, 100, 100);
+				gfx.setClip(null);
+				gfx.fillRect(360, 360, 10, 10);
 
 			}
 		});
