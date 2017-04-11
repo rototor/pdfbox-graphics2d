@@ -286,8 +286,8 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			tf.scale(1, -1);
 			contentStream.transform(new Matrix(tf));
 
-			if (RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR
-					.equals(renderingHints.get(RenderingHints.KEY_INTERPOLATION)))
+			Object keyInterpolation = renderingHints.get(RenderingHints.KEY_INTERPOLATION);
+			if (RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR.equals(keyInterpolation))
 				pdImage.setInterpolate(false);
 			contentStream.drawImage(pdImage, 0, 0, img.getWidth(obs), imgHeight);
 			contentStream.restoreGraphicsState();
@@ -634,8 +634,13 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		try {
 			contentStream.restoreGraphicsState();
 			contentStream.saveGraphicsState();
-			walkShape(clip);
-			contentStream.clip();
+			/*
+			 * clip can be null, only set a clipping if not null
+			 */
+			if (clip != null) {
+				walkShape(clip);
+				contentStream.clip();
+			}
 		} catch (IOException e) {
 			throwIOException(e);
 		}
