@@ -44,6 +44,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 	protected PDExtendedGraphicsState pdExtendedGraphicsState;
 	@SuppressWarnings("WeakerAccess")
 	protected Composite composite;
+	private COSDictionary dictExtendedState;
 
 	@Override
 	public PDShading applyPaint(Paint paint, PDPageContentStream contentStream, AffineTransform tf, IPaintEnv env)
@@ -85,8 +86,11 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 	}
 
 	private void ensureExtendedState() {
-		if (pdExtendedGraphicsState == null)
-			pdExtendedGraphicsState = new PDExtendedGraphicsState();
+		if (pdExtendedGraphicsState == null) {
+			this.dictExtendedState = new COSDictionary();
+			this.dictExtendedState.setItem(COSName.TYPE, COSName.EXT_G_STATE);
+			pdExtendedGraphicsState = new PDExtendedGraphicsState(this.dictExtendedState);
+		}
 	}
 
 	private PDShading applyPaint(Paint paint, AffineTransform tf) throws IOException {
@@ -109,13 +113,49 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 
 	private void applyComposite() {
 		// Possibly set the alpha constant
-		if (composite instanceof AlphaComposite) {
-			float alpha = ((AlphaComposite) composite).getAlpha();
+		if (this.composite instanceof AlphaComposite) {
+			AlphaComposite composite = (AlphaComposite) this.composite;
+			ensureExtendedState();
+			float alpha = composite.getAlpha();
 			if (alpha < 1) {
-				ensureExtendedState();
 				pdExtendedGraphicsState.setStrokingAlphaConstant(alpha);
 				pdExtendedGraphicsState.setNonStrokingAlphaConstant(alpha);
 			}
+			/*
+			 * Try to map the alpha rule
+			 */
+			COSName blendMode = COSName.COMPATIBLE;
+			switch (composite.getRule()) {
+			case AlphaComposite.CLEAR:
+				break;
+			case AlphaComposite.SRC:
+				blendMode = COSName.NORMAL;
+				break;
+			case AlphaComposite.SRC_OVER:
+				blendMode = COSName.COMPATIBLE;
+				break;
+			case AlphaComposite.XOR:
+				blendMode = COSName.EXCLUSION;
+				break;
+			case AlphaComposite.DST:
+				break;
+			case AlphaComposite.DST_ATOP:
+				break;
+			case AlphaComposite.SRC_ATOP:
+				blendMode = COSName.COMPATIBLE;
+				break;
+			case AlphaComposite.DST_IN:
+				break;
+			case AlphaComposite.DST_OUT:
+				break;
+			case AlphaComposite.SRC_IN:
+				break;
+			case AlphaComposite.SRC_OUT:
+				break;
+			case AlphaComposite.DST_OVER:
+				break;
+			}
+			dictExtendedState.setItem(COSName.BM, blendMode);
 		}
 	}
 
