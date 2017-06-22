@@ -40,6 +40,10 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 	protected IPdfBoxGraphics2DImageEncoder imageEncoder;
 	@SuppressWarnings("WeakerAccess")
 	protected PDResources resources;
+	@SuppressWarnings("WeakerAccess")
+	protected PDExtendedGraphicsState pdExtendedGraphicsState;
+	@SuppressWarnings("WeakerAccess")
+	protected Composite composite;
 
 	@Override
 	public PDShading applyPaint(Paint paint, PDPageContentStream contentStream, AffineTransform tf, IPaintEnv env)
@@ -49,11 +53,17 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 		this.contentStream = contentStream;
 		this.colorMapper = env.getColorMapper();
 		this.imageEncoder = env.getImageEncoder();
-		return applyPaint(paint, tf);
+		this.composite = env.getComposite();
+		this.pdExtendedGraphicsState = null;
+		PDShading shading = applyPaint(paint, tf);
+		if (pdExtendedGraphicsState != null)
+			contentStream.setGraphicsStateParameters(pdExtendedGraphicsState);
+		return shading;
 	}
 
 	@SuppressWarnings("WeakerAccess")
 	protected void applyAsStrokingColor(Color color) throws IOException {
+
 		contentStream.setStrokingColor(colorMapper.mapColor(contentStream, color));
 		contentStream.setNonStrokingColor(colorMapper.mapColor(contentStream, color));
 
@@ -62,14 +72,25 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 			/*
 			 * This is semitransparent
 			 */
-			PDExtendedGraphicsState pdExtendedGraphicsState = new PDExtendedGraphicsState();
-			pdExtendedGraphicsState.setStrokingAlphaConstant((alpha / 255f));
-			pdExtendedGraphicsState.setNonStrokingAlphaConstant((alpha / 255f));
-			contentStream.setGraphicsStateParameters(pdExtendedGraphicsState);
+			ensureExtendedState();
+			Float strokingAlphaConstant = pdExtendedGraphicsState.getStrokingAlphaConstant();
+			if (strokingAlphaConstant == null)
+				strokingAlphaConstant = 1f;
+			pdExtendedGraphicsState.setStrokingAlphaConstant(strokingAlphaConstant * (alpha / 255f));
+			Float nonStrokingAlphaConstant = pdExtendedGraphicsState.getNonStrokingAlphaConstant();
+			if (nonStrokingAlphaConstant == null)
+				nonStrokingAlphaConstant = 1f;
+			pdExtendedGraphicsState.setNonStrokingAlphaConstant(nonStrokingAlphaConstant * (alpha / 255f));
 		}
 	}
 
+	private void ensureExtendedState() {
+		if (pdExtendedGraphicsState == null)
+			pdExtendedGraphicsState = new PDExtendedGraphicsState();
+	}
+
 	private PDShading applyPaint(Paint paint, AffineTransform tf) throws IOException {
+		applyComposite();
 		if (paint instanceof Color) {
 			applyAsStrokingColor((Color) paint);
 		} else if (paint.getClass().getSimpleName().equals("LinearGradientPaint")) {
@@ -84,6 +105,18 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 			System.err.println("Don't know paint " + paint.getClass().getName());
 		}
 		return null;
+	}
+
+	private void applyComposite() {
+		// Possibly set the alpha constant
+		if (composite instanceof AlphaComposite) {
+			float alpha = ((AlphaComposite) composite).getAlpha();
+			if (alpha < 1) {
+				ensureExtendedState();
+				pdExtendedGraphicsState.setStrokingAlphaConstant(alpha);
+				pdExtendedGraphicsState.setNonStrokingAlphaConstant(alpha);
+			}
+		}
 	}
 
 	private PDShading buildLinearGradientShading(Paint paint, AffineTransform tf) throws IOException {
@@ -317,6 +350,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 			while (c != null) {
 				try {
 					Method m = c.getMethod(propertyGetter, (Class<?>[]) null);
+					// noinspection JavaReflectionInvocation
 					return (T) m.invoke(obj);
 				} catch (NoSuchMethodException ignored) {
 				}

@@ -22,7 +22,6 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.graphics.shading.PDShading;
-import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
 import org.apache.pdfbox.util.Matrix;
 
@@ -268,15 +267,6 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		try {
 			contentStream.saveGraphicsState();
 
-			// Possibly set the alpha constant
-			if (composite instanceof AlphaComposite) {
-				float alpha = ((AlphaComposite) composite).getAlpha();
-				if (alpha < 1) {
-					PDExtendedGraphicsState graphicsState = new PDExtendedGraphicsState();
-					graphicsState.setStrokingAlphaConstant(alpha);
-					contentStream.setGraphicsStateParameters(graphicsState);
-				}
-			}
 
 			applyPaint();
 			if (stroke instanceof BasicStroke) {
@@ -521,15 +511,6 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		try {
 			contentStream.saveGraphicsState();
 
-			// Possibly set the alpha constant
-			if (composite instanceof AlphaComposite) {
-				float alpha = ((AlphaComposite) composite).getAlpha();
-				if (alpha < 1) {
-					PDExtendedGraphicsState graphicsState = new PDExtendedGraphicsState();
-					graphicsState.setNonStrokingAlphaConstant(alpha);
-					contentStream.setGraphicsStateParameters(graphicsState);
-				}
-			}
 
 			PDShading shading = applyPaint();
 			if (shading != null) {
@@ -576,6 +557,11 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			@Override
 			public PDResources getResources() {
 				return xFormObject.getResources();
+			}
+
+			@Override
+			public Composite getComposite() {
+				return PdfBoxGraphics2D.this.getComposite();
 			}
 		});
 	}

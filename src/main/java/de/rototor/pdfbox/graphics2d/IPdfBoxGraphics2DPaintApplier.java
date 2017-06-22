@@ -54,5 +54,10 @@ public interface IPdfBoxGraphics2DPaintApplier {
 		 * The resource of the content stream
 		 */
 		PDResources getResources();
+
+		/**
+		 * Get the Graphics2D Composite
+		 */
+		Composite getComposite();
 	}
 }

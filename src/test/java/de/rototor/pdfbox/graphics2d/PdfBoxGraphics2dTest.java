@@ -50,7 +50,7 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase {
 					gfx.setPaint(gp);
 					gfx.fill(AffineTransform.getTranslateInstance(30f, 20f).createTransformedShape(rect));
 					Composite composite = gfx.getComposite();
-					gfx.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
+					gfx.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.8f));
 					gfx.setColor(Color.cyan);
 					gfx.fillRect(15, 0, 40, 40);
 					gfx.setColor(Color.green);
