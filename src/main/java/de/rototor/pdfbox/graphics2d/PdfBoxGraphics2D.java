@@ -49,8 +49,6 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	private final PDPageContentStream contentStream;
 	private BufferedImage calcImage;
 	private PDDocument document;
-	private final int pixelWidth;
-	private final int pixelHeight;
 	private final AffineTransform baseTransform;
 	private AffineTransform transform = new AffineTransform();
 	private IPdfBoxGraphics2DImageEncoder imageEncoder = new PdfBoxGraphics2DLosslessImageEncoder();
@@ -66,6 +64,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	private Color backgroundColor;
 	private boolean isClone = false;
 	private boolean vectoringText = true;
+	private PDRectangle bbox;
 
 	/**
 	 * Set a new font applier.
@@ -158,19 +157,48 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 */
 	@SuppressWarnings("WeakerAccess")
 	public PdfBoxGraphics2D(PDDocument document, int pixelWidth, int pixelHeight) throws IOException {
+		this(document, new PDRectangle(pixelWidth, pixelHeight));
+	}
+
+	/**
+	 * Create a PDfBox Graphics2D. This size is used for the BBox of the XForm.
+	 * So everything drawn outside the rectangle (0x0)-(pixelWidth,pixelHeight)
+	 * will be clipped.
+	 *
+	 * Note: pixelWidth and pixelHeight only define the size of the coordinate
+	 * space within this Graphics2D. They do not affect how big the XForm is
+	 * finally displayed in the PDF.
+	 *
+	 * @param document
+	 *            The document the graphics should be used to create a XForm in.
+	 * @param pixelWidth
+	 *            the width in pixel of the drawing area.
+	 * @param pixelHeight
+	 *            the height in pixel of the drawing area.
+	 */
+	@SuppressWarnings("WeakerAccess")
+	public PdfBoxGraphics2D(PDDocument document, float pixelWidth, float pixelHeight) throws IOException {
+		this(document, new PDRectangle(pixelWidth, pixelHeight));
+	}
+
+	/**
+	 * @param document
+	 *            The document the graphics should be used to create a XForm in.
+	 * @param bbox
+	 *            Bounding Box of the graphics
+	 */
+	public PdfBoxGraphics2D(PDDocument document, PDRectangle bbox) throws IOException {
 		this.document = document;
-		this.pixelWidth = pixelWidth;
-		this.pixelHeight = pixelHeight;
 
 		PDAppearanceStream appearance = new PDAppearanceStream(document);
 		xFormObject = appearance;
 		xFormObject.setResources(new PDResources());
-		xFormObject.setBBox(new PDRectangle(pixelWidth, pixelHeight));
+		xFormObject.setBBox(bbox);
 		contentStream = new PDPageContentStream(document, appearance, xFormObject.getStream().createOutputStream());
 		contentStream.saveGraphicsState();
 
 		baseTransform = new AffineTransform();
-		baseTransform.translate(0, pixelHeight);
+		baseTransform.translate(0, bbox.getHeight());
 		baseTransform.scale(1, -1);
 
 		calcImage = new BufferedImage(100, 100, BufferedImage.TYPE_4BYTE_ABGR);
@@ -180,8 +208,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 
 	private PdfBoxGraphics2D(PdfBoxGraphics2D gfx) throws IOException {
 		this.document = gfx.document;
-		this.pixelWidth = gfx.pixelWidth;
-		this.pixelHeight = gfx.pixelHeight;
+		this.bbox = gfx.bbox;
 		this.xFormObject = gfx.xFormObject;
 		this.contentStream = gfx.contentStream;
 		this.baseTransform = gfx.baseTransform;
@@ -241,11 +268,9 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			contentStream.saveGraphicsState();
 
 			// Possibly set the alpha constant
-			if(composite instanceof AlphaComposite)
-			{
-				float alpha = ((AlphaComposite)composite).getAlpha();
-				if(alpha < 1)
-				{
+			if (composite instanceof AlphaComposite) {
+				float alpha = ((AlphaComposite) composite).getAlpha();
+				if (alpha < 1) {
 					PDExtendedGraphicsState graphicsState = new PDExtendedGraphicsState();
 					graphicsState.setStrokingAlphaConstant(alpha);
 					contentStream.setGraphicsStateParameters(graphicsState);
@@ -260,8 +285,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 				contentStream.setLineCapStyle(basicStroke.getEndCap());
 				// Line Join Style maps 1:1 between Java and PDF Spec
 				contentStream.setLineJoinStyle(basicStroke.getLineJoin());
-				if(basicStroke.getMiterLimit() > 0)
-				{
+				if (basicStroke.getMiterLimit() > 0) {
 					// Also Miter maps 1:1 between Java and PDF Spec
 					// (NB: set the miter-limit only if value is > 0)
 					contentStream.setMiterLimit(basicStroke.getMiterLimit());
@@ -497,11 +521,9 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			contentStream.saveGraphicsState();
 
 			// Possibly set the alpha constant
-			if(composite instanceof AlphaComposite)
-			{
-				float alpha = ((AlphaComposite)composite).getAlpha();
-				if(alpha < 1)
-				{
+			if (composite instanceof AlphaComposite) {
+				float alpha = ((AlphaComposite) composite).getAlpha();
+				if (alpha < 1) {
 					PDExtendedGraphicsState graphicsState = new PDExtendedGraphicsState();
 					graphicsState.setNonStrokingAlphaConstant(alpha);
 					contentStream.setGraphicsStateParameters(graphicsState);
@@ -511,15 +533,13 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			PDShading shading = applyPaint();
 			if (shading != null) {
 				walkShape(s);
-				// NB: the shading fill doesn't work with shapes with zero or negative dimensions
+				// NB: the shading fill doesn't work with shapes with zero or
+				// negative dimensions
 				// (width and/or height): in these cases a normal fill is used
 				Rectangle2D r2d = s.getBounds2D();
-				if((r2d.getWidth () <= 0) || (r2d.getHeight() <= 0))
-				{
+				if ((r2d.getWidth() <= 0) || (r2d.getHeight() <= 0)) {
 					contentStream.fill();
-				}
-				else
-				{
+				} else {
 					contentStream.clip();
 					contentStream.shadingFill(shading);
 				}
@@ -848,11 +868,13 @@ public class PdfBoxGraphics2D extends Graphics2D {
 
 	// In case a single 2D graphic object has to be written (one or more times)
 	// into a PDF document, this method isn't needed.
-	// If, instead, several 2D graphic objects have to be written (one or more times)
-	// into a PDF document, the graphic state has to be saved after a graphic object
-	// has been written for the last time and a new graphic object has to be created
-	public void saveGraphicsState() throws IOException
-	{
+	// If, instead, several 2D graphic objects have to be written (one or more
+	// times)
+	// into a PDF document, the graphic state has to be saved after a graphic
+	// object
+	// has been written for the last time and a new graphic object has to be
+	// created
+	public void saveGraphicsState() throws IOException {
 		contentStream.saveGraphicsState();
 	}
 }
