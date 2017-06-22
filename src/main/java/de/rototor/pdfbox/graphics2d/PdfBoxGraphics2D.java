@@ -22,6 +22,7 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.graphics.shading.PDShading;
+import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
 import org.apache.pdfbox.util.Matrix;
 
@@ -238,6 +239,19 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	public void draw(Shape s) {
 		try {
 			contentStream.saveGraphicsState();
+
+			// Possibly set the alpha constant
+			if((composite != null) && (composite instanceof AlphaComposite))
+			{
+				float alpha = ((AlphaComposite)composite).getAlpha();
+				if(alpha < 1)
+				{
+					PDExtendedGraphicsState graphicsState = new PDExtendedGraphicsState();
+					graphicsState.setStrokingAlphaConstant(alpha);
+					contentStream.setGraphicsStateParameters(graphicsState);
+				}
+			}
+
 			applyPaint();
 			if (stroke instanceof BasicStroke) {
 				BasicStroke basicStroke = (BasicStroke) this.stroke;
@@ -246,8 +260,12 @@ public class PdfBoxGraphics2D extends Graphics2D {
 				contentStream.setLineCapStyle(basicStroke.getEndCap());
 				// Line Join Style maps 1:1 between Java and PDF Spec
 				contentStream.setLineJoinStyle(basicStroke.getLineJoin());
-				// Also Miter maps 1:1 between Java and PDF Spec
-				contentStream.setMiterLimit(basicStroke.getMiterLimit());
+				if(basicStroke.getMiterLimit() > 0)
+				{
+					// Also Miter maps 1:1 between Java and PDF Spec
+					// (NB: set the miter-limit only if value is > 0)
+					contentStream.setMiterLimit(basicStroke.getMiterLimit());
+				}
 
 				AffineTransform tf = new AffineTransform();
 				tf.concatenate(baseTransform);
@@ -477,11 +495,34 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	public void fill(Shape s) {
 		try {
 			contentStream.saveGraphicsState();
+
+			// Possibly set the alpha constant
+			if((composite != null) && (composite instanceof AlphaComposite))
+			{
+				float alpha = ((AlphaComposite)composite).getAlpha();
+				if(alpha < 1)
+				{
+					PDExtendedGraphicsState graphicsState = new PDExtendedGraphicsState();
+					graphicsState.setNonStrokingAlphaConstant(alpha);
+					contentStream.setGraphicsStateParameters(graphicsState);
+				}
+			}
+
 			PDShading shading = applyPaint();
 			if (shading != null) {
 				walkShape(s);
-				contentStream.clip();
-				contentStream.shadingFill(shading);
+				// NB: the shading fill doesn't work with shapes with zero or negative dimensions
+				// (width and/or height): in these cases a normal fill is used
+				Rectangle2D r2d = s.getBounds2D();
+				if((r2d.getWidth () <= 0) || (r2d.getHeight() <= 0))
+				{
+					contentStream.fill();
+				}
+				else
+				{
+					contentStream.clip();
+					contentStream.shadingFill(shading);
+				}
 			} else {
 				walkShape(s);
 				contentStream.fill();
@@ -803,5 +844,15 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	public FontRenderContext getFontRenderContext() {
 		calcGfx.addRenderingHints(renderingHints);
 		return calcGfx.getFontRenderContext();
+	}
+
+	// In case a single 2D graphic object has to be written (one or more times)
+	// into a PDF document, this method isn't needed.
+	// If, instead, several 2D graphic objects have to be written (one or more times)
+	// into a PDF document, the graphic state has to be saved after a graphic object
+	// has been written for the last time and a new graphic object has to be created
+	public void saveGraphicsState() throws IOException
+	{
+		contentStream.saveGraphicsState();
 	}
 }
