@@ -25,8 +25,9 @@ The following features are supported:
 - Drawing text. At the moment all text is drawn as vector shapes, so no fonts are embedded. 
 RTL languages are supported.
 
-The following features are not supported:
+The following features are not supported (yet):
 
+- (Alpha-)Composite with a rule different then AlphaComposite.SRC_OVER.
 - copyArea(). This is not possible to implement.
 - hit(). Why would you want to use that?
 
@@ -38,7 +39,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.3</version>
+	<version>0.4</version>
 </dependency>
 ```
 
@@ -138,6 +139,10 @@ moment there is a hook to implement that, but its not working yet. Also note tha
 [problems](https://issues.apache.org/jira/browse/PDFBOX-3550) rendering RTL languages at the moment.
 
 ## Changes
+
+Version 0.4:
+ - Initial support for basic AlphaComposite. Thanks @FabioVassallo [#1](https://github.com/rototor/pdfbox-graphics2d/pull/1)
+ - When drawing a shape with a zero or negative size don't use PDShadings, as they won't work.Thanks @FabioVassallo [#1](https://github.com/rototor/pdfbox-graphics2d/pull/1)
 
 Version 0.3:
  - Fix for a NPE when calling setClip() with null.

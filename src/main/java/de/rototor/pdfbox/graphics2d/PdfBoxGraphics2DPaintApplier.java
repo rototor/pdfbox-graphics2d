@@ -122,7 +122,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 				pdExtendedGraphicsState.setNonStrokingAlphaConstant(alpha);
 			}
 			/*
-			 * Try to map the alpha rule
+			 * Try to map the alpha rule into blend modes
 			 */
 			COSName blendMode = COSName.COMPATIBLE;
 			switch (composite.getRule()) {
