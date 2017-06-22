@@ -867,15 +867,4 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		return calcGfx.getFontRenderContext();
 	}
 
-	// In case a single 2D graphic object has to be written (one or more times)
-	// into a PDF document, this method isn't needed.
-	// If, instead, several 2D graphic objects have to be written (one or more
-	// times)
-	// into a PDF document, the graphic state has to be saved after a graphic
-	// object
-	// has been written for the last time and a new graphic object has to be
-	// created
-	public void saveGraphicsState() throws IOException {
-		contentStream.saveGraphicsState();
-	}
 }
