@@ -20,13 +20,45 @@ import org.junit.Test;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.font.TextAttribute;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.text.AttributedString;
 
 public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase {
+
+	@Test
+	public void testNegativeShapesAndComposite() {
+		exportGraphic("simple", "negativeWithComposite", new GraphicsExporter() {
+			@Override
+			public void draw(Graphics2D gfx) throws IOException, FontFormatException {
+				RoundRectangle2D.Float rect = new RoundRectangle2D.Float(10f, 10f, 20f, 20f, 5f, 6f);
+
+				AffineTransform transformIdentity = new AffineTransform();
+				AffineTransform transformMirrored = AffineTransform.getTranslateInstance(0, 100);
+				transformMirrored.scale(1, -0.5);
+				for (AffineTransform tf : new AffineTransform[] { transformIdentity, transformMirrored }) {
+					gfx.setTransform(tf);
+					gfx.setColor(Color.red);
+					gfx.fill(rect);
+					gfx.setStroke(new BasicStroke(2f));
+					gfx.draw(rect);
+					GradientPaint gp = new GradientPaint(10.0f, 25.0f, Color.blue, (float) 100, (float) 100, Color.red);
+					gfx.setPaint(gp);
+					gfx.fill(AffineTransform.getTranslateInstance(30f, 20f).createTransformedShape(rect));
+					Composite composite = gfx.getComposite();
+					gfx.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
+					gfx.setColor(Color.blue);
+					gfx.fillRect(15, 0, 40, 40);
+					gfx.setComposite(composite);
+				}
+
+			}
+		});
+	}
 
 	@Test
 	public void testSimpleGraphics2d() throws IOException {
