@@ -64,7 +64,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	private Color backgroundColor;
 	private boolean isClone = false;
 	private boolean vectoringText = true;
-	private PDRectangle bbox;
+	private final PDRectangle bbox;
 
 	/**
 	 * Set a new font applier.
@@ -189,6 +189,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 */
 	public PdfBoxGraphics2D(PDDocument document, PDRectangle bbox) throws IOException {
 		this.document = document;
+		this.bbox = bbox;
 
 		PDAppearanceStream appearance = new PDAppearanceStream(document);
 		xFormObject = appearance;
