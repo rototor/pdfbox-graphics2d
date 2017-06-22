@@ -267,7 +267,6 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		try {
 			contentStream.saveGraphicsState();
 
-
 			applyPaint();
 			if (stroke instanceof BasicStroke) {
 				BasicStroke basicStroke = (BasicStroke) this.stroke;
@@ -511,10 +510,9 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		try {
 			contentStream.saveGraphicsState();
 
-
 			PDShading shading = applyPaint();
+			walkShape(s);
 			if (shading != null) {
-				walkShape(s);
 				// NB: the shading fill doesn't work with shapes with zero or
 				// negative dimensions
 				// (width and/or height): in these cases a normal fill is used
@@ -526,7 +524,6 @@ public class PdfBoxGraphics2D extends Graphics2D {
 					contentStream.shadingFill(shading);
 				}
 			} else {
-				walkShape(s);
 				contentStream.fill();
 			}
 			contentStream.restoreGraphicsState();
