@@ -241,7 +241,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			contentStream.saveGraphicsState();
 
 			// Possibly set the alpha constant
-			if((composite != null) && (composite instanceof AlphaComposite))
+			if(composite instanceof AlphaComposite)
 			{
 				float alpha = ((AlphaComposite)composite).getAlpha();
 				if(alpha < 1)
@@ -497,7 +497,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			contentStream.saveGraphicsState();
 
 			// Possibly set the alpha constant
-			if((composite != null) && (composite instanceof AlphaComposite))
+			if(composite instanceof AlphaComposite)
 			{
 				float alpha = ((AlphaComposite)composite).getAlpha();
 				if(alpha < 1)
