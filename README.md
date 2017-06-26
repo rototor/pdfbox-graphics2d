@@ -39,7 +39,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.4</version>
+	<version>0.5</version>
 </dependency>
 ```
 
@@ -140,6 +140,10 @@ moment there is a hook to implement that, but its not working yet. Also note tha
 
 ## Changes
 
+Version 0.5:
+ - Fixed getClip() and clip(Shape) handling. Both did not correctly handle transforms. This bug was
+ exposed by Batik 1.9 and found by @ketanmpandya. Thanks @ketanmpandya [#2](https://github.com/rototor/pdfbox-graphics2d/pull/2), OpenHtmlToPdf [#99](https://github.com/danfickle/openhtmltopdf/issues/99)
+ 
 Version 0.4:
  - Initial support for basic AlphaComposite. Thanks @FabioVassallo [#1](https://github.com/rototor/pdfbox-graphics2d/pull/1)
  - When drawing a shape with a zero or negative size don't use PDShadings, as they won't work.Thanks @FabioVassallo [#1](https://github.com/rototor/pdfbox-graphics2d/pull/1)
