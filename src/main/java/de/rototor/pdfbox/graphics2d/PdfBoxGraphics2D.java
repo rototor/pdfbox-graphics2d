@@ -695,7 +695,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 
 	public void setClip(Shape clip) {
 		checkNoCloneActive();
-		this.clipShape = clip == null ? null : transform.createTransformedShape(clip);
+		this.clipShape = transform.createTransformedShape(clip);
 		/*
 		 * Clip on the content stream
 		 */
@@ -872,10 +872,11 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	public void clip(Shape shape) {
-		if (clipShape == null)
+		Shape clip = getClip();
+		if (clip == null)
 			setClip(shape);
 		else {
-			Area area = new Area(clipShape);
+			Area area = new Area(clip);
 			area.intersect(new Area(shape));
 			setClip(area);
 		}

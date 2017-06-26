@@ -22,7 +22,7 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase {
 		renderSVG("compuserver_msn_Ford_Focus.svg", 0.7);
 	}
 
-	void renderSVG(String name, final double scale) throws IOException {
+	private void renderSVG(String name, final double scale) throws IOException {
 		String uri = RenderSVGsTest.class.getResource(name).toString();
 
 		// create the document
