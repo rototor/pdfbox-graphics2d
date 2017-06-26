@@ -36,7 +36,9 @@ import java.awt.image.renderable.RenderableImage;
 import java.io.IOException;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -61,7 +63,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	private Composite composite;
 	private Shape clipShape;
 	private Color backgroundColor;
-	private boolean isClone = false;
+	private final CloneInfo cloneInfo;
 	private boolean vectoringText = true;
 	private final PDRectangle bbox;
 
@@ -204,9 +206,24 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		calcImage = new BufferedImage(100, 100, BufferedImage.TYPE_4BYTE_ABGR);
 		calcGfx = calcImage.createGraphics();
 		font = calcGfx.getFont();
+		cloneInfo = null;
+	}
+
+	private final List<CloneInfo> cloneList = new ArrayList<CloneInfo>();
+
+	private static class CloneInfo {
+		PdfBoxGraphics2D sourceGfx;
+		PdfBoxGraphics2D clone;
+
 	}
 
 	private PdfBoxGraphics2D(PdfBoxGraphics2D gfx) throws IOException {
+		CloneInfo info = new CloneInfo();
+		info.clone = this;
+		info.sourceGfx = gfx;
+		gfx.cloneList.add(info);
+		this.cloneInfo = info;
+
 		this.document = gfx.document;
 		this.bbox = gfx.bbox;
 		this.xFormObject = gfx.xFormObject;
@@ -225,7 +242,6 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		this.imageEncoder = gfx.imageEncoder;
 		this.xorColor = gfx.xorColor;
 
-		this.isClone = true;
 		this.contentStream.saveGraphicsState();
 	}
 
@@ -236,14 +252,15 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	@SuppressWarnings("WeakerAccess")
 	public PDFormXObject getXFormObject() {
 		if (document != null)
-			throw new IllegalStateException("You can only get the xFormObject after you disposed the Graphics2D!");
-		if (isClone)
-			throw new IllegalStateException("You can not get the xform stream from the clone");
+			throw new IllegalStateException("You can only get the XformObject after you disposed the Graphics2D!");
+		if (cloneInfo != null)
+			throw new IllegalStateException("You can not get the Xform stream from the clone");
 		return xFormObject;
 	}
 
 	public void dispose() {
-		if (isClone) {
+		if (cloneInfo != null) {
+			cloneInfo.sourceGfx.cloneList.remove(cloneInfo);
 			try {
 				this.contentStream.restoreGraphicsState();
 			} catch (IOException e) {
@@ -251,6 +268,8 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			}
 			return;
 		}
+		if (cloneList.size() > 0)
+			throw new RuntimeException("Not all PdfGraphics2D clones where destroyed!!!");
 		try {
 			contentStream.restoreGraphicsState();
 			contentStream.close();
@@ -651,8 +670,9 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	public Rectangle getClipBounds() {
-		if (clipShape != null)
-			return clipShape.getBounds();
+		Shape clip = getClip();
+		if (clip != null)
+			return clip.getBounds();
 		return null;
 	}
 
@@ -666,11 +686,16 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	public Shape getClip() {
-		return clipShape;
+		try {
+			return transform.createInverse().createTransformedShape(clipShape);
+		} catch (NoninvertibleTransformException e) {
+			return null;
+		}
 	}
 
 	public void setClip(Shape clip) {
-		clipShape = clip;
+		checkNoCloneActive();
+		this.clipShape = clip == null ? null : transform.createTransformedShape(clip);
 		/*
 		 * Clip on the content stream
 		 */
@@ -690,6 +715,8 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	private void walkShape(Shape clip) throws IOException {
+		checkNoCloneActive();
+
 		AffineTransform tf = new AffineTransform(baseTransform);
 		tf.concatenate(transform);
 		PathIterator pi = clip.getPathIterator(tf);
@@ -714,6 +741,14 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			}
 			pi.next();
 		}
+	}
+
+	private void checkNoCloneActive() {
+		/*
+		 * As long as a clone is in use you are not allowed to do anything here
+		 */
+		if (cloneList.size() > 0)
+			throw new IllegalStateException("Don't use the main context as long as a clone is active!");
 	}
 
 	private void throwIOException(IOException e) {
@@ -807,6 +842,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	public void setTransform(AffineTransform Tx) {
+		checkNoCloneActive();
 		transform = new AffineTransform();
 		transform.concatenate(Tx);
 	}
