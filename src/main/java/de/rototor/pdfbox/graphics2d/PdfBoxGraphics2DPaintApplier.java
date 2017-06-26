@@ -112,51 +112,70 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 	}
 
 	private void applyComposite() {
+		/*
+		 * If we don't have a composite we don't need to do any mapping
+		 */
+		if (this.composite == null)
+			return;
+
 		// Possibly set the alpha constant
+		float alpha = 1;
+		COSName blendMode = COSName.COMPATIBLE;
+		int rule = AlphaComposite.SRC;
+
 		if (this.composite instanceof AlphaComposite) {
 			AlphaComposite composite = (AlphaComposite) this.composite;
-			ensureExtendedState();
-			float alpha = composite.getAlpha();
-			if (alpha < 1) {
-				pdExtendedGraphicsState.setStrokingAlphaConstant(alpha);
-				pdExtendedGraphicsState.setNonStrokingAlphaConstant(alpha);
-			}
+			alpha = composite.getAlpha();
+			rule = composite.getRule();
+		} else if (this.composite.getClass().getSimpleName().equals("SVGComposite")) {
 			/*
-			 * Try to map the alpha rule into blend modes
+			 * Batik Composite
 			 */
-			COSName blendMode = COSName.COMPATIBLE;
-			switch (composite.getRule()) {
-			case AlphaComposite.CLEAR:
-				break;
-			case AlphaComposite.SRC:
-				blendMode = COSName.NORMAL;
-				break;
-			case AlphaComposite.SRC_OVER:
-				blendMode = COSName.COMPATIBLE;
-				break;
-			case AlphaComposite.XOR:
-				blendMode = COSName.EXCLUSION;
-				break;
-			case AlphaComposite.DST:
-				break;
-			case AlphaComposite.DST_ATOP:
-				break;
-			case AlphaComposite.SRC_ATOP:
-				blendMode = COSName.COMPATIBLE;
-				break;
-			case AlphaComposite.DST_IN:
-				break;
-			case AlphaComposite.DST_OUT:
-				break;
-			case AlphaComposite.SRC_IN:
-				break;
-			case AlphaComposite.SRC_OUT:
-				break;
-			case AlphaComposite.DST_OVER:
-				break;
-			}
-			dictExtendedState.setItem(COSName.BM, blendMode);
+			alpha = getPropertyValue(this.composite, "alpha");
+			rule = getPropertyValue(this.composite, "rule");
+		} else {
+			System.err.println("Unknown composite " + this.composite.getClass().getSimpleName());
 		}
+
+		ensureExtendedState();
+		if (alpha < 1) {
+			pdExtendedGraphicsState.setStrokingAlphaConstant(alpha);
+			pdExtendedGraphicsState.setNonStrokingAlphaConstant(alpha);
+		}
+		/*
+		 * Try to map the alpha rule into blend modes
+		 */
+		switch (rule) {
+		case AlphaComposite.CLEAR:
+			break;
+		case AlphaComposite.SRC:
+			blendMode = COSName.NORMAL;
+			break;
+		case AlphaComposite.SRC_OVER:
+			blendMode = COSName.COMPATIBLE;
+			break;
+		case AlphaComposite.XOR:
+			blendMode = COSName.EXCLUSION;
+			break;
+		case AlphaComposite.DST:
+			break;
+		case AlphaComposite.DST_ATOP:
+			break;
+		case AlphaComposite.SRC_ATOP:
+			blendMode = COSName.COMPATIBLE;
+			break;
+		case AlphaComposite.DST_IN:
+			break;
+		case AlphaComposite.DST_OUT:
+			break;
+		case AlphaComposite.SRC_IN:
+			break;
+		case AlphaComposite.SRC_OUT:
+			break;
+		case AlphaComposite.DST_OVER:
+			break;
+		}
+		dictExtendedState.setItem(COSName.BM, blendMode);
 	}
 
 	private PDShading buildLinearGradientShading(Paint paint, AffineTransform tf) throws IOException {
