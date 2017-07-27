@@ -82,6 +82,7 @@ public class PDFGraphics2DSample {
 		 *  Note: As PDF coordinates start at the bottom left corner, we move up from there.
 		 */
 		matrix.translate(0, 20);
+		PDPageContentStream contentStream = new PDPageContentStream(document, page);
 		contentStream.transform(matrix);
 		
 		/*
