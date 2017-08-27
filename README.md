@@ -23,7 +23,8 @@ The following features are supported:
 	  The actual given fractions are ignored at the moment.
 	- TexturePaint. 
 - Drawing text. At the moment all text is drawn as vector shapes, so no fonts are embedded. 
-RTL languages are supported.
+RTL languages are supported. It's possible to use fonts, but this loses some features (especially RTL support) 
+and you must provide the TTF files of the fonts.
 
 The following features are not supported (yet):
 
@@ -134,11 +135,15 @@ your normal desktop printer.
 
 At the moment only rendering text as vector shapes is implemented. To embed a text using its font into a PDF direct 
 access to the underling font file is required, because PDFBox needs to build the embedded font subset. Using the normal 
-Java font API it is not possible to access the underlying font file. So a mapping Font -> PDFont is needed. At the 
-moment there is a hook to implement that, but its not working yet. Also note that PDFBox has 
-[problems](https://issues.apache.org/jira/browse/PDFBOX-3550) rendering RTL languages at the moment.
+Java font API it is not possible to access the underlying font file. So a mapping Font -> PDFont is needed. 
+
+The next release will allow you to register font files to embed the text using fonts, but this is work in progress.
+Also note that PDFBox has [problems](https://issues.apache.org/jira/browse/PDFBOX-3550) rendering RTL languages at the moment.
 
 ## Changes
+
+Version 0.6-SNAPSHOT: (not yet released)
+ - Implemented basic support for using fonts to render texts. Sample documentation still missing.
 
 Version 0.5:
  - Fixed getClip() and clip(Shape) handling. Both did not correctly handle transforms. This bug was
