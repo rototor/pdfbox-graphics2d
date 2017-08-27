@@ -37,6 +37,7 @@ public class MultiPageTest {
 	@Test
 	public void testMultiPageJFreeChart() throws IOException {
 		File parentDir = new File("target/test/multipage");
+		// noinspection ResultOfMethodCallIgnored
 		parentDir.mkdirs();
 		File targetPDF = new File(parentDir, "multipage.pdf");
 		PDDocument document = new PDDocument();
@@ -194,7 +195,7 @@ public class MultiPageTest {
 	 *
 	 * @return The dataset.
 	 */
-	public static IntervalCategoryDataset createDatasetGantt() {
+	private static IntervalCategoryDataset createDatasetGantt() {
 
 		final TaskSeries s1 = new TaskSeries("Scheduled");
 		s1.add(new Task("Write Proposal",
@@ -267,12 +268,10 @@ public class MultiPageTest {
 	 *
 	 * @return a date.
 	 */
-	private static Date date(final int day, final int month, final int year) {
-
+	private static Date date(final int day, final int month, @SuppressWarnings("SameParameterValue") final int year) {
 		final Calendar calendar = Calendar.getInstance();
 		calendar.set(year, month, day);
-		final Date result = calendar.getTime();
-		return result;
+		return calendar.getTime();
 
 	}
 
@@ -285,8 +284,8 @@ public class MultiPageTest {
 	 * @return The chart.
 	 */
 	private JFreeChart createChartGantt(final IntervalCategoryDataset dataset) {
-		final JFreeChart chart = ChartFactory.createGanttChart("Gantt Chart Demo", // chart
-																					// title
+		return ChartFactory.createGanttChart("Gantt Chart Demo", // chart
+																	// title
 				"Task", // domain axis label
 				"Date", // range axis label
 				dataset, // data
@@ -294,8 +293,6 @@ public class MultiPageTest {
 				true, // tooltips
 				false // urls
 		);
-		// chart.getCategoryPlot().getDomainAxis().setMaxCategoryLabelWidthRatio(10.0f);
-		return chart;
 	}
 
 	/**
@@ -376,7 +373,7 @@ public class MultiPageTest {
 		// subchart.setLegend(legend);
 		plot.setLimit(0.10);
 		final PiePlot p = (PiePlot) subchart.getPlot();
-		//p.setLabelGenerator(new StandardPieItemLabelGenerator("{0}"));
+		// p.setLabelGenerator(new StandardPieItemLabelGenerator("{0}"));
 		p.setLabelFont(new Font("SansSerif", Font.PLAIN, 8));
 		p.setInteriorGap(0.30);
 

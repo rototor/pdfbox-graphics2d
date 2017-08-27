@@ -54,8 +54,9 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	private AffineTransform transform = new AffineTransform();
 	private IPdfBoxGraphics2DImageEncoder imageEncoder = new PdfBoxGraphics2DLosslessImageEncoder();
 	private IPdfBoxGraphics2DColorMapper colorMapper = new PdfBoxGraphics2DColorMapper();
-	private IPdfBoxGraphics2DFontApplier fontApplier = new PdfBoxGraphics2DFontApplier();
 	private IPdfBoxGraphics2DPaintApplier paintApplier = new PdfBoxGraphics2DPaintApplier();
+
+	private IPdfBoxGraphics2DFontTextDrawer fontTextDrawer = new PdfBoxGraphics2DFontTextDrawer();
 	private Paint paint;
 	private Stroke stroke;
 	private Color xorColor;
@@ -64,20 +65,8 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	private Shape clipShape;
 	private Color backgroundColor;
 	private final CloneInfo cloneInfo;
-	private boolean vectoringText = true;
+	@SuppressWarnings("SpellCheckingInspection")
 	private final PDRectangle bbox;
-
-	/**
-	 * Set a new font applier.
-	 * 
-	 * @param fontApplier
-	 *            the font applier which has to map Font objects to PDFont
-	 *            objects.
-	 */
-	@SuppressWarnings({ "WeakerAccess", "unused" })
-	public void setFontApplier(IPdfBoxGraphics2DFontApplier fontApplier) {
-		this.fontApplier = fontApplier;
-	}
 
 	/**
 	 * Set a new color mapper.
@@ -102,35 +91,13 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	/**
-	 * Determine if text should be drawn as text with embedded font in the PDF
-	 * or as vector shapes.
+	 * Set a new paint applier. You should always derive your custom paint applier
+	 * from the {@link PdfBoxGraphics2DPaintApplier} and just extend the paint
+	 * mapping for custom paint.
 	 * 
-	 * The default value is true.
-	 * 
-	 * Note: The paint are only mapped correctly when the text is drawn as
-	 * vector shapes. Especially shadings.
-	 * 
-	 * @param vectoringText
-	 *            true if all text should be drawn as vector shapes. No fonts
-	 *            will be embedded in that case. If false then the text will be
-	 *            drawn using a font. You have to provide the FontApplyer which
-	 *            maps the font to the PDFont.
-	 * 
-	 * @see #setFontApplier(IPdfBoxGraphics2DFontApplier)
-	 */
-	@SuppressWarnings({ "WeakerAccess", "unused" })
-	public void setVectoringText(boolean vectoringText) {
-		this.vectoringText = vectoringText;
-	}
-
-	/**
-	 * Set a new paint applier. You should always derive your custom paint
-	 * applier from the {@link PdfBoxGraphics2DPaintApplier} and just extend the
-	 * paint mapping for custom paint.
-	 * 
-	 * If the paint you map is a paint from a standard library and you can
-	 * implement the mapping using reflection please feel free to send a pull
-	 * request to extend the default paint mapper.
+	 * If the paint you map is a paint from a standard library and you can implement
+	 * the mapping using reflection please feel free to send a pull request to
+	 * extend the default paint mapper.
 	 * 
 	 * @param paintApplier
 	 *            the paint applier responsible for mapping the paint correctly
@@ -141,13 +108,13 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	/**
-	 * Create a PDfBox Graphics2D. This size is used for the BBox of the XForm.
-	 * So everything drawn outside the rectangle (0x0)-(pixelWidth,pixelHeight)
-	 * will be clipped.
+	 * Create a PDfBox Graphics2D. This size is used for the BBox of the XForm. So
+	 * everything drawn outside the rectangle (0x0)-(pixelWidth,pixelHeight) will be
+	 * clipped.
 	 * 
-	 * Note: pixelWidth and pixelHeight only define the size of the coordinate
-	 * space within this Graphics2D. They do not affect how big the XForm is
-	 * finally displayed in the PDF.
+	 * Note: pixelWidth and pixelHeight only define the size of the coordinate space
+	 * within this Graphics2D. They do not affect how big the XForm is finally
+	 * displayed in the PDF.
 	 * 
 	 * @param document
 	 *            The document the graphics should be used to create a XForm in.
@@ -162,13 +129,13 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	/**
-	 * Create a PDfBox Graphics2D. This size is used for the BBox of the XForm.
-	 * So everything drawn outside the rectangle (0x0)-(pixelWidth,pixelHeight)
-	 * will be clipped.
+	 * Create a PDfBox Graphics2D. This size is used for the BBox of the XForm. So
+	 * everything drawn outside the rectangle (0x0)-(pixelWidth,pixelHeight) will be
+	 * clipped.
 	 *
-	 * Note: pixelWidth and pixelHeight only define the size of the coordinate
-	 * space within this Graphics2D. They do not affect how big the XForm is
-	 * finally displayed in the PDF.
+	 * Note: pixelWidth and pixelHeight only define the size of the coordinate space
+	 * within this Graphics2D. They do not affect how big the XForm is finally
+	 * displayed in the PDF.
 	 *
 	 * @param document
 	 *            The document the graphics should be used to create a XForm in.
@@ -180,6 +147,22 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	@SuppressWarnings("WeakerAccess")
 	public PdfBoxGraphics2D(PDDocument document, float pixelWidth, float pixelHeight) throws IOException {
 		this(document, new PDRectangle(pixelWidth, pixelHeight));
+	}
+
+	/**
+	 * Set an optional text drawer. By default, all text is vectorized and drawn
+	 * using vector shapes. To embed fonts into a PDF file it is necessary to have
+	 * the underlying TTF file. The java.awt.Font class does not provide that. The
+	 * FontTextDrawer must perform the java.awt.Font <=> PDFont mapping and also
+	 * must perform the text layout. If it can not map the text or font correctly,
+	 * the font drawing falls back to vectoring the text.
+	 * 
+	 * @param fontTextDrawer
+	 *            The text drawer, which can draw text using fonts
+	 */
+	@SuppressWarnings("WeakerAccess")
+	public void setFontTextDrawer(IPdfBoxGraphics2DFontTextDrawer fontTextDrawer) {
+		this.fontTextDrawer = fontTextDrawer;
 	}
 
 	/**
@@ -238,7 +221,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		this.clipShape = gfx.clipShape;
 		this.backgroundColor = gfx.backgroundColor;
 		this.colorMapper = gfx.colorMapper;
-		this.fontApplier = gfx.fontApplier;
+		this.fontTextDrawer = gfx.fontTextDrawer;
 		this.imageEncoder = gfx.imageEncoder;
 		this.xorColor = gfx.xorColor;
 
@@ -264,7 +247,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			try {
 				this.contentStream.restoreGraphicsState();
 			} catch (IOException e) {
-				throwIOException(e);
+				throwException(e);
 			}
 			return;
 		}
@@ -274,7 +257,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			contentStream.restoreGraphicsState();
 			contentStream.close();
 		} catch (IOException e) {
-			throwIOException(e);
+			throwException(e);
 		}
 		document = null;
 		calcGfx.dispose();
@@ -317,7 +300,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			contentStream.stroke();
 			contentStream.restoreGraphicsState();
 		} catch (IOException e) {
-			throwIOException(e);
+			throwException(e);
 		}
 	}
 
@@ -341,7 +324,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			contentStream.drawImage(pdImage, 0, 0, img.getWidth(obs), imgHeight);
 			contentStream.restoreGraphicsState();
 		} catch (IOException e) {
-			throwIOException(e);
+			throwException(e);
 		}
 		return true;
 	}
@@ -398,7 +381,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			}
 			return drawImage(img, x, y, img.getWidth(observer), img.getHeight(observer), observer);
 		} catch (IOException e) {
-			throwIOException(e);
+			throwException(e);
 			return false;
 		}
 	}
@@ -445,19 +428,28 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			contentStream.restoreGraphicsState();
 			return true;
 		} catch (IOException e) {
-			throwIOException(e);
+			throwException(e);
 			return false;
 		}
 	}
 
 	public void drawString(AttributedCharacterIterator iterator, float x, float y) {
 		try {
-			if (vectoringText)
-				drawStringUsingShapes(iterator, x, y);
-			else
+			/*
+			 * If we can draw the text using fonts, we do this
+			 */
+			if (fontTextDrawer.canDrawText((AttributedCharacterIterator) iterator.clone(), fontDrawerEnv())) {
 				drawStringUsingText(iterator, x, y);
+			} else {
+				/*
+				 * Otherwise we fall back to draw using shapes. This works always
+				 */
+				drawStringUsingShapes(iterator, x, y);
+			}
 		} catch (IOException e) {
-			throwIOException(e);
+			throwException(e);
+		} catch (FontFormatException e) {
+			throwException(e);
 		}
 	}
 
@@ -470,52 +462,46 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		stroke = originalStroke;
 	}
 
-	private boolean iterateRun(AttributedCharacterIterator iterator, StringBuilder sb) {
-		sb.setLength(0);
-		int charCount = iterator.getRunLimit() - iterator.getRunStart();
-		while (charCount-- >= 0) {
-			char c = iterator.current();
-			iterator.next();
-			if (c == AttributedCharacterIterator.DONE) {
-				return false;
-			} else {
-				sb.append(c);
-			}
-		}
-		return true;
-	}
-
-	private void drawStringUsingText(AttributedCharacterIterator iterator, float x, float y) throws IOException {
+	private void drawStringUsingText(AttributedCharacterIterator iterator, float x, float y)
+			throws IOException, FontFormatException {
 		contentStream.saveGraphicsState();
 		AffineTransform tf = new AffineTransform(baseTransform);
 		tf.concatenate(transform);
 		tf.translate(x, y);
 		contentStream.transform(new Matrix(tf));
 
-		Matrix textMatrix = new Matrix();
-		textMatrix.scale(1, -1);
-		contentStream.beginText();
-		fontApplier.applyFont(document, contentStream, font);
-		applyPaint();
-		contentStream.setTextMatrix(textMatrix);
+		fontTextDrawer.drawText(iterator, fontDrawerEnv());
 
-		calcGfx.setFont(font);
-		boolean run = true;
-		while (run) {
-			StringBuilder sb = new StringBuilder();
-			Font attributeFont = (Font) iterator.getAttribute(TextAttribute.FONT);
-			Number fontSize = ((Number) iterator.getAttribute(TextAttribute.SIZE));
-			if (attributeFont != null) {
-				if (fontSize != null)
-					attributeFont = attributeFont.deriveFont(fontSize.floatValue());
-				fontApplier.applyFont(document, contentStream, attributeFont);
+		contentStream.restoreGraphicsState();
+	}
+
+	private IPdfBoxGraphics2DFontTextDrawer.IFontTextDrawerEnv fontDrawerEnv() {
+		return new IPdfBoxGraphics2DFontTextDrawer.IFontTextDrawerEnv() {
+			@Override
+			public PDDocument getDocument() {
+				return document;
 			}
 
-			run = iterateRun(iterator, sb);
-			contentStream.showText(sb.toString());
-		}
-		contentStream.endText();
-		contentStream.restoreGraphicsState();
+			@Override
+			public PDPageContentStream getContentStream() {
+				return contentStream;
+			}
+
+			@Override
+			public Font getFont() {
+				return font;
+			}
+
+			@Override
+			public Paint getPaint() {
+				return paint;
+			}
+
+			@Override
+			public PDShading applyPaint(Paint paint) throws IOException {
+				return PdfBoxGraphics2D.this.applyPaint(paint);
+			}
+		};
 	}
 
 	public void drawGlyphVector(GlyphVector g, float x, float y) {
@@ -547,14 +533,18 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			}
 			contentStream.restoreGraphicsState();
 		} catch (IOException e) {
-			throwIOException(e);
+			throwException(e);
 		}
 	}
 
 	private PDShading applyPaint() throws IOException {
+		return applyPaint(paint);
+	}
+
+	private PDShading applyPaint(Paint paintToApply) throws IOException {
 		AffineTransform tf = new AffineTransform(baseTransform);
 		tf.concatenate(transform);
-		return paintApplier.applyPaint(paint, contentStream, tf, new IPdfBoxGraphics2DPaintApplier.IPaintEnv() {
+		return paintApplier.applyPaint(paintToApply, contentStream, tf, new IPdfBoxGraphics2DPaintApplier.IPaintEnv() {
 			@Override
 			public IPdfBoxGraphics2DColorMapper getColorMapper() {
 				return colorMapper;
@@ -710,7 +700,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 				contentStream.clip();
 			}
 		} catch (IOException e) {
-			throwIOException(e);
+			throwException(e);
 		}
 	}
 
@@ -751,7 +741,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			throw new IllegalStateException("Don't use the main context as long as a clone is active!");
 	}
 
-	private void throwIOException(IOException e) {
+	private void throwException(Exception e) {
 		throw new RuntimeException(e);
 	}
 

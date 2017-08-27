@@ -19,6 +19,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.font.PDFontFactory;
 import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import org.apache.pdfbox.util.Matrix;
 
@@ -28,21 +29,19 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
-public class PdfBoxGraphics2DTestBase {
-	protected void exportGraphic(String dir, String name, GraphicsExporter exporter) {
+class PdfBoxGraphics2DTestBase {
+	enum Mode {
+		NormalVectorized, FontTextIfPossible, ForceFontText
+	}
+
+	@SuppressWarnings("SpellCheckingInspection")
+	void exportGraphic(String dir, String name, GraphicsExporter exporter) {
 		try {
 			PDDocument document = new PDDocument();
 
-			PDPage page = new PDPage(PDRectangle.A4);
-			document.addPage(page);
 			File parentDir = new File("target/test/" + dir);
+			// noinspection ResultOfMethodCallIgnored
 			parentDir.mkdirs();
-
-			PDPageContentStream contentStream = new PDPageContentStream(document, page);
-
-			PdfBoxGraphics2D pdfBoxGraphics2D = new PdfBoxGraphics2D(document, 400, 400);
-			exporter.draw(pdfBoxGraphics2D);
-			pdfBoxGraphics2D.dispose();
 
 			BufferedImage image = new BufferedImage(400, 400, BufferedImage.TYPE_4BYTE_ABGR);
 			Graphics2D imageGraphics = image.createGraphics();
@@ -50,17 +49,55 @@ public class PdfBoxGraphics2DTestBase {
 			imageGraphics.dispose();
 			ImageIO.write(image, "PNG", new File(parentDir, name + ".png"));
 
-			PDFormXObject appearanceStream = pdfBoxGraphics2D.getXFormObject();
-			Matrix matrix = new Matrix();
-			matrix.translate(0, 20);
-			contentStream.transform(matrix);
-			contentStream.drawForm(appearanceStream);
+			for (Mode m : Mode.values()) {
+				PDPage page = new PDPage(PDRectangle.A4);
+				document.addPage(page);
 
-			matrix.scale(1.5f, 1.5f);
-			matrix.translate(0, 100);
-			contentStream.transform(matrix);
-			contentStream.drawForm(appearanceStream);
-			contentStream.close();
+				PDPageContentStream contentStream = new PDPageContentStream(document, page);
+				PdfBoxGraphics2D pdfBoxGraphics2D = new PdfBoxGraphics2D(document, 400, 400);
+				PdfBoxGraphics2DFontTextDrawer fontTextDrawer = null;
+				contentStream.beginText();
+				contentStream.setStrokingColor(0,0,0);
+				contentStream.setNonStrokingColor(0,0,0);
+				contentStream.setFont(PDFontFactory.createDefaultFont(), 12);
+				contentStream.setTextMatrix(Matrix.getTranslateInstance(10, -100));
+				contentStream.showText("Mode " + m);
+				contentStream.endText();
+				switch (m) {
+				case FontTextIfPossible:
+					fontTextDrawer = new PdfBoxGraphics2DFontTextDrawer();
+					fontTextDrawer.registerFont(
+							new File("src/test/resources/de/rototor/pdfbox/graphics2d/DejaVuSerifCondensed.ttf"));
+					break;
+				case ForceFontText:
+					fontTextDrawer = new PdfBoxGraphics2DFontTextForcedDrawer();
+					fontTextDrawer.registerFont(
+							PdfBoxGraphics2DTestBase.class.getResourceAsStream("DejaVuSerifCondensed.ttf"));
+					break;
+				case NormalVectorized:
+				default:
+					break;
+				}
+
+				if (fontTextDrawer != null) {
+					pdfBoxGraphics2D.setFontTextDrawer(fontTextDrawer);
+				}
+
+				exporter.draw(pdfBoxGraphics2D);
+				pdfBoxGraphics2D.dispose();
+
+				PDFormXObject appearanceStream = pdfBoxGraphics2D.getXFormObject();
+				Matrix matrix = new Matrix();
+				matrix.translate(0, 20);
+				contentStream.transform(matrix);
+				contentStream.drawForm(appearanceStream);
+
+				matrix.scale(1.5f, 1.5f);
+				matrix.translate(0, 100);
+				contentStream.transform(matrix);
+				contentStream.drawForm(appearanceStream);
+				contentStream.close();
+			}
 
 			document.save(new File(parentDir, name + ".pdf"));
 			document.close();
