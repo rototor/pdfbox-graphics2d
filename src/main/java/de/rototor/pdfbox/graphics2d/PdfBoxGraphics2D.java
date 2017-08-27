@@ -501,6 +501,11 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			public PDShading applyPaint(Paint paint) throws IOException {
 				return PdfBoxGraphics2D.this.applyPaint(paint);
 			}
+
+			@Override
+			public FontRenderContext getFontRenderContext() {
+				return PdfBoxGraphics2D.this.getFontRenderContext();
+			}
 		};
 	}
 

@@ -10,6 +10,7 @@ import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.util.Matrix;
 
 import java.awt.*;
+import java.awt.font.LineMetrics;
 import java.awt.font.TextAttribute;
 import java.io.*;
 import java.text.AttributedCharacterIterator;
@@ -196,12 +197,16 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 			Number fontSize = ((Number) iterator.getAttribute(TextAttribute.SIZE));
 			if (fontSize != null)
 				attributeFont = attributeFont.deriveFont(fontSize.floatValue());
-			applyFont(attributeFont, env);
+			PDFont font = applyFont(attributeFont, env);
 
 			Paint paint = (Paint) iterator.getAttribute(TextAttribute.FOREGROUND);
 			if (paint == null)
 				paint = env.getPaint();
 			env.applyPaint(paint);
+
+			boolean isStrikeThrough = TextAttribute.STRIKETHROUGH_ON
+					.equals(iterator.getAttribute(TextAttribute.STRIKETHROUGH));
+			boolean isUnderline = TextAttribute.UNDERLINE_ON.equals(iterator.getAttribute(TextAttribute.UNDERLINE));
 
 			run = iterateRun(iterator, sb);
 			String text = sb.toString();
@@ -212,6 +217,14 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 			 * just silently ignore the text and not display it instead.
 			 */
 			try {
+				if (isStrikeThrough || isUnderline) {
+					float stringWidth = font.getStringWidth(text);
+					LineMetrics lineMetrics = attributeFont.getLineMetrics(text, env.getFontRenderContext());
+					/*
+					 * TODO: We can not draw that yet, we must do that later. While in textmode its
+					 * not possible to draw lines...
+					 */
+				}
 				contentStream.showText(text);
 			} catch (IllegalArgumentException e) {
 				System.err.println("PDFBoxGraphics: Can not map text " + text + " with font "
@@ -221,21 +234,55 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 		contentStream.endText();
 	}
 
-	private void applyFont(Font font, IFontTextDrawerEnv env) throws IOException, FontFormatException {
+	private PDFont applyFont(Font font, IFontTextDrawerEnv env) throws IOException, FontFormatException {
 		PDFont fontToUse = mapFont(font, env);
 		if (fontToUse == null) {
 			fontToUse = defaultFont;
 		}
 		env.getContentStream().setFont(fontToUse, font.getSize2D());
+		return fontToUse;
 	}
 
 	private PDFont mapFont(final Font font, final IFontTextDrawerEnv env) throws IOException, FontFormatException {
-		if (fontMap.size() == 0) {
-			if (defaultFont == null) {
-				defaultFont = PDFontFactory.createDefaultFont();
-				fontMap.put("Dialog", defaultFont);
-				fontMap.put("SansSerif", defaultFont);
+		/*
+		 * When we did not yet load the default font we are going to initialize it.
+		 */
+		if (defaultFont == null) {
+			/*
+			 * This font does normally not work :( Don't ask me why
+			 */
+			defaultFont = PDFontFactory.createDefaultFont();
+
+			/*
+			 * Because of that we search for the right font in the system folders... We try
+			 * to use LucidaSansRegular and if not found Arial, because this fonts often
+			 * exists. We use the Java default font as fallback.
+			 */
+			String javaHome = System.getProperty("java.home", ".");
+			String javaFontDir = javaHome + "/lib/fonts";
+			String windir = System.getenv("WINDIR");
+			if (windir == null)
+				windir = javaFontDir;
+			File[] paths = new File[] { new File(new File(windir), "fonts"),
+					new File(System.getProperty("user.dir", ".")), new File("/Library/Fonts"),
+					new File("/usr/share/fonts/truetype"), new File(javaFontDir) };
+			File foundFontFile = null;
+			for (String fontFileName : new String[] { "LucidaSansRegular.ttf", "arial.ttf", "Arial.ttf" }) {
+				for (File path : paths) {
+					File arialFile = new File(path, fontFileName);
+					if (arialFile.exists()) {
+						foundFontFile = arialFile;
+						break;
+					}
+				}
+				if (foundFontFile != null)
+					break;
 			}
+			if (foundFontFile != null) {
+				defaultFont = PDType0Font.load(env.getDocument(), foundFontFile);
+			}
+			fontMap.put("Dialog", defaultFont);
+			fontMap.put("SansSerif", defaultFont);
 		}
 
 		/*

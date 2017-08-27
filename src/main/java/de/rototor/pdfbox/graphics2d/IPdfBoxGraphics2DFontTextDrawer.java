@@ -5,6 +5,7 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.graphics.shading.PDShading;
 
 import java.awt.*;
+import java.awt.font.FontRenderContext;
 import java.io.IOException;
 import java.text.AttributedCharacterIterator;
 
@@ -53,6 +54,8 @@ public interface IPdfBoxGraphics2DFontTextDrawer {
 		 */
 		@SuppressWarnings("UnusedReturnValue")
 		PDShading applyPaint(Paint paint) throws IOException;
+
+		FontRenderContext getFontRenderContext();
 	}
 
 	/**
