@@ -130,9 +130,31 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 		registerFont(null, fontStream);
 	}
 
+	/**
+	 * Register a font which is already associated with the PDDocument
+	 * 
+	 * @param name
+	 *            the name of the font as returned by
+	 *            {@link java.awt.Font#getFontName()}. This name is used for the
+	 *            mapping the java.awt.Font to this PDFont.
+	 * @param font
+	 *            the PDFont to use. This font must be loaded in the current
+	 *            document.
+	 */
+	@SuppressWarnings("WeakerAccess")
+	public void registerFont(String name, PDFont font) {
+		fontMap.put(name, font);
+	}
+
 	@Override
 	public boolean canDrawText(AttributedCharacterIterator iterator, IFontTextDrawerEnv env)
 			throws IOException, FontFormatException {
+		/*
+		 * When no font is registered we can not display the text using a font...
+		 */
+		if (fontMap.size() == 0 && fontFiles.size() == 0)
+			return false;
+
 		boolean run = true;
 		StringBuilder sb = new StringBuilder();
 		while (run) {
@@ -158,6 +180,13 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 			 * We can not do a Background on the text currently.
 			 */
 			if (iterator.getAttribute(TextAttribute.BACKGROUND) != null)
+				return false;
+
+			boolean isStrikeThrough = TextAttribute.STRIKETHROUGH_ON
+					.equals(iterator.getAttribute(TextAttribute.STRIKETHROUGH));
+			boolean isUnderline = TextAttribute.UNDERLINE_ON.equals(iterator.getAttribute(TextAttribute.UNDERLINE));
+			boolean isLingatures = TextAttribute.LIGATURES_ON.equals(iterator.getAttribute(TextAttribute.LIGATURES));
+			if (isStrikeThrough || isUnderline || isLingatures)
 				return false;
 
 			run = iterateRun(iterator, sb);
@@ -222,6 +251,7 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 			boolean isStrikeThrough = TextAttribute.STRIKETHROUGH_ON
 					.equals(iterator.getAttribute(TextAttribute.STRIKETHROUGH));
 			boolean isUnderline = TextAttribute.UNDERLINE_ON.equals(iterator.getAttribute(TextAttribute.UNDERLINE));
+			boolean isLingatures = TextAttribute.LIGATURES_ON.equals(iterator.getAttribute(TextAttribute.LIGATURES));
 
 			run = iterateRun(iterator, sb);
 			String text = sb.toString();
@@ -233,11 +263,19 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 			 */
 			try {
 				if (isStrikeThrough || isUnderline) {
+					// noinspection unused
 					float stringWidth = font.getStringWidth(text);
+					// noinspection unused
 					LineMetrics lineMetrics = attributeFont.getLineMetrics(text, env.getFontRenderContext());
 					/*
 					 * TODO: We can not draw that yet, we must do that later. While in textmode its
 					 * not possible to draw lines...
+					 */
+				}
+				// noinspection StatementWithEmptyBody
+				if (isLingatures) {
+					/*
+					 * No Idea how to map this ...
 					 */
 				}
 				contentStream.showText(text);

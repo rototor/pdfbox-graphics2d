@@ -143,7 +143,6 @@
 			<scope>test</scope>
 		</dependency>
 
-
 		<!-- This dependencies are only needed for the test drivers -->
 		<dependency>
 			<groupId>org.apache.xmlgraphics</groupId>

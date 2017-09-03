@@ -40,7 +40,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.5</version>
+	<version>0.6</version>
 </dependency>
 ```
 
@@ -60,7 +60,7 @@ public class PDFGraphics2DSample {
 		PdfBoxGraphics2D pdfBoxGraphics2D = new PdfBoxGraphics2D(document, 400, 400);
 		
 		/*
-		 * Now do your drawing
+		 * Now do your drawing. By default all texts are rendered as vector shapes
 		 */ 
 		
 		/* ... */
@@ -125,26 +125,108 @@ any printing registration mismatches, which would be very bad for reading the te
   have a different version of the font, which can happen across different OS and OS versions.
 - Note: Not all PDF viewer can handle all fonts correctly. E.g. PDFBox 1.8 was not able to handle fonts right. 
 But nowadays all PDF viewers should be able to handle fonts fine.
+- Note: Not all java.awt.Paint's supported by this library can be used with text. You may loose some effects. 
+- Note: Underline and Strike through are currently not supported.
+- Note: There is no Bidi support at the moment. See PDFBox the [problems](https://issues.apache.org/jira/browse/PDFBOX-3550) 
+has with rendering RTL languages at the moment.
 
 On the other site rendering a text using vector shapes has the following properties:
 - The text is always displayed the same. They will be no differences between the PDF viewers.
 - The text is not searchable and can not be copied.
+- All java.awt.Paint's, which are handled by this library, can be used for text.
 - Note: Vector shapes take more space than a embedded font.
 - Note: You may want to manually alter the color mapping to e.g. ensure a black text is printed using pure CMYK black. 
 If you do not plan to print the PDF in offset or digital print you can ignore that. This will make no difference for 
 your normal desktop printer.
 
-At the moment only rendering text as vector shapes is implemented. To embed a text using its font into a PDF direct 
-access to the underling font file is required, because PDFBox needs to build the embedded font subset. Using the normal 
-Java font API it is not possible to access the underlying font file. So a mapping Font -> PDFont is needed. 
+If you want to get a 1:1 mapping of your Graphics2D drawing in the PDF you should use the vector text mode. If you want to
+have the text searchable, only use LTR languanges (i.e. latin-based) and don't use any fancy text paints and effects you
+may try the text mode. For this mode to work you need the font files (.ttf / .ttc) of the fonts you want to use and must
+register it with this library. Using the normal Java font API it is not possible to access the underlying font file. 
+So a mapping Font -> PDFont is needed. 
 
-The next release will allow you to register font files to embed the text using fonts, but this is work in progress.
-Also note that PDFBox has [problems](https://issues.apache.org/jira/browse/PDFBOX-3550) rendering RTL languages at the moment.
+### Example how to use the font mapping
+The font mapping is done using the PdfBoxGraphics2DFontTextDrawer class. There you register the fonts you have.
+By default the mapping tries to only use fonts when all features/paints used by the drawn text are supported. If your text
+uses a features which is not supported (i.e. RTL text) then it falls back to using vectorized text. 
+
+If you always want to force the use of fonts you can use the class PdfBoxGraphics2DFontTextForcedDrawer. But this is 
+unsafe and not recommend, because if some text can not be rendered using the given fonts it will not be drawn at all 
+(e.g. if a font misses a needed glyph).
+
+```java
+public class PDFGraphics2DSample {
+	public static main(String[] argv) throws Exception {
+		/* 
+		 * Document creation and init as in the example above 
+		 */
+		
+		// ...
+		
+		/*
+		 * Register your fonts
+		 */
+		PdfBoxGraphics2DFontTextDrawer fontTextDrawer = new PdfBoxGraphics2DFontTextDrawer();
+		try {
+			/*
+			 * Register the font using a file
+			 */
+			fontTextDrawer.registerFont(
+					new File("..path..to../DejaVuSerifCondensed.ttf"));
+			
+			/*
+			 * Or register the font using a stream
+			 */
+			fontTextDrawer.registerFont(
+					PDFGraphics2DSample.class.getResourceAsStream("DejaVuSerifCondensed.ttf"));
+			
+			/*
+			 * You already have a PDFont in the document? Then make it known to the library.
+			 */
+			fontTextDrawer.registerFont("Helvetica Bold", pdFontHelveticaBold);
+			
+			
+			/*
+			 * Create the graphics
+			 */
+			PdfBoxGraphics2D pdfBoxGraphics2D = new PdfBoxGraphics2D(document, 400, 400);
+			
+			/*
+			 * Set the fontTextDrawer on the Graphics2D. Note:
+			 * You can and should reuse the PdfBoxGraphics2DFontTextDrawer 
+			 * within the same PDDocument if you use multiple PdfBoxGraphics2D.
+			 */
+			pdfBoxGraphics2D.setFontTextDrawer(fontTextDrawer);
+						
+			/* Do you're drawing */
+			
+			/* 
+			 * Dispose when finished
+			 */
+			pdfBoxGraphics2D.dispose();
+			
+			/*
+			 * Use the result as above
+			 */
+			// ...
+		} finally {
+			/* 
+			 * If you register a font using a stream then a tempfile 
+			 * will be created in the background.
+			 * Close the PdfBoxGraphics2DFontTextDrawer to free any 
+			 * tempfiles created for the fonts. 
+			 */
+			fontTextDrawer.close();	
+		}
+		
+	}
+}
+```
 
 ## Changes
 
-Version 0.6-SNAPSHOT: (not yet released)
- - Implemented basic support for using fonts to render texts. Sample documentation still missing.
+Version 0.6: 
+ - Implemented basic support for using fonts to render texts. 
 
 Version 0.5:
  - Fixed getClip() and clip(Shape) handling. Both did not correctly handle transforms. This bug was

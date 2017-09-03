@@ -19,6 +19,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDFontFactory;
 import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import org.apache.pdfbox.util.Matrix;
@@ -39,6 +40,8 @@ class PdfBoxGraphics2DTestBase {
 		try {
 			PDDocument document = new PDDocument();
 
+			PDFont pdArial = PDFontFactory.createDefaultFont();
+
 			File parentDir = new File("target/test/" + dir);
 			// noinspection ResultOfMethodCallIgnored
 			parentDir.mkdirs();
@@ -57,8 +60,8 @@ class PdfBoxGraphics2DTestBase {
 				PdfBoxGraphics2D pdfBoxGraphics2D = new PdfBoxGraphics2D(document, 400, 400);
 				PdfBoxGraphics2DFontTextDrawer fontTextDrawer = null;
 				contentStream.beginText();
-				contentStream.setStrokingColor(0,0,0);
-				contentStream.setNonStrokingColor(0,0,0);
+				contentStream.setStrokingColor(0, 0, 0);
+				contentStream.setNonStrokingColor(0, 0, 0);
 				contentStream.setFont(PDFontFactory.createDefaultFont(), 12);
 				contentStream.setTextMatrix(Matrix.getTranslateInstance(10, -100));
 				contentStream.showText("Mode " + m);
@@ -73,6 +76,7 @@ class PdfBoxGraphics2DTestBase {
 					fontTextDrawer = new PdfBoxGraphics2DFontTextForcedDrawer();
 					fontTextDrawer.registerFont(
 							PdfBoxGraphics2DTestBase.class.getResourceAsStream("DejaVuSerifCondensed.ttf"));
+					fontTextDrawer.registerFont("Arial", pdArial);
 					break;
 				case NormalVectorized:
 				default:
