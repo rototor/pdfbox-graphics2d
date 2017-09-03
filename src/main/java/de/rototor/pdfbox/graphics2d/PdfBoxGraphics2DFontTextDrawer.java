@@ -296,7 +296,17 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 		return fontToUse;
 	}
 
-	private PDFont mapFont(final Font font, final IFontTextDrawerEnv env) throws IOException, FontFormatException {
+	/**
+	 * Try to map the java.awt.Font to a PDFont.
+	 * 
+	 * @param font
+	 *            the java.awt.Font for which a mapping should be found
+	 * @param env
+	 *            environment of the font mapper
+	 * @return the PDFont or null if none can be found.
+	 */
+	@SuppressWarnings("WeakerAccess")
+	protected PDFont mapFont(final Font font, final IFontTextDrawerEnv env) throws IOException, FontFormatException {
 		/*
 		 * When we did not yet load the default font we are going to initialize it.
 		 */

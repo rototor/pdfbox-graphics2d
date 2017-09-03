@@ -223,6 +223,21 @@ public class PDFGraphics2DSample {
 }
 ```
 
+You can also complete customize the font mapping if you derive from PdfBoxGraphics2DFontTextDrawer:
+```java
+class MyPdfBoxGraphics2DFontTextDrawer extends PdfBoxGraphics2DFontTextDrawer {
+	@Override
+	protected PDFont mapFont(Font font, IFontTextDrawerEnv env) throws IOException, FontFormatException {
+		// Using the font, especially the font.getFontName() or font.getFamily() to determine which
+		// font to use... return null if the font can not be mapped. You can also call registerFont() here.
+		
+		// Default lookup in the registered fonts
+		return super.mapFont(font, env);
+	}
+}
+```
+This allows you to load the fonts on demand.
+
 ## Changes
 
 Version 0.6: 
