@@ -126,9 +126,10 @@ any printing registration mismatches, which would be very bad for reading the te
 - Note: Not all PDF viewer can handle all fonts correctly. E.g. PDFBox 1.8 was not able to handle fonts right. 
 But nowadays all PDF viewers should be able to handle fonts fine.
 - Note: Not all java.awt.Paint's supported by this library can be used with text. You may loose some effects. 
-- Note: Underline and Strike through are currently not supported.
-- Note: There is no Bidi support at the moment. See PDFBox the [problems](https://issues.apache.org/jira/browse/PDFBOX-3550) 
-has with rendering RTL languages at the moment.
+- Note: TextAttribute.UNDERLINE, TextAttribute.STRIKETHROUGH and TextAttribute.LIGATURES are currently not supported.
+- Note: TextAttribute.BACKGROUND is currently not supported.
+- Note: There is no Bidi support at the moment. See the [problems](https://issues.apache.org/jira/browse/PDFBOX-3550) 
+PDFBox has with rendering RTL languages at the moment.
 
 On the other site rendering a text using vector shapes has the following properties:
 - The text is always displayed the same. They will be no differences between the PDF viewers.
@@ -148,7 +149,7 @@ So a mapping Font -> PDFont is needed.
 ### Example how to use the font mapping
 The font mapping is done using the PdfBoxGraphics2DFontTextDrawer class. There you register the fonts you have.
 By default the mapping tries to only use fonts when all features/paints used by the drawn text are supported. If your text
-uses a features which is not supported (i.e. RTL text) then it falls back to using vectorized text. 
+uses a features which is not supported (e.g. RTL text) then it falls back to using vectorized text. 
 
 If you always want to force the use of fonts you can use the class PdfBoxGraphics2DFontTextForcedDrawer. But this is 
 unsafe and not recommend, because if some text can not be rendered using the given fonts it will not be drawn at all 
@@ -237,6 +238,13 @@ class MyPdfBoxGraphics2DFontTextDrawer extends PdfBoxGraphics2DFontTextDrawer {
 }
 ```
 This allows you to load the fonts on demand.
+
+## Creating PDF reports
+If you want to create complex PDF reports with text and graphs mixed it is recommend to not use
+PDFBox and this library directly, as both are very low level. Instead you should use 
+[OpenHtmlToPdf](https://github.com/danfickle/openhtmltopdf).  OpenHtmlToPdf allows you to build your reports using
+HTML (which you can generate with any template engine you like, e.g. Apache FreeMarker) and place custom graphs 
+(which are draw using Graphics2D using this library) with <object> HTML tags.
 
 ## Changes
 
