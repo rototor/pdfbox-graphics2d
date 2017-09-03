@@ -140,11 +140,11 @@ On the other site rendering a text using vector shapes has the following propert
 If you do not plan to print the PDF in offset or digital print you can ignore that. This will make no difference for 
 your normal desktop printer.
 
-If you want to get a 1:1 mapping of your Graphics2D drawing in the PDF you should use the vector text mode. If you want to
+If you want to get a 1:1 mapping of your Graphics2D drawing in the PDF you should use the vector mode. If you want to
 have the text searchable, only use LTR languanges (i.e. latin-based) and don't use any fancy text paints and effects you
 may try the text mode. For this mode to work you need the font files (.ttf / .ttc) of the fonts you want to use and must
 register it with this library. Using the normal Java font API it is not possible to access the underlying font file. 
-So a mapping Font -> PDFont is needed. 
+So a manual mapping of Font to PDFont is needed. 
 
 ### Example how to use the font mapping
 The font mapping is done using the PdfBoxGraphics2DFontTextDrawer class. There you register the fonts you have.
@@ -244,7 +244,7 @@ If you want to create complex PDF reports with text and graphs mixed it is recom
 PDFBox and this library directly, as both are very low level. Instead you should use 
 [OpenHtmlToPdf](https://github.com/danfickle/openhtmltopdf).  OpenHtmlToPdf allows you to build your reports using
 HTML (which you can generate with any template engine you like, e.g. Apache FreeMarker) and place custom graphs 
-(which are draw using Graphics2D using this library) with <object> HTML tags.
+(which are draw using Graphics2D using this library) with &lt;object&gt; HTML tags.
 
 ## Changes
 
