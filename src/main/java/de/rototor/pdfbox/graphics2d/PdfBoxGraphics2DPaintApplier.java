@@ -180,9 +180,9 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 
 	private PDShading buildLinearGradientShading(Paint paint, AffineTransform tf) throws IOException {
 		/*
-		 * Batik has a copy of RadialGradientPaint, but it has the same
-		 * structure as the AWT RadialGradientPaint. So we use Reflection to
-		 * access the fields of both these classes.
+		 * Batik has a copy of RadialGradientPaint, but it has the same structure as the
+		 * AWT RadialGradientPaint. So we use Reflection to access the fields of both
+		 * these classes.
 		 */
 		Color[] colors = getPropertyValue(paint, "getColors");
 		Color firstColor = colors[0];
@@ -220,9 +220,9 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 
 	private PDShading buildRadialGradientShading(Paint paint, AffineTransform tf) throws IOException {
 		/*
-		 * Batik has a copy of RadialGradientPaint, but it has the same
-		 * structure as the AWT RadialGradientPaint. So we use Reflection to
-		 * access the fields of both these classes.
+		 * Batik has a copy of RadialGradientPaint, but it has the same structure as the
+		 * AWT RadialGradientPaint. So we use Reflection to access the fields of both
+		 * these classes.
 		 */
 		Color[] colors = getPropertyValue(paint, "getColors");
 		Color firstColor = colors[0];
@@ -401,6 +401,12 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 
 	/**
 	 * Get a property value from an object using reflection
+	 * 
+	 * @param obj
+	 *            The object to get a property from.
+	 * @param propertyGetter
+	 *            method name of the getter, i.e. "getXY".
+	 * @return the value read from the object
 	 */
 	@SuppressWarnings({ "unchecked", "WeakerAccess" })
 	protected <T> T getPropertyValue(Object obj, String propertyGetter) {

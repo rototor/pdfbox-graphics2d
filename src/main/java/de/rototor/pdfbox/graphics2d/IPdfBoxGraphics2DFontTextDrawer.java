@@ -66,10 +66,15 @@ public interface IPdfBoxGraphics2DFontTextDrawer {
 		 * @return the shading for this paint or null if this paint has no special
 		 *         shading. At the moment I don't know of a way to use the shading with
 		 *         text.
+		 * @throws IOException
+		 *             if an IO error occurs when writing the paint to the content
+		 *             stream.
 		 */
-		@SuppressWarnings("UnusedReturnValue")
 		PDShading applyPaint(Paint paint) throws IOException;
 
+		/**
+		 * @return the {@link Graphics2D} {@link FontRenderContext}
+		 */
 		FontRenderContext getFontRenderContext();
 	}
 
@@ -80,6 +85,8 @@ public interface IPdfBoxGraphics2DFontTextDrawer {
 	 *            Environment
 	 * @return true when the given text can be fully drawn using fonts. return false
 	 *         to have the text drawn as vector shapes
+	 * @throws IOException
+	 *             when a font can not be loaded or a paint can't be applied.
 	 */
 	boolean canDrawText(AttributedCharacterIterator iterator, IFontTextDrawerEnv env)
 			throws IOException, FontFormatException;

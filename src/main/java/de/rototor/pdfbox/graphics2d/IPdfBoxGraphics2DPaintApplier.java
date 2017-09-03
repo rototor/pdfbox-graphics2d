@@ -26,6 +26,8 @@ public interface IPdfBoxGraphics2DPaintApplier {
 	 * @param env
 	 *            Environment for mapping the paint.
 	 * @return null or a PDShading which should be used to fill a shape.
+	 * @throws IOException
+	 *             if its not possible to write the paint into the contentStream
 	 */
 	PDShading applyPaint(Paint paint, PDPageContentStream contentStream, AffineTransform currentTransform,
 			IPaintEnv env) throws IOException;
@@ -51,12 +53,12 @@ public interface IPdfBoxGraphics2DPaintApplier {
 		PDDocument getDocument();
 
 		/**
-		 * The resource of the content stream
+		 * @return the resource of the content stream
 		 */
 		PDResources getResources();
 
 		/**
-		 * Get the Graphics2D Composite
+		 * @return the {@link Graphics2D} {@link Composite}
 		 */
 		Composite getComposite();
 	}

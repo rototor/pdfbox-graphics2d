@@ -75,6 +75,11 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 	 *            the input stream of the font. This file must be a ttf/otf file!
 	 *            You have to close the stream outside, this method will not close
 	 *            the stream.
+	 * @throws IOException
+	 *             when something goes wrong with reading the font or writing the
+	 *             font to the content stream of the PDF:
+	 * @throws FontFormatException
+	 *             if the font file can not read correctly using java.awt.Font.
 	 */
 	@SuppressWarnings("WeakerAccess")
 	public void registerFont(String fontName, InputStream fontStream) throws IOException, FontFormatException {
@@ -99,6 +104,11 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 	 * @param fontFile
 	 *            the font file. This file must exist for the live time of this
 	 *            object, as the font data will be read lazy on demand
+	 * @throws IOException
+	 *             when something goes wrong with reading the font or writing the
+	 *             font to the content stream of the PDF:
+	 * @throws FontFormatException
+	 *             if the font file can not read correctly using java.awt.Font.
 	 */
 	@SuppressWarnings("WeakerAccess")
 	public void registerFont(String fontName, File fontFile) throws IOException, FontFormatException {
@@ -113,6 +123,11 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 	 * 
 	 * @param fontFile
 	 *            the font file
+	 * @throws IOException
+	 *             when something goes wrong with reading the font or writing the
+	 *             font to the content stream of the PDF:
+	 * @throws FontFormatException
+	 *             if the font file can not read correctly using java.awt.Font.
 	 */
 	@SuppressWarnings("WeakerAccess")
 	public void registerFont(File fontFile) throws IOException, FontFormatException {
@@ -124,6 +139,11 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 	 * 
 	 * @param fontStream
 	 *            the font file
+	 * @throws IOException
+	 *             when something goes wrong with reading the font or writing the
+	 *             font to the content stream of the PDF:
+	 * @throws FontFormatException
+	 *             if the font file can not read correctly using java.awt.Font.
 	 */
 	@SuppressWarnings("WeakerAccess")
 	public void registerFont(InputStream fontStream) throws IOException, FontFormatException {

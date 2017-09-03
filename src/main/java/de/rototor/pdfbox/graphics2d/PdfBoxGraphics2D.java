@@ -142,6 +142,9 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 *            the width in pixel of the drawing area.
 	 * @param pixelHeight
 	 *            the height in pixel of the drawing area.
+	 * @throws IOException
+	 *             if something goes wrong with writing into the content stream of
+	 *             the {@link PDDocument}.
 	 */
 	@SuppressWarnings("WeakerAccess")
 	public PdfBoxGraphics2D(PDDocument document, float pixelWidth, float pixelHeight) throws IOException {
@@ -152,9 +155,9 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 * Set an optional text drawer. By default, all text is vectorized and drawn
 	 * using vector shapes. To embed fonts into a PDF file it is necessary to have
 	 * the underlying TTF file. The java.awt.Font class does not provide that. The
-	 * FontTextDrawer must perform the java.awt.Font <=> PDFont mapping and also
-	 * must perform the text layout. If it can not map the text or font correctly,
-	 * the font drawing falls back to vectoring the text.
+	 * FontTextDrawer must perform the java.awt.Font &lt;=&gt; PDFont mapping and
+	 * also must perform the text layout. If it can not map the text or font
+	 * correctly, the font drawing falls back to vectoring the text.
 	 * 
 	 * @param fontTextDrawer
 	 *            The text drawer, which can draw text using fonts
@@ -169,6 +172,9 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 *            The document the graphics should be used to create a XForm in.
 	 * @param bbox
 	 *            Bounding Box of the graphics
+	 * @throws IOException
+	 *             when something goes wrong with writing into the content stream of
+	 *             the {@link PDDocument}.
 	 */
 	public PdfBoxGraphics2D(PDDocument document, PDRectangle bbox) throws IOException {
 		this.document = document;
