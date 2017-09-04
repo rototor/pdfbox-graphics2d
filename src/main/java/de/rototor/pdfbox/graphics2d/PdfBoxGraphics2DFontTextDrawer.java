@@ -33,7 +33,11 @@ import java.util.*;
 import java.util.List;
 
 /**
- * Default implementation to draw fonts
+ * Default implementation to draw fonts. You can reuse instances of this class
+ * within a PDDocument for more then one {@link PdfBoxGraphics2D}.
+ * 
+ * Just ensure that you call close after you closed the PDDocument to free any
+ * temporary files.
  */
 public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontTextDrawer, Closeable {
 	/**
@@ -166,13 +170,23 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 		fontMap.put(name, font);
 	}
 
+	/**
+	 * @return true if the font mapping is populated on demand. This is usually only
+	 *         the case if this class has been derived. The default implementation
+	 *         just checks for this.
+	 */
+	@SuppressWarnings("WeakerAccess")
+	protected boolean hasDynamicFontMapping() {
+		return getClass() != PdfBoxGraphics2DFontTextDrawer.class;
+	}
+
 	@Override
 	public boolean canDrawText(AttributedCharacterIterator iterator, IFontTextDrawerEnv env)
 			throws IOException, FontFormatException {
 		/*
 		 * When no font is registered we can not display the text using a font...
 		 */
-		if (fontMap.size() == 0 && fontFiles.size() == 0)
+		if (fontMap.size() == 0 && fontFiles.size() == 0 && !hasDynamicFontMapping())
 			return false;
 
 		boolean run = true;
@@ -299,29 +313,36 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 			 * just silently ignore the text and not display it instead.
 			 */
 			try {
-				if (isStrikeThrough || isUnderline) {
-					// noinspection unused
-					float stringWidth = font.getStringWidth(text);
-					// noinspection unused
-					LineMetrics lineMetrics = attributeFont.getLineMetrics(text, env.getFontRenderContext());
-					/*
-					 * TODO: We can not draw that yet, we must do that later. While in textmode its
-					 * not possible to draw lines...
-					 */
-				}
-				// noinspection StatementWithEmptyBody
-				if (isLingatures) {
-					/*
-					 * No Idea how to map this ...
-					 */
-				}
-				contentStream.showText(text);
+				showTextOnStream(env, contentStream, attributeFont, font, isStrikeThrough, isUnderline, isLingatures,
+						text);
 			} catch (IllegalArgumentException e) {
 				System.err.println("PDFBoxGraphics: Can not map text " + text + " with font "
 						+ attributeFont.getFontName() + ": " + e.getMessage());
 			}
 		}
 		contentStream.endText();
+	}
+
+	private void showTextOnStream(IFontTextDrawerEnv env, PDPageContentStream contentStream, Font attributeFont,
+			PDFont font, boolean isStrikeThrough, boolean isUnderline, boolean isLingatures, String text)
+			throws IOException {
+		if (isStrikeThrough || isUnderline) {
+			// noinspection unused
+			float stringWidth = font.getStringWidth(text);
+			// noinspection unused
+			LineMetrics lineMetrics = attributeFont.getLineMetrics(text, env.getFontRenderContext());
+			/*
+			 * TODO: We can not draw that yet, we must do that later. While in textmode its
+			 * not possible to draw lines...
+			 */
+		}
+		// noinspection StatementWithEmptyBody
+		if (isLingatures) {
+			/*
+			 * No Idea how to map this ...
+			 */
+		}
+		contentStream.showText(text);
 	}
 
 	private PDFont applyFont(Font font, IFontTextDrawerEnv env) throws IOException, FontFormatException {
