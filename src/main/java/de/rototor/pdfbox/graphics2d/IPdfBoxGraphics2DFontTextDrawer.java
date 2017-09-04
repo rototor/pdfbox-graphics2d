@@ -17,6 +17,8 @@ package de.rototor.pdfbox.graphics2d;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.PDResources;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.graphics.shading.PDShading;
 
 import java.awt.*;
@@ -76,6 +78,16 @@ public interface IPdfBoxGraphics2DFontTextDrawer {
 		 * @return the {@link Graphics2D} {@link FontRenderContext}
 		 */
 		FontRenderContext getFontRenderContext();
+
+		/**
+		 * @return the bbox of the {@link PdfBoxGraphics2D}
+		 */
+		PDRectangle getGraphicsBBox();
+
+		/**
+		 * @return the resource of the content stream
+		 */
+		PDResources getResources();
 	}
 
 	/**

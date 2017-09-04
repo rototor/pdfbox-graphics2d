@@ -514,6 +514,16 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			public FontRenderContext getFontRenderContext() {
 				return PdfBoxGraphics2D.this.getFontRenderContext();
 			}
+
+			@Override
+			public PDRectangle getGraphicsBBox() {
+				return bbox;
+			}
+
+			@Override
+			public PDResources getResources() {
+				return xFormObject.getResources();
+			}
 		};
 	}
 

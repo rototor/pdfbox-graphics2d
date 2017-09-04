@@ -17,11 +17,21 @@ package de.rototor.pdfbox.graphics2d;
 
 import org.apache.fontbox.ttf.TrueTypeCollection;
 import org.apache.fontbox.ttf.TrueTypeFont;
+import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.cos.COSStream;
 import org.apache.pdfbox.io.IOUtils;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.PDResources;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDFontFactory;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
+import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
+import org.apache.pdfbox.pdmodel.graphics.color.PDColorSpace;
+import org.apache.pdfbox.pdmodel.graphics.color.PDPattern;
+import org.apache.pdfbox.pdmodel.graphics.pattern.PDTilingPattern;
+import org.apache.pdfbox.pdmodel.graphics.shading.PDShading;
+import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
 import org.apache.pdfbox.util.Matrix;
 
 import java.awt.*;
@@ -199,17 +209,6 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 			if (mapFont(attributeFont, env) == null)
 				return false;
 
-			Paint paint = (Paint) iterator.getAttribute(TextAttribute.FOREGROUND);
-			if (paint == null)
-				paint = env.getPaint();
-
-			/*
-			 * When the paint has a shading, we can not draw the text correct, as we can not
-			 * apply shadings on text in PDF.
-			 */
-			if (env.applyPaint(paint) != null)
-				return false;
-
 			/*
 			 * We can not do a Background on the text currently.
 			 */
@@ -297,7 +296,43 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 			Paint paint = (Paint) iterator.getAttribute(TextAttribute.FOREGROUND);
 			if (paint == null)
 				paint = env.getPaint();
-			env.applyPaint(paint);
+
+			/*
+			 * Apply the paint
+			 */
+			PDShading pdShading = env.applyPaint(paint);
+			if (pdShading != null) {
+				/*
+				 * If the paint has a shading we must create a tiling pattern and set that as
+				 * stroke color...
+				 */
+				PDTilingPattern pattern = new PDTilingPattern();
+				pattern.setPaintType(PDTilingPattern.PAINT_COLORED);
+				pattern.setTilingType(PDTilingPattern.TILING_CONSTANT_SPACING_FASTER_TILING);
+				PDRectangle anchorRect = env.getGraphicsBBox();
+				pattern.setBBox(anchorRect);
+				pattern.setXStep(anchorRect.getWidth());
+				pattern.setYStep(anchorRect.getHeight());
+
+				PDAppearanceStream appearance = new PDAppearanceStream(env.getDocument());
+				appearance.setResources(pattern.getResources());
+				appearance.setBBox(pattern.getBBox());
+
+				PDPageContentStream imageContentStream = new PDPageContentStream(env.getDocument(), appearance,
+						((COSStream) pattern.getCOSObject()).createOutputStream());
+				imageContentStream.addRect(0, 0, anchorRect.getWidth(), anchorRect.getHeight());
+				imageContentStream.clip();
+				imageContentStream.shadingFill(pdShading);
+				imageContentStream.close();
+
+				PDColorSpace patternCS1 = new PDPattern(null);
+				PDResources resources = env.getResources();
+				COSName tilingPatternName = resources.add(pattern);
+				PDColor patternColor = new PDColor(tilingPatternName, patternCS1);
+
+				contentStream.setNonStrokingColor(patternColor);
+				contentStream.setStrokingColor(patternColor);
+			}
 
 			boolean isStrikeThrough = TextAttribute.STRIKETHROUGH_ON
 					.equals(iterator.getAttribute(TextAttribute.STRIKETHROUGH));
