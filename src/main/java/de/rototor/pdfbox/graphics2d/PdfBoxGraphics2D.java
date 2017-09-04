@@ -173,6 +173,16 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		this.fontTextDrawer = fontTextDrawer;
 	}
 
+	private int saveCounter = 0;
+
+	private final List<CloneInfo> cloneList = new ArrayList<CloneInfo>();
+
+	private static class CloneInfo {
+		PdfBoxGraphics2D sourceGfx;
+		PdfBoxGraphics2D clone;
+
+	}
+
 	/**
 	 * @param document
 	 *            The document the graphics should be used to create a XForm in.
@@ -191,7 +201,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		xFormObject.setResources(new PDResources());
 		xFormObject.setBBox(bbox);
 		contentStream = new PDPageContentStream(document, appearance, xFormObject.getStream().createOutputStream());
-		contentStream.saveGraphicsState();
+		contentStreamSaveState();
 
 		baseTransform = new AffineTransform();
 		baseTransform.translate(0, bbox.getHeight());
@@ -203,12 +213,17 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		cloneInfo = null;
 	}
 
-	private final List<CloneInfo> cloneList = new ArrayList<CloneInfo>();
-
-	private static class CloneInfo {
-		PdfBoxGraphics2D sourceGfx;
-		PdfBoxGraphics2D clone;
-
+	/**
+	 * 
+	 * @return the PDAppearanceStream which resulted in this graphics
+	 */
+	@SuppressWarnings("WeakerAccess")
+	public PDFormXObject getXFormObject() {
+		if (document != null)
+			throw new IllegalStateException("You can only get the XformObject after you disposed the Graphics2D!");
+		if (cloneInfo != null)
+			throw new IllegalStateException("You can not get the Xform stream from the clone");
+		return xFormObject;
 	}
 
 	private PdfBoxGraphics2D(PdfBoxGraphics2D gfx) throws IOException {
@@ -236,27 +251,14 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		this.imageEncoder = gfx.imageEncoder;
 		this.xorColor = gfx.xorColor;
 
-		this.contentStream.saveGraphicsState();
-	}
-
-	/**
-	 * 
-	 * @return the PDAppearanceStream which resulted in this graphics
-	 */
-	@SuppressWarnings("WeakerAccess")
-	public PDFormXObject getXFormObject() {
-		if (document != null)
-			throw new IllegalStateException("You can only get the XformObject after you disposed the Graphics2D!");
-		if (cloneInfo != null)
-			throw new IllegalStateException("You can not get the Xform stream from the clone");
-		return xFormObject;
+		contentStreamSaveState();
 	}
 
 	public void dispose() {
 		if (cloneInfo != null) {
 			cloneInfo.sourceGfx.cloneList.remove(cloneInfo);
 			try {
-				this.contentStream.restoreGraphicsState();
+				contentStreamRestoreState();
 			} catch (IOException e) {
 				throwException(e);
 			}
@@ -265,7 +267,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		if (cloneList.size() > 0)
 			throw new RuntimeException("Not all PdfGraphics2D clones where destroyed!!!");
 		try {
-			contentStream.restoreGraphicsState();
+			contentStreamRestoreState();
 			contentStream.close();
 		} catch (IOException e) {
 			throwException(e);
@@ -278,7 +280,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 
 	public void draw(Shape s) {
 		try {
-			contentStream.saveGraphicsState();
+			contentStreamSaveState();
 
 			PDShading pdShading = applyPaint();
 			if (pdShading != null)
@@ -311,35 +313,10 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			}
 			walkShape(s);
 			contentStream.stroke();
-			contentStream.restoreGraphicsState();
+			contentStreamRestoreState();
 		} catch (IOException e) {
 			throwException(e);
 		}
-	}
-
-	public boolean drawImage(Image img, AffineTransform xform, ImageObserver obs) {
-		AffineTransform tf = new AffineTransform();
-		tf.concatenate(baseTransform);
-		tf.concatenate(transform);
-		tf.concatenate((AffineTransform) xform.clone());
-
-		PDImageXObject pdImage = imageEncoder.encodeImage(document, contentStream, img);
-		try {
-			contentStream.saveGraphicsState();
-			int imgHeight = img.getHeight(obs);
-			tf.translate(0, imgHeight);
-			tf.scale(1, -1);
-			contentStream.transform(new Matrix(tf));
-
-			Object keyInterpolation = renderingHints.get(RenderingHints.KEY_INTERPOLATION);
-			if (RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR.equals(keyInterpolation))
-				pdImage.setInterpolate(false);
-			contentStream.drawImage(pdImage, 0, 0, img.getWidth(obs), imgHeight);
-			contentStream.restoreGraphicsState();
-		} catch (IOException e) {
-			throwException(e);
-		}
-		return true;
 	}
 
 	public void drawImage(BufferedImage img, BufferedImageOp op, int x, int y) {
@@ -404,10 +381,35 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		return drawImage(img, dx1, dy1, dx2, dy2, sx1, sy2, sx2, sy2, null, observer);
 	}
 
+	public boolean drawImage(Image img, AffineTransform xform, ImageObserver obs) {
+		AffineTransform tf = new AffineTransform();
+		tf.concatenate(baseTransform);
+		tf.concatenate(transform);
+		tf.concatenate((AffineTransform) xform.clone());
+
+		PDImageXObject pdImage = imageEncoder.encodeImage(document, contentStream, img);
+		try {
+			contentStreamSaveState();
+			int imgHeight = img.getHeight(obs);
+			tf.translate(0, imgHeight);
+			tf.scale(1, -1);
+			contentStream.transform(new Matrix(tf));
+
+			Object keyInterpolation = renderingHints.get(RenderingHints.KEY_INTERPOLATION);
+			if (RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR.equals(keyInterpolation))
+				pdImage.setInterpolate(false);
+			contentStream.drawImage(pdImage, 0, 0, img.getWidth(obs), imgHeight);
+			contentStreamRestoreState();
+		} catch (IOException e) {
+			throwException(e);
+		}
+		return true;
+	}
+
 	public boolean drawImage(Image img, int dx1, int dy1, int dx2, int dy2, int sx1, int sy1, int sx2, int sy2,
 			Color bgcolor, ImageObserver observer) {
 		try {
-			contentStream.saveGraphicsState();
+			contentStreamSaveState();
 			int width = dx2 - dx1;
 			int height = dy2 - dy1;
 
@@ -438,33 +440,11 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			tf.scale((sx2 - sx1) / imgWidth, (sy2 - sy1) / imgHeight);
 
 			drawImage(img, tf, observer);
-			contentStream.restoreGraphicsState();
+			contentStreamRestoreState();
 			return true;
 		} catch (IOException e) {
 			throwException(e);
 			return false;
-		}
-	}
-
-	public void drawString(AttributedCharacterIterator iterator, float x, float y) {
-		try {
-			contentStream.saveGraphicsState();
-			/*
-			 * If we can draw the text using fonts, we do this
-			 */
-			if (fontTextDrawer.canDrawText((AttributedCharacterIterator) iterator.clone(), fontDrawerEnv())) {
-				drawStringUsingText(iterator, x, y);
-			} else {
-				/*
-				 * Otherwise we fall back to draw using shapes. This works always
-				 */
-				drawStringUsingShapes(iterator, x, y);
-			}
-			contentStream.restoreGraphicsState();
-		} catch (IOException e) {
-			throwException(e);
-		} catch (FontFormatException e) {
-			throwException(e);
 		}
 	}
 
@@ -477,9 +457,31 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		stroke = originalStroke;
 	}
 
+	public void drawString(AttributedCharacterIterator iterator, float x, float y) {
+		try {
+			contentStreamSaveState();
+			/*
+			 * If we can draw the text using fonts, we do this
+			 */
+			if (fontTextDrawer.canDrawText((AttributedCharacterIterator) iterator.clone(), fontDrawerEnv())) {
+				drawStringUsingText(iterator, x, y);
+			} else {
+				/*
+				 * Otherwise we fall back to draw using shapes. This works always
+				 */
+				drawStringUsingShapes(iterator, x, y);
+			}
+			contentStreamRestoreState();
+		} catch (IOException e) {
+			throwException(e);
+		} catch (FontFormatException e) {
+			throwException(e);
+		}
+	}
+
 	private void drawStringUsingText(AttributedCharacterIterator iterator, float x, float y)
 			throws IOException, FontFormatException {
-		contentStream.saveGraphicsState();
+		contentStreamSaveState();
 
 		AffineTransform tf = new AffineTransform(baseTransform);
 		tf.concatenate(transform);
@@ -488,6 +490,18 @@ public class PdfBoxGraphics2D extends Graphics2D {
 
 		fontTextDrawer.drawText(iterator, fontDrawerEnv());
 
+		contentStreamRestoreState();
+	}
+
+	private void contentStreamSaveState() throws IOException {
+		saveCounter++;
+		contentStream.saveGraphicsState();
+	}
+
+	private void contentStreamRestoreState() throws IOException {
+		if (saveCounter == 0)
+			throw new IllegalStateException("Internal save/restore state error. Should never happen.");
+		saveCounter--;
 		contentStream.restoreGraphicsState();
 	}
 
@@ -546,7 +560,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 
 	public void fill(Shape s) {
 		try {
-			contentStream.saveGraphicsState();
+			contentStreamSaveState();
 
 			PDShading shading = applyPaint();
 			walkShape(s);
@@ -570,7 +584,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			} else {
 				contentStream.fill();
 			}
-			contentStream.restoreGraphicsState();
+			contentStreamRestoreState();
 		} catch (IOException e) {
 			throwException(e);
 		}
@@ -761,8 +775,8 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		 * Clip on the content stream
 		 */
 		try {
-			contentStream.restoreGraphicsState();
-			contentStream.saveGraphicsState();
+			contentStreamRestoreState();
+			contentStreamSaveState();
 			/*
 			 * clip can be null, only set a clipping if not null
 			 */
