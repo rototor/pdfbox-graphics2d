@@ -40,7 +40,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.6</version>
+	<version>0.7</version>
 </dependency>
 ```
 
@@ -125,7 +125,6 @@ any printing registration mismatches, which would be very bad for reading the te
   have a different version of the font, which can happen across different OS and OS versions.
 - Note: Not all PDF viewer can handle all fonts correctly. E.g. PDFBox 1.8 was not able to handle fonts right. 
 But nowadays all PDF viewers should be able to handle fonts fine.
-- Note: Not all java.awt.Paint's supported by this library can be used with text. You may loose some effects. 
 - Note: TextAttribute.UNDERLINE, TextAttribute.STRIKETHROUGH and TextAttribute.LIGATURES are currently not supported.
 - Note: TextAttribute.BACKGROUND is currently not supported.
 - Note: There is no Bidi support at the moment. See the [problems](https://issues.apache.org/jira/browse/PDFBOX-3550) 
@@ -141,14 +140,14 @@ If you do not plan to print the PDF in offset or digital print you can ignore th
 your normal desktop printer.
 
 If you want to get a 1:1 mapping of your Graphics2D drawing in the PDF you should use the vector mode. If you want to
-have the text searchable, only use LTR languanges (i.e. latin-based) and don't use any fancy text paints and effects you
-may try the text mode. For this mode to work you need the font files (.ttf / .ttc) of the fonts you want to use and must
+have the text searchable and only use LTR languanges (i.e. latin-based) you may try the text mode. For this mode to work 
+you need the font files (.ttf / .ttc) of the fonts you want to use and must
 register it with this library. Using the normal Java font API it is not possible to access the underlying font file. 
 So a manual mapping of Font to PDFont is needed. 
 
 ### Example how to use the font mapping
 The font mapping is done using the PdfBoxGraphics2DFontTextDrawer class. There you register the fonts you have.
-By default the mapping tries to only use fonts when all features/paints used by the drawn text are supported. If your text
+By default the mapping tries to only use fonts when all features used by the drawn text are supported. If your text
 uses a features which is not supported (e.g. RTL text) then it falls back to using vectorized text. 
 
 If you always want to force the use of fonts you can use the class PdfBoxGraphics2DFontTextForcedDrawer. But this is 
@@ -247,6 +246,9 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 (which are draw using Graphics2D using this library) with &lt;object&gt; HTML tags.
 
 ## Changes
+
+Version 0.7:
+ - Bugfixes on the font based text support. Now also gradients can be used to paint text.
 
 Version 0.6: 
  - Implemented basic support for using fonts to render texts. 
