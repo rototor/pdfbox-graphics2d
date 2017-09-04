@@ -223,7 +223,23 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 				case Character.DIRECTIONALITY_EUROPEAN_NUMBER_SEPARATOR:
 				case Character.DIRECTIONALITY_EUROPEAN_NUMBER_TERMINATOR:
 				case Character.DIRECTIONALITY_WHITESPACE:
+				case Character.DIRECTIONALITY_COMMON_NUMBER_SEPARATOR:
+				case Character.DIRECTIONALITY_NONSPACING_MARK:
+				case Character.DIRECTIONALITY_BOUNDARY_NEUTRAL:
+				case Character.DIRECTIONALITY_PARAGRAPH_SEPARATOR:
+				case Character.DIRECTIONALITY_SEGMENT_SEPARATOR:
+				case Character.DIRECTIONALITY_OTHER_NEUTRALS:
+				case Character.DIRECTIONALITY_ARABIC_NUMBER:
 					break;
+				case Character.DIRECTIONALITY_RIGHT_TO_LEFT:
+				case Character.DIRECTIONALITY_RIGHT_TO_LEFT_ARABIC:
+				case Character.DIRECTIONALITY_RIGHT_TO_LEFT_EMBEDDING:
+				case Character.DIRECTIONALITY_RIGHT_TO_LEFT_OVERRIDE:
+				case Character.DIRECTIONALITY_POP_DIRECTIONAL_FORMAT:
+					/*
+					 * We can not handle this
+					 */
+					return false;
 				default:
 					/*
 					 * Default: We can not handle this
