@@ -280,7 +280,9 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		try {
 			contentStream.saveGraphicsState();
 
-			applyPaint();
+			PDShading pdShading = applyPaint();
+			if (pdShading != null)
+				applyShadingAsColor(pdShading);
 			if (stroke instanceof BasicStroke) {
 				BasicStroke basicStroke = (BasicStroke) this.stroke;
 
