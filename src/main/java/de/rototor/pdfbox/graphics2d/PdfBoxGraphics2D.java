@@ -440,6 +440,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 
 	public void drawString(AttributedCharacterIterator iterator, float x, float y) {
 		try {
+			contentStream.saveGraphicsState();
 			/*
 			 * If we can draw the text using fonts, we do this
 			 */
@@ -451,6 +452,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 				 */
 				drawStringUsingShapes(iterator, x, y);
 			}
+			contentStream.restoreGraphicsState();
 		} catch (IOException e) {
 			throwException(e);
 		} catch (FontFormatException e) {
@@ -470,6 +472,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	private void drawStringUsingText(AttributedCharacterIterator iterator, float x, float y)
 			throws IOException, FontFormatException {
 		contentStream.saveGraphicsState();
+
 		AffineTransform tf = new AffineTransform(baseTransform);
 		tf.concatenate(transform);
 		tf.translate(x, y);
