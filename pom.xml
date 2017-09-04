@@ -6,7 +6,7 @@
 	<description>Graphics2D Bridge for Apache PDFBox</description>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.7-SNAPSHOT</version>
+	<version>0.7</version>
 	<packaging>jar</packaging>
 	<url>https://github.com/rototor/pdfbox-graphics2d</url>
 
@@ -36,7 +36,7 @@
 	<scm>
 		<url>https://github.com/rototor/pdfbox-graphics2d</url>
 		<connection>scm:git:https://github.com/rototor/pdfbox-graphics2d.git</connection>
-		<tag>HEAD</tag>
+		<tag>graphics2d-0.7</tag>
 	</scm>
 
 	<distributionManagement>
