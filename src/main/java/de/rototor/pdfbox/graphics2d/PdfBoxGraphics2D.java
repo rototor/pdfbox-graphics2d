@@ -15,12 +15,18 @@
  */
 package de.rototor.pdfbox.graphics2d;
 
+import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.cos.COSStream;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
+import org.apache.pdfbox.pdmodel.graphics.color.PDColorSpace;
+import org.apache.pdfbox.pdmodel.graphics.color.PDPattern;
 import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+import org.apache.pdfbox.pdmodel.graphics.pattern.PDTilingPattern;
 import org.apache.pdfbox.pdmodel.graphics.shading.PDShading;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
 import org.apache.pdfbox.util.Matrix;
@@ -506,8 +512,10 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			}
 
 			@Override
-			public PDShading applyPaint(Paint paint) throws IOException {
-				return PdfBoxGraphics2D.this.applyPaint(paint);
+			public void applyPaint(Paint paint) throws IOException {
+				PDShading pdShading = PdfBoxGraphics2D.this.applyPaint(paint);
+				if (pdShading != null)
+					applyShadingAsColor(pdShading);
 			}
 
 			@Override
@@ -541,11 +549,17 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			PDShading shading = applyPaint();
 			walkShape(s);
 			if (shading != null) {
-				// NB: the shading fill doesn't work with shapes with zero or
-				// negative dimensions
-				// (width and/or height): in these cases a normal fill is used
+				/*
+				 * NB: the shading fill doesn't work with shapes with zero or negative
+				 * dimensions (width and/or height): in these cases a normal fill is used
+				 */
 				Rectangle2D r2d = s.getBounds2D();
 				if ((r2d.getWidth() <= 0) || (r2d.getHeight() <= 0)) {
+					/*
+					 * But we apply the shading as color, we usually want to avoid that because it
+					 * creates another nested XForm for that ...
+					 */
+					applyShadingAsColor(shading);
 					contentStream.fill();
 				} else {
 					contentStream.clip();
@@ -558,6 +572,38 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		} catch (IOException e) {
 			throwException(e);
 		}
+	}
+
+	private void applyShadingAsColor(PDShading shading) throws IOException {
+		/*
+		 * If the paint has a shading we must create a tiling pattern and set that as
+		 * stroke color...
+		 */
+		PDTilingPattern pattern = new PDTilingPattern();
+		pattern.setPaintType(PDTilingPattern.PAINT_COLORED);
+		pattern.setTilingType(PDTilingPattern.TILING_CONSTANT_SPACING_FASTER_TILING);
+		PDRectangle anchorRect = bbox;
+		pattern.setBBox(anchorRect);
+		pattern.setXStep(anchorRect.getWidth());
+		pattern.setYStep(anchorRect.getHeight());
+
+		PDAppearanceStream appearance = new PDAppearanceStream(this.document);
+		appearance.setResources(pattern.getResources());
+		appearance.setBBox(pattern.getBBox());
+
+		PDPageContentStream imageContentStream = new PDPageContentStream(document, appearance,
+				((COSStream) pattern.getCOSObject()).createOutputStream());
+		imageContentStream.addRect(0, 0, anchorRect.getWidth(), anchorRect.getHeight());
+		imageContentStream.clip();
+		imageContentStream.shadingFill(shading);
+		imageContentStream.close();
+
+		PDColorSpace patternCS1 = new PDPattern(null);
+		COSName tilingPatternName = xFormObject.getResources().add(pattern);
+		PDColor patternColor = new PDColor(tilingPatternName, patternCS1);
+
+		contentStream.setNonStrokingColor(patternColor);
+		contentStream.setStrokingColor(patternColor);
 	}
 
 	private PDShading applyPaint() throws IOException {

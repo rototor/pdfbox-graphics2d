@@ -17,21 +17,11 @@ package de.rototor.pdfbox.graphics2d;
 
 import org.apache.fontbox.ttf.TrueTypeCollection;
 import org.apache.fontbox.ttf.TrueTypeFont;
-import org.apache.pdfbox.cos.COSName;
-import org.apache.pdfbox.cos.COSStream;
 import org.apache.pdfbox.io.IOUtils;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.PDResources;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDFontFactory;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
-import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
-import org.apache.pdfbox.pdmodel.graphics.color.PDColorSpace;
-import org.apache.pdfbox.pdmodel.graphics.color.PDPattern;
-import org.apache.pdfbox.pdmodel.graphics.pattern.PDTilingPattern;
-import org.apache.pdfbox.pdmodel.graphics.shading.PDShading;
-import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
 import org.apache.pdfbox.util.Matrix;
 
 import java.awt.*;
@@ -300,44 +290,12 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 			/*
 			 * Apply the paint
 			 */
-			PDShading pdShading = env.applyPaint(paint);
-			if (pdShading != null) {
-				/*
-				 * If the paint has a shading we must create a tiling pattern and set that as
-				 * stroke color...
-				 */
-				PDTilingPattern pattern = new PDTilingPattern();
-				pattern.setPaintType(PDTilingPattern.PAINT_COLORED);
-				pattern.setTilingType(PDTilingPattern.TILING_CONSTANT_SPACING_FASTER_TILING);
-				PDRectangle anchorRect = env.getGraphicsBBox();
-				pattern.setBBox(anchorRect);
-				pattern.setXStep(anchorRect.getWidth());
-				pattern.setYStep(anchorRect.getHeight());
-
-				PDAppearanceStream appearance = new PDAppearanceStream(env.getDocument());
-				appearance.setResources(pattern.getResources());
-				appearance.setBBox(pattern.getBBox());
-
-				PDPageContentStream imageContentStream = new PDPageContentStream(env.getDocument(), appearance,
-						((COSStream) pattern.getCOSObject()).createOutputStream());
-				imageContentStream.addRect(0, 0, anchorRect.getWidth(), anchorRect.getHeight());
-				imageContentStream.clip();
-				imageContentStream.shadingFill(pdShading);
-				imageContentStream.close();
-
-				PDColorSpace patternCS1 = new PDPattern(null);
-				PDResources resources = env.getResources();
-				COSName tilingPatternName = resources.add(pattern);
-				PDColor patternColor = new PDColor(tilingPatternName, patternCS1);
-
-				contentStream.setNonStrokingColor(patternColor);
-				contentStream.setStrokingColor(patternColor);
-			}
+			env.applyPaint(paint);
 
 			boolean isStrikeThrough = TextAttribute.STRIKETHROUGH_ON
 					.equals(iterator.getAttribute(TextAttribute.STRIKETHROUGH));
 			boolean isUnderline = TextAttribute.UNDERLINE_ON.equals(iterator.getAttribute(TextAttribute.UNDERLINE));
-			boolean isLingatures = TextAttribute.LIGATURES_ON.equals(iterator.getAttribute(TextAttribute.LIGATURES));
+			boolean isLigatures = TextAttribute.LIGATURES_ON.equals(iterator.getAttribute(TextAttribute.LIGATURES));
 
 			run = iterateRun(iterator, sb);
 			String text = sb.toString();
@@ -348,7 +306,7 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 			 * just silently ignore the text and not display it instead.
 			 */
 			try {
-				showTextOnStream(env, contentStream, attributeFont, font, isStrikeThrough, isUnderline, isLingatures,
+				showTextOnStream(env, contentStream, attributeFont, font, isStrikeThrough, isUnderline, isLigatures,
 						text);
 			} catch (IllegalArgumentException e) {
 				System.err.println("PDFBoxGraphics: Can not map text " + text + " with font "
@@ -359,7 +317,7 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 	}
 
 	private void showTextOnStream(IFontTextDrawerEnv env, PDPageContentStream contentStream, Font attributeFont,
-			PDFont font, boolean isStrikeThrough, boolean isUnderline, boolean isLingatures, String text)
+			PDFont font, boolean isStrikeThrough, boolean isUnderline, boolean isLigatures, String text)
 			throws IOException {
 		if (isStrikeThrough || isUnderline) {
 			// noinspection unused
@@ -372,9 +330,9 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 			 */
 		}
 		// noinspection StatementWithEmptyBody
-		if (isLingatures) {
+		if (isLigatures) {
 			/*
-			 * No Idea how to map this ...
+			 * No idea how to map this ...
 			 */
 		}
 		contentStream.showText(text);

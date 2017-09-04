@@ -19,7 +19,6 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.graphics.shading.PDShading;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
@@ -65,14 +64,11 @@ public interface IPdfBoxGraphics2DFontTextDrawer {
 		 * 
 		 * @param paint
 		 *            Paint to apply
-		 * @return the shading for this paint or null if this paint has no special
-		 *         shading. At the moment I don't know of a way to use the shading with
-		 *         text.
 		 * @throws IOException
 		 *             if an IO error occurs when writing the paint to the content
 		 *             stream.
 		 */
-		PDShading applyPaint(Paint paint) throws IOException;
+		void applyPaint(Paint paint) throws IOException;
 
 		/**
 		 * @return the {@link Graphics2D} {@link FontRenderContext}
