@@ -22,7 +22,7 @@ The following features are supported:
 	  - LinearGradientPaint and RadialGradientPaint always assume even split fractions. 
 	  The actual given fractions are ignored at the moment.
 	- TexturePaint. 
-- Drawing text. At the moment all text is drawn as vector shapes, so no fonts are embedded. 
+- Drawing text. By default all text is drawn as vector shapes, so no fonts are embedded. 
 RTL languages are supported. It's possible to use fonts, but this loses some features (especially RTL support) 
 and you must provide the TTF files of the fonts.
 
@@ -133,7 +133,6 @@ PDFBox has with rendering RTL languages at the moment.
 On the other site rendering a text using vector shapes has the following properties:
 - The text is always displayed the same. They will be no differences between the PDF viewers.
 - The text is not searchable and can not be copied.
-- All java.awt.Paint's, which are handled by this library, can be used for text.
 - Note: Vector shapes take more space than a embedded font.
 - Note: You may want to manually alter the color mapping to e.g. ensure a black text is printed using pure CMYK black. 
 If you do not plan to print the PDF in offset or digital print you can ignore that. This will make no difference for 
