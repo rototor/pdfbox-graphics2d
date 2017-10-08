@@ -7,30 +7,30 @@ to embed those graphics as vector drawing in a PDF.
 
 The following features are supported:
 
-- Drawing any shape using draw...() and fill...() methods from Graphics2D.
+- Drawing any shape using ```draw...()``` and ```fill...()``` methods from Graphics2D.
 - Drawing images. The default is to always lossless compress them. You could plugin 
-  your own Image -> PDImageXObject conversion if you want to encode the images as jpeg. 
+  your own ```Image``` -> ```PDImageXObject``` conversion if you want to encode the images as jpeg. 
   **Note:** At the moment PDFBox only writes 8 bit images. So even if you draw 
   a 16 bit image it will be reduced to 8 bit. Depending on the colorspaces this may be 
   bad and cause colorshifts in the embedded image (e.g. with 16 Bit ProPhoto color profile).
-- All BasicStroke attributes
-- Paint:
-	- Colors. You can specify your own color mapping implementation to special map the (RGB) 
-	colors to PDColor. Beside using CMYK colors you can also use spot colors.
-	- GradientPaint, LinearGradientPaint and RadialGradientPaint. There are some restrictions:
-	  - GradientPaint always generates acyclic gradients. 
-	  - LinearGradientPaint and RadialGradientPaint always assume even split fractions. 
+- All ```BasicStroke``` attributes.
+- ```Paint```:
+	- ```Color```. You can specify your own color mapping implementation to special map the (RGB) 
+	colors to ```PDColor```. Beside using CMYK colors you can also use spot colors.
+	- ```GradientPaint```, ```LinearGradientPaint``` and ```RadialGradientPaint```. There are some restrictions:
+	  - ```GradientPaint``` always generates acyclic gradients. 
+	  - ```LinearGradientPaint``` and ```RadialGradientPaint``` always assume even split fractions. 
 	  The actual given fractions are ignored at the moment.
-	- TexturePaint. 
+	- ```TexturePaint```. 
 - Drawing text. By default all text is drawn as vector shapes, so no fonts are embedded. 
 RTL languages are supported. It's possible to use fonts, but this loses some features (especially RTL support) 
-and you must provide the TTF files of the fonts.
+and you must provide the TTF files of the fonts if the default PDF fonts are not enough.
 
 The following features are not supported (yet):
 
-- (Alpha-)Composite with a rule different then AlphaComposite.SRC_OVER.
-- copyArea(). This is not possible to implement.
-- hit(). Why would you want to use that?
+- ```(Alpha-)Composite``` with a rule different then ```AlphaComposite.SRC_OVER```.
+- ```copyArea()```. This is not possible to implement.
+- ```hit()```. Why would you want to use that?
 
 ## Download
 
@@ -125,8 +125,8 @@ any printing registration mismatches, which would be very bad for reading the te
   have a different version of the font, which can happen across different OS and OS versions.
 - Note: Not all PDF viewer can handle all fonts correctly. E.g. PDFBox 1.8 was not able to handle fonts right. 
 But nowadays all PDF viewers should be able to handle fonts fine.
-- Note: TextAttribute.UNDERLINE, TextAttribute.STRIKETHROUGH and TextAttribute.LIGATURES are currently not supported.
-- Note: TextAttribute.BACKGROUND is currently not supported.
+- Note: ```TextAttribute.UNDERLINE```, ```TextAttribute.STRIKETHROUGH``` and ```TextAttribute.LIGATURES``` are currently not supported.
+- Note: ```TextAttribute.BACKGROUND``` is currently not supported.
 - Note: There is no Bidi support at the moment. See the [problems](https://issues.apache.org/jira/browse/PDFBOX-3550) 
 PDFBox has with rendering RTL languages at the moment.
 
@@ -138,20 +138,24 @@ On the other site rendering a text using vector shapes has the following propert
 If you do not plan to print the PDF in offset or digital print you can ignore that. This will make no difference for 
 your normal desktop printer.
 
-If you want to get a 1:1 mapping of your Graphics2D drawing in the PDF you should use the vector mode. If you want to
+If you want to get a 1:1 mapping of your ```Graphics2D``` drawing in the PDF you should use the vector mode. If you want to
 have the text searchable and only use LTR languanges (i.e. latin-based) you may try the text mode. For this mode to work 
 you need the font files (.ttf / .ttc) of the fonts you want to use and must
 register it with this library. Using the normal Java font API it is not possible to access the underlying font file. 
 So a manual mapping of Font to PDFont is needed. 
 
 ### Example how to use the font mapping
-The font mapping is done using the PdfBoxGraphics2DFontTextDrawer class. There you register the fonts you have.
+The font mapping is done using the ```PdfBoxGraphics2DFontTextDrawer``` class. There you register the fonts you have.
 By default the mapping tries to only use fonts when all features used by the drawn text are supported. If your text
 uses a features which is not supported (e.g. RTL text) then it falls back to using vectorized text. 
 
-If you always want to force the use of fonts you can use the class PdfBoxGraphics2DFontTextForcedDrawer. But this is 
+If you always want to force the use of fonts you can use the class ```PdfBoxGraphics2DFontTextForcedDrawer```. But this is 
 unsafe and not recommend, because if some text can not be rendered using the given fonts it will not be drawn at all 
 (e.g. if a font misses a needed glyph).
+
+If you want to use the default PDF fonts as much as possible to have no embedded fonts you can use the class 
+```PdfBoxGraphics2DFontTextDrawerDefaultFonts```. This class will always use a default PDF font, but you can also 
+register additional fonts.
 
 ```java
 public class PDFGraphics2DSample {
@@ -222,7 +226,7 @@ public class PDFGraphics2DSample {
 }
 ```
 
-You can also complete customize the font mapping if you derive from PdfBoxGraphics2DFontTextDrawer:
+You can also complete customize the font mapping if you derive from ```PdfBoxGraphics2DFontTextDrawer```:
 ```java
 class MyPdfBoxGraphics2DFontTextDrawer extends PdfBoxGraphics2DFontTextDrawer {
 	@Override

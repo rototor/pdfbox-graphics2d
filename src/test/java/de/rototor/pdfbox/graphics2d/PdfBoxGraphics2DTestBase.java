@@ -21,6 +21,7 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDFontFactory;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import org.apache.pdfbox.util.Matrix;
 
@@ -32,7 +33,7 @@ import java.io.IOException;
 
 class PdfBoxGraphics2DTestBase {
 	enum Mode {
-		NormalVectorized, FontTextIfPossible, ForceFontText
+		DefaultVectorized, FontTextIfPossible, ForceFontText, DefaultFontText
 	}
 
 	@SuppressWarnings("SpellCheckingInspection")
@@ -62,8 +63,8 @@ class PdfBoxGraphics2DTestBase {
 				contentStream.beginText();
 				contentStream.setStrokingColor(0, 0, 0);
 				contentStream.setNonStrokingColor(0, 0, 0);
-				contentStream.setFont(PDFontFactory.createDefaultFont(), 12);
-				contentStream.setTextMatrix(Matrix.getTranslateInstance(10, -100));
+				contentStream.setFont(PDType1Font.HELVETICA_BOLD, 15);
+				contentStream.setTextMatrix(Matrix.getTranslateInstance(10, 800));
 				contentStream.showText("Mode " + m);
 				contentStream.endText();
 				switch (m) {
@@ -72,13 +73,19 @@ class PdfBoxGraphics2DTestBase {
 					fontTextDrawer.registerFont(
 							new File("src/test/resources/de/rototor/pdfbox/graphics2d/DejaVuSerifCondensed.ttf"));
 					break;
+				case DefaultFontText: {
+					fontTextDrawer = new PdfBoxGraphics2DFontTextDrawerDefaultFonts();
+					fontTextDrawer.registerFont(
+							new File("src/test/resources/de/rototor/pdfbox/graphics2d/DejaVuSerifCondensed.ttf"));
+					break;
+				}
 				case ForceFontText:
 					fontTextDrawer = new PdfBoxGraphics2DFontTextForcedDrawer();
 					fontTextDrawer.registerFont(
 							PdfBoxGraphics2DTestBase.class.getResourceAsStream("DejaVuSerifCondensed.ttf"));
 					fontTextDrawer.registerFont("Arial", pdArial);
 					break;
-				case NormalVectorized:
+				case DefaultVectorized:
 				default:
 					break;
 				}

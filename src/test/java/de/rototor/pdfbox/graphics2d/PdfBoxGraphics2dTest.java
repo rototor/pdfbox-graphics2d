@@ -70,7 +70,54 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase {
 	}
 
 	@Test
-	public void testSimpleGraphics2d() throws IOException {
+	public void testDifferentFonts() {
+		exportGraphic("simple", "fonts", new GraphicsExporter() {
+			@Override
+			public void draw(Graphics2D gfx) throws IOException, FontFormatException {
+				Font sansSerif = new Font(Font.SANS_SERIF, Font.PLAIN, 15);
+				Font embeddedFont = Font
+						.createFont(Font.TRUETYPE_FONT,
+								PdfBoxGraphics2dTest.class.getResourceAsStream("DejaVuSerifCondensed.ttf"))
+						.deriveFont(15f);
+				Font monoFont = Font.decode(Font.MONOSPACED).deriveFont(15f);
+				Font serifFont = Font.decode(Font.SERIF).deriveFont(15f);
+				gfx.setPaint(Color.BLACK);
+				int y = 50;
+				for (Font f : new Font[] { sansSerif, embeddedFont, monoFont, serifFont }) {
+					int x = 10;
+					gfx.setFont(f);
+					String txt = f.getFontName() + ": ";
+					gfx.drawString(txt, x, y);
+					x += gfx.getFontMetrics().stringWidth(txt);
+
+					txt = "Normal ";
+					gfx.drawString(txt, x, y);
+					x += gfx.getFontMetrics().stringWidth(txt);
+
+					txt = "Bold ";
+					gfx.setFont(f.deriveFont(Font.BOLD));
+					gfx.drawString(txt, x, y);
+					x += gfx.getFontMetrics().stringWidth(txt);
+
+					txt = "Italic ";
+					gfx.setFont(f.deriveFont(Font.ITALIC));
+					gfx.drawString(txt, x, y);
+					x += gfx.getFontMetrics().stringWidth(txt);
+
+					txt = "Bold-Italic ";
+					gfx.setFont(f.deriveFont(Font.ITALIC | Font.BOLD));
+					gfx.drawString(txt, x, y);
+					gfx.getFontMetrics().stringWidth(txt);
+
+					y += 30;
+				}
+
+			}
+		});
+	}
+
+	@Test
+	public void testSimpleGraphics2d() {
 		exportGraphic("simple", "simple", new GraphicsExporter() {
 			@Override
 			public void draw(Graphics2D gfx) throws IOException, FontFormatException {

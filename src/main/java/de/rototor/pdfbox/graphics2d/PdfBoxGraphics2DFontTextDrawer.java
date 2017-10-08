@@ -20,8 +20,8 @@ import org.apache.fontbox.ttf.TrueTypeFont;
 import org.apache.pdfbox.io.IOUtils;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDFont;
-import org.apache.pdfbox.pdmodel.font.PDFontFactory;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.util.Matrix;
 
 import java.awt.*;
@@ -49,7 +49,7 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 	 */
 	@SuppressWarnings("ResultOfMethodCallIgnored")
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		for (File tempFile : tempFiles)
 			tempFile.delete();
 		tempFiles.clear();
@@ -65,7 +65,6 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 	private final List<FontEntry> fontFiles = new ArrayList<FontEntry>();
 	private final List<File> tempFiles = new ArrayList<File>();
 	private final Map<String, PDFont> fontMap = new HashMap<String, PDFont>();
-	private PDFont defaultFont;
 
 	/**
 	 * Register a font. If possible, try to use a font file, i.e.
@@ -79,14 +78,9 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 	 *            the input stream of the font. This file must be a ttf/otf file!
 	 *            You have to close the stream outside, this method will not close
 	 *            the stream.
-	 * @throws IOException
-	 *             when something goes wrong with reading the font or writing the
-	 *             font to the content stream of the PDF:
-	 * @throws FontFormatException
-	 *             if the font file can not read correctly using java.awt.Font.
 	 */
 	@SuppressWarnings("WeakerAccess")
-	public void registerFont(String fontName, InputStream fontStream) throws IOException, FontFormatException {
+	public void registerFont(String fontName, InputStream fontStream) throws IOException {
 		File fontFile = File.createTempFile("pdfboxgfx2dfont", ".ttf");
 		FileOutputStream out = new FileOutputStream(fontFile);
 		try {
@@ -108,14 +102,9 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 	 * @param fontFile
 	 *            the font file. This file must exist for the live time of this
 	 *            object, as the font data will be read lazy on demand
-	 * @throws IOException
-	 *             when something goes wrong with reading the font or writing the
-	 *             font to the content stream of the PDF:
-	 * @throws FontFormatException
-	 *             if the font file can not read correctly using java.awt.Font.
 	 */
 	@SuppressWarnings("WeakerAccess")
-	public void registerFont(String fontName, File fontFile) throws IOException, FontFormatException {
+	public void registerFont(String fontName, File fontFile) {
 		FontEntry entry = new FontEntry();
 		entry.overrideName = fontName;
 		entry.file = fontFile;
@@ -127,14 +116,9 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 	 * 
 	 * @param fontFile
 	 *            the font file
-	 * @throws IOException
-	 *             when something goes wrong with reading the font or writing the
-	 *             font to the content stream of the PDF:
-	 * @throws FontFormatException
-	 *             if the font file can not read correctly using java.awt.Font.
 	 */
 	@SuppressWarnings("WeakerAccess")
-	public void registerFont(File fontFile) throws IOException, FontFormatException {
+	public void registerFont(File fontFile) {
 		registerFont(null, fontFile);
 	}
 
@@ -146,11 +130,9 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 	 * @throws IOException
 	 *             when something goes wrong with reading the font or writing the
 	 *             font to the content stream of the PDF:
-	 * @throws FontFormatException
-	 *             if the font file can not read correctly using java.awt.Font.
 	 */
 	@SuppressWarnings("WeakerAccess")
-	public void registerFont(InputStream fontStream) throws IOException, FontFormatException {
+	public void registerFont(InputStream fontStream) throws IOException {
 		registerFont(null, fontStream);
 	}
 
@@ -208,8 +190,8 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 			boolean isStrikeThrough = TextAttribute.STRIKETHROUGH_ON
 					.equals(iterator.getAttribute(TextAttribute.STRIKETHROUGH));
 			boolean isUnderline = TextAttribute.UNDERLINE_ON.equals(iterator.getAttribute(TextAttribute.UNDERLINE));
-			boolean isLingatures = TextAttribute.LIGATURES_ON.equals(iterator.getAttribute(TextAttribute.LIGATURES));
-			if (isStrikeThrough || isUnderline || isLingatures)
+			boolean isLigatures = TextAttribute.LIGATURES_ON.equals(iterator.getAttribute(TextAttribute.LIGATURES));
+			if (isStrikeThrough || isUnderline || isLigatures)
 				return false;
 
 			run = iterateRun(iterator, sb);
@@ -309,11 +291,64 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 				showTextOnStream(env, contentStream, attributeFont, font, isStrikeThrough, isUnderline, isLigatures,
 						text);
 			} catch (IllegalArgumentException e) {
-				System.err.println("PDFBoxGraphics: Can not map text " + text + " with font "
-						+ attributeFont.getFontName() + ": " + e.getMessage());
+				if (font instanceof PDType1Font && !font.isEmbedded()) {
+					/*
+					 * We tried to use a builtin default font, but it does not have the needed
+					 * characters. So we use a embedded font as fallback.
+					 */
+					try {
+						if (fallbackFontUnknownEncodings == null)
+							fallbackFontUnknownEncodings = findFallbackFont(env);
+						if (fallbackFontUnknownEncodings != null) {
+							env.getContentStream().setFont(fallbackFontUnknownEncodings, attributeFont.getSize2D());
+							showTextOnStream(env, contentStream, attributeFont, fallbackFontUnknownEncodings,
+									isStrikeThrough, isUnderline, isLigatures, text);
+							e = null;
+						}
+					} catch (IllegalArgumentException ignored) {
+						e = ignored;
+					}
+				}
+
+				if (e != null)
+					System.err.println("PDFBoxGraphics: Can not map text " + text + " with font "
+							+ attributeFont.getFontName() + ": " + e.getMessage());
 			}
 		}
 		contentStream.endText();
+	}
+
+	private PDFont fallbackFontUnknownEncodings;
+
+	private PDFont findFallbackFont(IFontTextDrawerEnv env) throws IOException {
+		/*
+		 * We search for the right font in the system folders... We try to use
+		 * LucidaSansRegular and if not found Arial, because this fonts often exists. We
+		 * use the Java default font as fallback.
+		 * 
+		 * Normally this method is only used and called if a default font misses some
+		 * special characters, e.g. Hebrew or Arabic characters.
+		 */
+		String javaHome = System.getProperty("java.home", ".");
+		String javaFontDir = javaHome + "/lib/fonts";
+		String windir = System.getenv("WINDIR");
+		if (windir == null)
+			windir = javaFontDir;
+		File[] paths = new File[] { new File(new File(windir), "fonts"), new File(System.getProperty("user.dir", ".")),
+				new File("/Library/Fonts"), new File("/usr/share/fonts/truetype"), new File(javaFontDir) };
+		File foundFontFile = null;
+		for (String fontFileName : new String[] { "LucidaSansRegular.ttf", "arial.ttf", "Arial.ttf" }) {
+			for (File path : paths) {
+				File arialFile = new File(path, fontFileName);
+				if (arialFile.exists()) {
+					foundFontFile = arialFile;
+					break;
+				}
+			}
+			if (foundFontFile != null)
+				break;
+		}
+		return PDType0Font.load(env.getDocument(), foundFontFile);
 	}
 
 	private void showTextOnStream(IFontTextDrawerEnv env, PDPageContentStream contentStream, Font attributeFont,
@@ -341,7 +376,11 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 	private PDFont applyFont(Font font, IFontTextDrawerEnv env) throws IOException, FontFormatException {
 		PDFont fontToUse = mapFont(font, env);
 		if (fontToUse == null) {
-			fontToUse = defaultFont;
+			/*
+			 * If we have no font but are forced to apply a font, we just use the default
+			 * builtin PDF font...
+			 */
+			fontToUse = PdfBoxGraphics2DFontTextDrawerDefaultFonts.chooseMatchingHelvetica(font);
 		}
 		env.getContentStream().setFont(fontToUse, font.getSize2D());
 		return fontToUse;
@@ -358,47 +397,6 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 	 */
 	@SuppressWarnings("WeakerAccess")
 	protected PDFont mapFont(final Font font, final IFontTextDrawerEnv env) throws IOException, FontFormatException {
-		/*
-		 * When we did not yet load the default font we are going to initialize it.
-		 */
-		if (defaultFont == null) {
-			/*
-			 * This font does normally not work :( Don't ask me why
-			 */
-			defaultFont = PDFontFactory.createDefaultFont();
-
-			/*
-			 * Because of that we search for the right font in the system folders... We try
-			 * to use LucidaSansRegular and if not found Arial, because this fonts often
-			 * exists. We use the Java default font as fallback.
-			 */
-			String javaHome = System.getProperty("java.home", ".");
-			String javaFontDir = javaHome + "/lib/fonts";
-			String windir = System.getenv("WINDIR");
-			if (windir == null)
-				windir = javaFontDir;
-			File[] paths = new File[] { new File(new File(windir), "fonts"),
-					new File(System.getProperty("user.dir", ".")), new File("/Library/Fonts"),
-					new File("/usr/share/fonts/truetype"), new File(javaFontDir) };
-			File foundFontFile = null;
-			for (String fontFileName : new String[] { "LucidaSansRegular.ttf", "arial.ttf", "Arial.ttf" }) {
-				for (File path : paths) {
-					File arialFile = new File(path, fontFileName);
-					if (arialFile.exists()) {
-						foundFontFile = arialFile;
-						break;
-					}
-				}
-				if (foundFontFile != null)
-					break;
-			}
-			if (foundFontFile != null) {
-				defaultFont = PDType0Font.load(env.getDocument(), foundFontFile);
-			}
-			fontMap.put("Dialog", defaultFont);
-			fontMap.put("SansSerif", defaultFont);
-		}
-
 		/*
 		 * If we have any font registering's, we must perform them now
 		 */
