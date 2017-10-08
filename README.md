@@ -254,7 +254,7 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 
 Version 0.8:
  - Implemented ```PdfBoxGraphics2DFontTextDrawerDefaultFonts``` to allow
- preferring default PDF fonts over vectorized text [#1](https://github.com/rototor/pdfbox-graphics2d/issues/5).
+ preferring default PDF fonts over vectorized text [#5](https://github.com/rototor/pdfbox-graphics2d/issues/5).
 
 Version 0.7:
  - Bugfixes on the font based text support. Now also gradients can be used to paint text.
