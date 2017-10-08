@@ -40,15 +40,17 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.7</version>
+	<version>0.8</version>
 </dependency>
 ```
+
+This library targets Java 1.6 and should work with Java 1.6. But at the moment it is only tested with Java 1.7 and Java 9.
 
 ## Example Usage
 
 ```java
 public class PDFGraphics2DSample {
-	public static main(String[] argv) throws Exception {
+	public static main(String[] argv) {
 		PDDocument document = new PDDocument();
 		PDPage page = new PDPage(PDRectangle.A4);
 		document.addPage(page);
@@ -159,7 +161,7 @@ register additional fonts.
 
 ```java
 public class PDFGraphics2DSample {
-	public static main(String[] argv) throws Exception {
+	public static main(String[] argv) {
 		/* 
 		 * Document creation and init as in the example above 
 		 */
@@ -186,7 +188,7 @@ public class PDFGraphics2DSample {
 			/*
 			 * You already have a PDFont in the document? Then make it known to the library.
 			 */
-			fontTextDrawer.registerFont("Helvetica Bold", pdFontHelveticaBold);
+			fontTextDrawer.registerFont("My Custom Font", pdMyCustomFont);
 			
 			
 			/*
@@ -250,6 +252,10 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 
 ## Changes
 
+Version 0.8:
+ - Implemented ```PdfBoxGraphics2DFontTextDrawerDefaultFonts``` to allow
+ preferring default PDF fonts over vectorized text [#1](https://github.com/rototor/pdfbox-graphics2d/issues/5).
+
 Version 0.7:
  - Bugfixes on the font based text support. Now also gradients can be used to paint text.
 
@@ -257,20 +263,20 @@ Version 0.6:
  - Implemented basic support for using fonts to render texts. 
 
 Version 0.5:
- - Fixed getClip() and clip(Shape) handling. Both did not correctly handle transforms. This bug was
+ - Fixed ```getClip()``` and ```clip(Shape)``` handling. Both did not correctly handle transforms. This bug was
  exposed by Batik 1.9 and found by @ketanmpandya. Thanks @ketanmpandya [#2](https://github.com/rototor/pdfbox-graphics2d/pull/2), OpenHtmlToPdf [#99](https://github.com/danfickle/openhtmltopdf/issues/99)
  
 Version 0.4:
- - Initial support for basic AlphaComposite. Thanks @FabioVassallo [#1](https://github.com/rototor/pdfbox-graphics2d/pull/1)
- - When drawing a shape with a zero or negative size don't use PDShadings, as they won't work.Thanks @FabioVassallo [#1](https://github.com/rototor/pdfbox-graphics2d/pull/1)
+ - Initial support for basic ```AlphaComposite```. Thanks @FabioVassallo [#1](https://github.com/rototor/pdfbox-graphics2d/pull/1)
+ - When drawing a shape with a zero or negative size don't use ```PDShadings```, as they won't work.Thanks @FabioVassallo [#1](https://github.com/rototor/pdfbox-graphics2d/pull/1)
 
 Version 0.3:
- - Fix for a NPE when calling setClip() with null.
- - Upgrade to PDFBox 2.0.5, replacing the usage of appendRawCommands() with setMiterLimit().
+ - Fix for a NPE when calling ```setClip()``` with null.
+ - Upgrade to PDFBox 2.0.5, replacing the usage of ```appendRawCommands()``` with ```setMiterLimit()```.
 
 Version 0.2:
- - The paint applier (Mapping of java.awt.Paint to PDF) can be customized, so you can map special paints if needed.
- - Support for TexturePaint
+ - The paint applier (Mapping of ```java.awt.Paint``` to PDF) can be customized, so you can map special paints if needed.
+ - Support for ```TexturePaint```
 
 ## Licence
 

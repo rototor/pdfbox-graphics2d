@@ -11,7 +11,7 @@ import java.io.IOException;
  * whenever possible. Default fonts are not embedded. You can register
  * additional font files. If no font mapping is found, Helvetica is used.
  * 
- * This will fallback to vectorized text, if any kind of RTL text is rendered
+ * This will fallback to vectorized text if any kind of RTL text is rendered
  * and/or any other not supported feature is used.
  */
 public class PdfBoxGraphics2DFontTextDrawerDefaultFonts extends PdfBoxGraphics2DFontTextDrawer {
