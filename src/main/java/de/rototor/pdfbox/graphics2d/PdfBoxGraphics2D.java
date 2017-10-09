@@ -200,7 +200,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		xFormObject = appearance;
 		xFormObject.setResources(new PDResources());
 		xFormObject.setBBox(bbox);
-		contentStream = new PDPageContentStream(document, appearance, xFormObject.getStream().createOutputStream());
+		contentStream = new PDPageContentStream(document, appearance, xFormObject.getStream().createOutputStream(COSName.FLATE_DECODE));
 		contentStreamSaveState();
 
 		baseTransform = new AffineTransform();

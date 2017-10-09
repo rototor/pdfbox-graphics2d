@@ -252,6 +252,9 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 
 ## Changes
 
+Version 0.9-SNAPSHOT:
+ - Compress the content stream generated for the XForm.
+
 Version 0.8:
  - Implemented ```PdfBoxGraphics2DFontTextDrawerDefaultFonts``` to allow
  preferring default PDF fonts over vectorized text [#5](https://github.com/rototor/pdfbox-graphics2d/issues/5).
