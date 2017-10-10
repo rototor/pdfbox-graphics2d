@@ -34,7 +34,7 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase {
 	public void testNegativeShapesAndComposite() {
 		exportGraphic("simple", "negativeWithComposite", new GraphicsExporter() {
 			@Override
-			public void draw(Graphics2D gfx) throws IOException, FontFormatException {
+			public void draw(Graphics2D gfx) {
 				RoundRectangle2D.Float rect = new RoundRectangle2D.Float(10f, 10f, 20f, 20f, 5f, 6f);
 
 				AffineTransform transformIdentity = new AffineTransform();
