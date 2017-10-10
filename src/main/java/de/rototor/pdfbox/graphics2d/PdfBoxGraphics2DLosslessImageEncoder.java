@@ -27,12 +27,22 @@ import java.awt.color.ICC_Profile;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.ref.SoftReference;
+import java.util.HashMap;
+import java.util.Map;
 
+/**
+ * Encodes all images using lossless compression. Tries to reuse images as much
+ * as possible. You can share an instance of this class with multiple
+ * PdfBoxGraphics2D objects.
+ */
 public class PdfBoxGraphics2DLosslessImageEncoder implements IPdfBoxGraphics2DImageEncoder {
+	private Map<SoftReference<PDDocument>, Map<SoftReference<Image>, SoftReference<PDImageXObject>>> docImageMap = new HashMap<SoftReference<PDDocument>, Map<SoftReference<Image>, SoftReference<PDImageXObject>>>();
 
 	@Override
 	public PDImageXObject encodeImage(PDDocument document, PDPageContentStream contentStream, Image image) {
 		final BufferedImage bi;
+
 		if (image instanceof BufferedImage) {
 			bi = (BufferedImage) image;
 		} else {
@@ -42,25 +52,39 @@ public class PdfBoxGraphics2DLosslessImageEncoder implements IPdfBoxGraphics2DIm
 			Graphics graphics = bi.getGraphics();
 			if (!graphics.drawImage(image, 0, 0, null, null))
 				throw new IllegalStateException("Not fully loaded images are not supported.");
+			graphics.dispose();
 		}
-		try {
-			PDImageXObject imageXObject = LosslessFactory.createFromImage(document, bi);
 
-			/*
-			 * Do we have a color profile we need to embed?
-			 */
-			if (bi.getColorModel().getColorSpace() instanceof ICC_ColorSpace) {
-				ICC_Profile profile = ((ICC_ColorSpace) bi.getColorModel().getColorSpace()).getProfile();
+		try {
+			Map<SoftReference<Image>, SoftReference<PDImageXObject>> imageMap = docImageMap
+					.get(new SoftReference<PDDocument>(document));
+			if (imageMap == null) {
+				imageMap = new HashMap<SoftReference<Image>, SoftReference<PDImageXObject>>();
+				docImageMap.put(new SoftReference<PDDocument>(document), imageMap);
+			}
+			SoftReference<PDImageXObject> pdImageXObjectSoftReference = imageMap.get(new SoftReference<Image>(image));
+			PDImageXObject imageXObject = pdImageXObjectSoftReference == null ? null
+					: pdImageXObjectSoftReference.get();
+			if (imageXObject == null) {
+				imageXObject = LosslessFactory.createFromImage(document, bi);
+
 				/*
-				 * Only tag a profile if it is not the default sRGB profile.
+				 * Do we have a color profile we need to embed?
 				 */
-				if (bi.getColorModel().getColorSpace() != ICC_ColorSpace.getInstance(ICC_ColorSpace.CS_sRGB)) {
-					PDICCBased pdProfile = new PDICCBased(document);
-					OutputStream outputStream = pdProfile.getPDStream().createOutputStream();
-					outputStream.write(profile.getData());
-					outputStream.close();
-					imageXObject.setColorSpace(pdProfile);
+				if (bi.getColorModel().getColorSpace() instanceof ICC_ColorSpace) {
+					ICC_Profile profile = ((ICC_ColorSpace) bi.getColorModel().getColorSpace()).getProfile();
+					/*
+					 * Only tag a profile if it is not the default sRGB profile.
+					 */
+					if (bi.getColorModel().getColorSpace() != ICC_ColorSpace.getInstance(ICC_ColorSpace.CS_sRGB)) {
+						PDICCBased pdProfile = new PDICCBased(document);
+						OutputStream outputStream = pdProfile.getPDStream().createOutputStream();
+						outputStream.write(profile.getData());
+						outputStream.close();
+						imageXObject.setColorSpace(pdProfile);
+					}
 				}
+				imageMap.put(new SoftReference<Image>(image), new SoftReference<PDImageXObject>(imageXObject));
 			}
 
 			return imageXObject;
