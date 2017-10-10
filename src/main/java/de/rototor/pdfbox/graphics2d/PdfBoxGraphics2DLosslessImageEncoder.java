@@ -37,7 +37,8 @@ import java.util.Map;
  * PdfBoxGraphics2D objects.
  */
 public class PdfBoxGraphics2DLosslessImageEncoder implements IPdfBoxGraphics2DImageEncoder {
-	private Map<SoftReference<PDDocument>, Map<SoftReference<Image>, SoftReference<PDImageXObject>>> docImageMap = new HashMap<SoftReference<PDDocument>, Map<SoftReference<Image>, SoftReference<PDImageXObject>>>();
+	private Map<ImageSoftReference, SoftReference<PDImageXObject>> imageMap = new HashMap<ImageSoftReference, SoftReference<PDImageXObject>>();
+	private SoftReference<PDDocument> doc;
 
 	@Override
 	public PDImageXObject encodeImage(PDDocument document, PDPageContentStream contentStream, Image image) {
@@ -56,13 +57,11 @@ public class PdfBoxGraphics2DLosslessImageEncoder implements IPdfBoxGraphics2DIm
 		}
 
 		try {
-			Map<SoftReference<Image>, SoftReference<PDImageXObject>> imageMap = docImageMap
-					.get(new SoftReference<PDDocument>(document));
-			if (imageMap == null) {
-				imageMap = new HashMap<SoftReference<Image>, SoftReference<PDImageXObject>>();
-				docImageMap.put(new SoftReference<PDDocument>(document), imageMap);
+			if (doc == null || doc.get() != document) {
+				imageMap = new HashMap<ImageSoftReference, SoftReference<PDImageXObject>>();
+				doc = new SoftReference<PDDocument>(document);
 			}
-			SoftReference<PDImageXObject> pdImageXObjectSoftReference = imageMap.get(new SoftReference<Image>(image));
+			SoftReference<PDImageXObject> pdImageXObjectSoftReference = imageMap.get(new ImageSoftReference(image));
 			PDImageXObject imageXObject = pdImageXObjectSoftReference == null ? null
 					: pdImageXObjectSoftReference.get();
 			if (imageXObject == null) {
@@ -84,12 +83,32 @@ public class PdfBoxGraphics2DLosslessImageEncoder implements IPdfBoxGraphics2DIm
 						imageXObject.setColorSpace(pdProfile);
 					}
 				}
-				imageMap.put(new SoftReference<Image>(image), new SoftReference<PDImageXObject>(imageXObject));
+				imageMap.put(new ImageSoftReference(image), new SoftReference<PDImageXObject>(imageXObject));
 			}
 
 			return imageXObject;
 		} catch (IOException e) {
 			throw new RuntimeException("Could not encode Image", e);
+		}
+	}
+
+	private class ImageSoftReference extends SoftReference<Image> {
+		ImageSoftReference(Image referent) {
+			super(referent);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			assert obj instanceof ImageSoftReference;
+			return ((ImageSoftReference) obj).get() == get();
+		}
+
+		@Override
+		public int hashCode() {
+			Image image = get();
+			if (image == null)
+				return 0;
+			return image.hashCode();
 		}
 	}
 }

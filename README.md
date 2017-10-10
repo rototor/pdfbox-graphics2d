@@ -252,8 +252,9 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 
 ## Changes
 
-Version 0.9-SNAPSHOT:
+Version 0.9:
  - Compress the content stream generated for the XForm.
+ - When drawing the same image multiple times, it is only encoded once now.
 
 Version 0.8:
  - Implemented ```PdfBoxGraphics2DFontTextDrawerDefaultFonts``` to allow

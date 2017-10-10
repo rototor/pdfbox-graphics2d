@@ -130,6 +130,7 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase {
 				gfx.drawImage(imgColorTest, 70, 50, 100, 50, null);
 
 				gfx.drawImage(img3, 30, 200, 75, 50, null);
+				gfx.drawImage(img3, 110, 200, 50, 50, null);
 
 				gfx.setColor(Color.YELLOW);
 				gfx.drawRect(20, 20, 100, 100);
