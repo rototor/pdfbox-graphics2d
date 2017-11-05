@@ -17,12 +17,14 @@ import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
 
 import java.awt.*;
+import java.util.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.List;
 
 /**
  * Default paint mapper.
@@ -45,6 +47,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 	@SuppressWarnings("WeakerAccess")
 	protected Composite composite;
 	private COSDictionary dictExtendedState;
+	private ExtGStateCache cache = new ExtGStateCache();
 
 	@Override
 	public PDShading applyPaint(Paint paint, PDPageContentStream contentStream, AffineTransform tf, IPaintEnv env)
@@ -58,7 +61,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 		this.pdExtendedGraphicsState = null;
 		PDShading shading = applyPaint(paint, tf);
 		if (pdExtendedGraphicsState != null)
-			contentStream.setGraphicsStateParameters(pdExtendedGraphicsState);
+			contentStream.setGraphicsStateParameters(cache.makeUnqiue(pdExtendedGraphicsState));
 		return shading;
 	}
 
@@ -427,4 +430,47 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 		}
 	}
 
+	static class ExtGStateCache {
+		private Map<Integer, List<PDExtendedGraphicsState>> states = new HashMap<Integer, List<PDExtendedGraphicsState>>();
+
+		PDExtendedGraphicsState makeUnqiue(PDExtendedGraphicsState state) {
+			int key = state.getCOSObject().size();
+			List<PDExtendedGraphicsState> pdExtendedGraphicsStates = states.get(key);
+			if (pdExtendedGraphicsStates == null) {
+				pdExtendedGraphicsStates = new ArrayList<PDExtendedGraphicsState>();
+				states.put(key, pdExtendedGraphicsStates);
+			}
+			for (PDExtendedGraphicsState s : pdExtendedGraphicsStates) {
+				if (stateEquals(s, state))
+					return s;
+			}
+			pdExtendedGraphicsStates.add(state);
+			return state;
+		}
+
+		private boolean stateEquals(PDExtendedGraphicsState s, PDExtendedGraphicsState state) {
+			COSDictionary cosDictionary = s.getCOSObject();
+			COSDictionary cosDictionary1 = state.getCOSObject();
+			return equalsCOSDictionary(cosDictionary, cosDictionary1);
+		}
+
+		private boolean equalsCOSDictionary(COSDictionary cosDictionary, COSDictionary cosDictionary1) {
+			if (cosDictionary.size() != cosDictionary1.size())
+				return false;
+			for (COSName name : cosDictionary.keySet()) {
+				COSBase item = cosDictionary.getItem(name);
+				COSBase item2 = cosDictionary1.getItem(name);
+				if (item2 == null)
+					return false;
+				if (!item.equals(item2)) {
+					if (item instanceof COSDictionary && item2 instanceof COSDictionary) {
+						if (equalsCOSDictionary((COSDictionary) item, (COSDictionary) item2))
+							continue;
+					}
+					return false;
+				}
+			}
+			return true;
+		}
+	}
 }
