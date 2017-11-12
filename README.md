@@ -40,7 +40,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.9</version>
+	<version>0.10</version>
 </dependency>
 ```
 
@@ -252,6 +252,9 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 
 ## Changes
 
+Version 0.10:
+ - Don't export the same extended graphics state over and over again. Same for shadings. [#8](https://github.com/rototor/pdfbox-graphics2d/issues/8)
+ 
 Version 0.9:
  - Compress the content stream generated for the XForm.
  - When drawing the same image multiple times, it is only encoded once now.
