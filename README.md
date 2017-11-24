@@ -243,6 +243,13 @@ class MyPdfBoxGraphics2DFontTextDrawer extends PdfBoxGraphics2DFontTextDrawer {
 ```
 This allows you to load the fonts on demand.
 
+## Compression
+By default the content stream data is compressed using the zlib default level 6. If you want to get the maximum compression out of PDFBox you should set a system property before generating your PDF:
+
+```java
+	System.setProperty(Filter.SYSPROP_DEFLATELEVEL, "9");
+```
+
 ## Creating PDF reports
 If you want to create complex PDF reports with text and graphs mixed it is recommend to not use
 PDFBox and this library directly, as both are very low level. Instead you should use 
