@@ -15,6 +15,7 @@
  */
 package de.rototor.pdfbox.graphics2d;
 
+import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.graphics.color.PDICCBased;
@@ -56,7 +57,7 @@ public class PdfBoxGraphics2DLosslessImageEncoder implements IPdfBoxGraphics2DIm
 				 */
 				if (bi.getColorModel().getColorSpace() != ICC_ColorSpace.getInstance(ICC_ColorSpace.CS_sRGB)) {
 					PDICCBased pdProfile = new PDICCBased(document);
-					OutputStream outputStream = pdProfile.getPDStream().createOutputStream();
+					OutputStream outputStream = pdProfile.getPDStream().createOutputStream(COSName.FLATE_DECODE);
 					outputStream.write(profile.getData());
 					outputStream.close();
 					imageXObject.setColorSpace(pdProfile);
