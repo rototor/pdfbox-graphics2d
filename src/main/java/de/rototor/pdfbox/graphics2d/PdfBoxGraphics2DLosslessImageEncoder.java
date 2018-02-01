@@ -39,6 +39,7 @@ import java.util.Map;
  */
 public class PdfBoxGraphics2DLosslessImageEncoder implements IPdfBoxGraphics2DImageEncoder {
 	private Map<ImageSoftReference, SoftReference<PDImageXObject>> imageMap = new HashMap<ImageSoftReference, SoftReference<PDImageXObject>>();
+	private Map<ProfileSoftReference, SoftReference<PDICCBased>> profileMap = new HashMap<ProfileSoftReference, SoftReference<PDICCBased>>();
 	private SoftReference<PDDocument> doc;
 
 	@Override
@@ -60,6 +61,7 @@ public class PdfBoxGraphics2DLosslessImageEncoder implements IPdfBoxGraphics2DIm
 		try {
 			if (doc == null || doc.get() != document) {
 				imageMap = new HashMap<ImageSoftReference, SoftReference<PDImageXObject>>();
+				profileMap = new HashMap<ProfileSoftReference, SoftReference<PDICCBased>>();
 				doc = new SoftReference<PDDocument>(document);
 			}
 			SoftReference<PDImageXObject> pdImageXObjectSoftReference = imageMap.get(new ImageSoftReference(image));
@@ -77,10 +79,18 @@ public class PdfBoxGraphics2DLosslessImageEncoder implements IPdfBoxGraphics2DIm
 					 * Only tag a profile if it is not the default sRGB profile.
 					 */
 					if (bi.getColorModel().getColorSpace() != ICC_ColorSpace.getInstance(ICC_ColorSpace.CS_sRGB)) {
-						PDICCBased pdProfile = new PDICCBased(document);
-						OutputStream outputStream = pdProfile.getPDStream().createOutputStream(COSName.FLATE_DECODE);
-						outputStream.write(profile.getData());
-						outputStream.close();
+
+						SoftReference<PDICCBased> pdProfileRef = profileMap.get(new ProfileSoftReference(profile));
+
+						PDICCBased pdProfile = pdProfileRef == null ? null : pdProfileRef.get();
+						if (pdProfile == null) {
+							pdProfile = new PDICCBased(document);
+							OutputStream outputStream = pdProfile.getPDStream()
+									.createOutputStream(COSName.FLATE_DECODE);
+							outputStream.write(profile.getData());
+							outputStream.close();
+							profileMap.put(new ProfileSoftReference(profile), new SoftReference<PDICCBased>(pdProfile));
+						}
 						imageXObject.setColorSpace(pdProfile);
 					}
 				}
@@ -109,6 +119,28 @@ public class PdfBoxGraphics2DLosslessImageEncoder implements IPdfBoxGraphics2DIm
 		@Override
 		public int hashCode() {
 			Image image = get();
+			if (image == null)
+				return 0;
+			return image.hashCode();
+		}
+	}
+
+	private class ProfileSoftReference extends SoftReference<ICC_Profile> {
+		ProfileSoftReference(ICC_Profile referent) {
+			super(referent);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (obj == null)
+				return false;
+			assert obj instanceof ProfileSoftReference;
+			return ((ProfileSoftReference) obj).get() == get();
+		}
+
+		@Override
+		public int hashCode() {
+			ICC_Profile image = get();
 			if (image == null)
 				return 0;
 			return image.hashCode();
