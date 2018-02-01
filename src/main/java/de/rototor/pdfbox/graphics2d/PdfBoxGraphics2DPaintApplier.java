@@ -4,6 +4,7 @@ import org.apache.pdfbox.cos.*;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.PDResources;
+import org.apache.pdfbox.pdmodel.common.COSObjectable;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.common.function.PDFunctionType3;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
@@ -17,12 +18,14 @@ import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
 
 import java.awt.*;
+import java.util.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.List;
 
 /**
  * Default paint mapper.
@@ -45,6 +48,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 	@SuppressWarnings("WeakerAccess")
 	protected Composite composite;
 	private COSDictionary dictExtendedState;
+	private ExtGStateCache extGStateCache = new ExtGStateCache();
+	private PDShadingCache shadingCache = new PDShadingCache();
 
 	@Override
 	public PDShading applyPaint(Paint paint, PDPageContentStream contentStream, AffineTransform tf, IPaintEnv env)
@@ -58,7 +63,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 		this.pdExtendedGraphicsState = null;
 		PDShading shading = applyPaint(paint, tf);
 		if (pdExtendedGraphicsState != null)
-			contentStream.setGraphicsStateParameters(pdExtendedGraphicsState);
+			contentStream.setGraphicsStateParameters(extGStateCache.makeUnqiue(pdExtendedGraphicsState));
 		return shading;
 	}
 
@@ -98,11 +103,11 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 		if (paint instanceof Color) {
 			applyAsStrokingColor((Color) paint);
 		} else if (paint.getClass().getSimpleName().equals("LinearGradientPaint")) {
-			return buildLinearGradientShading(paint, tf);
+			return shadingCache.makeUnqiue(buildLinearGradientShading(paint, tf));
 		} else if (paint.getClass().getSimpleName().equals("RadialGradientPaint")) {
-			return buildRadialGradientShading(paint, tf);
+			return shadingCache.makeUnqiue(buildRadialGradientShading(paint, tf));
 		} else if (paint instanceof GradientPaint) {
-			return buildGradientShading(tf, (GradientPaint) paint);
+			return shadingCache.makeUnqiue(buildGradientShading(tf, (GradientPaint) paint));
 		} else if (paint instanceof TexturePaint) {
 			applyTexturePaint((TexturePaint) paint);
 		} else {
@@ -424,6 +429,94 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 			throw new NullPointerException("Method " + propertyGetter + " not found!");
 		} catch (Exception e) {
 			throw new RuntimeException(e);
+		}
+	}
+
+	private static abstract class COSResourceCacheBase<TObject extends COSObjectable> {
+		private Map<Integer, List<TObject>> states = new HashMap<Integer, List<TObject>>();
+
+		private static boolean equalsCOSDictionary(COSDictionary cosDictionary, COSDictionary cosDictionary1) {
+			if (cosDictionary.size() != cosDictionary1.size())
+				return false;
+			for (COSName name : cosDictionary.keySet()) {
+				COSBase item = cosDictionary.getItem(name);
+				COSBase item2 = cosDictionary1.getItem(name);
+				if (!equalsCOSBase(item, item2))
+					return false;
+			}
+			return true;
+		}
+
+		private static boolean equalsCOSBase(COSBase item, COSBase item2) {
+			if (item == item2)
+				return true;
+			if (item == null)
+				return false;
+			if (item2 == null)
+				return false;
+			/*
+			 * Can the items be compared directly?
+			 */
+			if (item.equals(item2))
+				return true;
+
+			if (item instanceof COSDictionary && item2 instanceof COSDictionary)
+				return equalsCOSDictionary((COSDictionary) item, (COSDictionary) item2);
+
+			// noinspection SimplifiableIfStatement
+			if (item instanceof COSArray && item2 instanceof COSArray)
+				return equalsCOSArray((COSArray) item, (COSArray) item2);
+
+			return false;
+		}
+
+		private static boolean equalsCOSArray(COSArray item, COSArray item2) {
+			if (item.size() != item2.size())
+				return false;
+			for (int i = 0; i < item.size(); i++) {
+				COSBase i1 = item.getObject(i);
+				COSBase i2 = item2.getObject(i);
+				if (!equalsCOSBase(i1, i2))
+					return false;
+			}
+			return true;
+		}
+
+		protected abstract int getKey(TObject obj);
+
+		TObject makeUnqiue(TObject state) {
+			int key = getKey(state);
+			List<TObject> pdExtendedGraphicsStates = states.get(key);
+			if (pdExtendedGraphicsStates == null) {
+				pdExtendedGraphicsStates = new ArrayList<TObject>();
+				states.put(key, pdExtendedGraphicsStates);
+			}
+			for (TObject s : pdExtendedGraphicsStates) {
+				if (stateEquals(s, state))
+					return s;
+			}
+			pdExtendedGraphicsStates.add(state);
+			return state;
+		}
+
+		private boolean stateEquals(TObject s, TObject state) {
+			COSBase base1 = s.getCOSObject();
+			COSBase base2 = state.getCOSObject();
+			return equalsCOSBase(base1, base2);
+		}
+	}
+
+	private static class ExtGStateCache extends COSResourceCacheBase<PDExtendedGraphicsState> {
+		@Override
+		protected int getKey(PDExtendedGraphicsState obj) {
+			return obj.getCOSObject().size();
+		}
+	}
+
+	private static class PDShadingCache extends COSResourceCacheBase<PDShading> {
+		@Override
+		protected int getKey(PDShading obj) {
+			return obj.getCOSObject().size();
 		}
 	}
 

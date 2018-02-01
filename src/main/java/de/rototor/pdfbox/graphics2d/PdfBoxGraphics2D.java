@@ -453,7 +453,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		}
 	}
 
-	private void drawStringUsingShapes(AttributedCharacterIterator iterator, float x, float y) throws IOException {
+	private void drawStringUsingShapes(AttributedCharacterIterator iterator, float x, float y) {
 		Stroke originalStroke = stroke;
 		Paint originalPaint = paint;
 		TextLayout textLayout = new TextLayout(iterator, getFontRenderContext());

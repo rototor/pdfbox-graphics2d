@@ -40,7 +40,7 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase {
 
 		this.exportGraphic("svg", name.replace(".svg", ""), new GraphicsExporter() {
 			@Override
-			public void draw(Graphics2D gfx) throws IOException {
+			public void draw(Graphics2D gfx) {
 				gfx.scale(scale, scale);
 				gvtRoot.paint(gfx);
 			}

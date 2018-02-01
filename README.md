@@ -40,7 +40,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.8</version>
+	<version>0.10</version>
 </dependency>
 ```
 
@@ -243,6 +243,13 @@ class MyPdfBoxGraphics2DFontTextDrawer extends PdfBoxGraphics2DFontTextDrawer {
 ```
 This allows you to load the fonts on demand.
 
+## Compression
+By default the content stream data is compressed using the zlib default level 6. If you want to get the maximum compression out of PDFBox you should set a system property before generating your PDF:
+
+```java
+	System.setProperty(Filter.SYSPROP_DEFLATELEVEL, "9");
+```
+
 ## Creating PDF reports
 If you want to create complex PDF reports with text and graphs mixed it is recommend to not use
 PDFBox and this library directly, as both are very low level. Instead you should use 
@@ -252,8 +259,12 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 
 ## Changes
 
-Version 0.9-SNAPSHOT:
+Version 0.10:
+ - Don't export the same extended graphics state over and over again. Same for shadings. [#8](https://github.com/rototor/pdfbox-graphics2d/issues/8)
+ 
+Version 0.9:
  - Compress the content stream generated for the XForm.
+ - When drawing the same image multiple times, it is only encoded once now.
 
 Version 0.8:
  - Implemented ```PdfBoxGraphics2DFontTextDrawerDefaultFonts``` to allow
