@@ -61,5 +61,11 @@ public interface IPdfBoxGraphics2DPaintApplier {
 		 * @return the {@link Graphics2D} {@link Composite}
 		 */
 		Composite getComposite();
+
+		/**
+		 * @return The PdfBoxGraphics2D
+		 */
+		PdfBoxGraphics2D getGraphics2D();
+
 	}
 }

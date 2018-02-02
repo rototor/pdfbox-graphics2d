@@ -32,6 +32,7 @@ import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
 import org.apache.pdfbox.util.Matrix;
 
 import java.awt.*;
+import java.awt.RenderingHints.Key;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.font.TextAttribute;
@@ -96,13 +97,13 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	/**
-	 * Set a new paint applier. You should always derive your custom paint
-	 * applier from the {@link PdfBoxGraphics2DPaintApplier} and just extend the
-	 * paint mapping for custom paint.
+	 * Set a new paint applier. You should always derive your custom paint applier
+	 * from the {@link PdfBoxGraphics2DPaintApplier} and just extend the paint
+	 * mapping for custom paint.
 	 * 
-	 * If the paint you map is a paint from a standard library and you can
-	 * implement the mapping using reflection please feel free to send a pull
-	 * request to extend the default paint mapper.
+	 * If the paint you map is a paint from a standard library and you can implement
+	 * the mapping using reflection please feel free to send a pull request to
+	 * extend the default paint mapper.
 	 * 
 	 * @param paintApplier
 	 *            the paint applier responsible for mapping the paint correctly
@@ -113,13 +114,13 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	/**
-	 * Create a PDfBox Graphics2D. This size is used for the BBox of the XForm.
-	 * So everything drawn outside the rectangle (0x0)-(pixelWidth,pixelHeight)
-	 * will be clipped.
+	 * Create a PDfBox Graphics2D. This size is used for the BBox of the XForm. So
+	 * everything drawn outside the rectangle (0x0)-(pixelWidth,pixelHeight) will be
+	 * clipped.
 	 * 
-	 * Note: pixelWidth and pixelHeight only define the size of the coordinate
-	 * space within this Graphics2D. They do not affect how big the XForm is
-	 * finally displayed in the PDF.
+	 * Note: pixelWidth and pixelHeight only define the size of the coordinate space
+	 * within this Graphics2D. They do not affect how big the XForm is finally
+	 * displayed in the PDF.
 	 * 
 	 * @param document
 	 *            The document the graphics should be used to create a XForm in.
@@ -134,13 +135,13 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	/**
-	 * Create a PDfBox Graphics2D. This size is used for the BBox of the XForm.
-	 * So everything drawn outside the rectangle (0x0)-(pixelWidth,pixelHeight)
-	 * will be clipped.
+	 * Create a PDfBox Graphics2D. This size is used for the BBox of the XForm. So
+	 * everything drawn outside the rectangle (0x0)-(pixelWidth,pixelHeight) will be
+	 * clipped.
 	 *
-	 * Note: pixelWidth and pixelHeight only define the size of the coordinate
-	 * space within this Graphics2D. They do not affect how big the XForm is
-	 * finally displayed in the PDF.
+	 * Note: pixelWidth and pixelHeight only define the size of the coordinate space
+	 * within this Graphics2D. They do not affect how big the XForm is finally
+	 * displayed in the PDF.
 	 *
 	 * @param document
 	 *            The document the graphics should be used to create a XForm in.
@@ -149,8 +150,8 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 * @param pixelHeight
 	 *            the height in pixel of the drawing area.
 	 * @throws IOException
-	 *             if something goes wrong with writing into the content stream
-	 *             of the {@link PDDocument}.
+	 *             if something goes wrong with writing into the content stream of
+	 *             the {@link PDDocument}.
 	 */
 	@SuppressWarnings("WeakerAccess")
 	public PdfBoxGraphics2D(PDDocument document, float pixelWidth, float pixelHeight) throws IOException {
@@ -159,11 +160,11 @@ public class PdfBoxGraphics2D extends Graphics2D {
 
 	/**
 	 * Set an optional text drawer. By default, all text is vectorized and drawn
-	 * using vector shapes. To embed fonts into a PDF file it is necessary to
-	 * have the underlying TTF file. The java.awt.Font class does not provide
-	 * that. The FontTextDrawer must perform the java.awt.Font &lt;=&gt; PDFont
-	 * mapping and also must perform the text layout. If it can not map the text
-	 * or font correctly, the font drawing falls back to vectoring the text.
+	 * using vector shapes. To embed fonts into a PDF file it is necessary to have
+	 * the underlying TTF file. The java.awt.Font class does not provide that. The
+	 * FontTextDrawer must perform the java.awt.Font &lt;=&gt; PDFont mapping and
+	 * also must perform the text layout. If it can not map the text or font
+	 * correctly, the font drawing falls back to vectoring the text.
 	 * 
 	 * @param fontTextDrawer
 	 *            The text drawer, which can draw text using fonts
@@ -189,26 +190,34 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 * @param bbox
 	 *            Bounding Box of the graphics
 	 * @throws IOException
-	 *             when something goes wrong with writing into the content
-	 *             stream of the {@link PDDocument}.
+	 *             when something goes wrong with writing into the content stream of
+	 *             the {@link PDDocument}.
 	 */
 	public PdfBoxGraphics2D(PDDocument document, PDRectangle bbox) throws IOException {
-		this(document,bbox,new PDResources());
+		this(document, bbox, null);
 	}
 
 	/*
 	 * @internal
 	 */
-	PdfBoxGraphics2D(PDDocument document, PDRectangle bbox, PDResources resources) throws IOException {
+	PdfBoxGraphics2D(PDDocument document, PDRectangle bbox, PdfBoxGraphics2D parentGfx) throws IOException {
 		this.document = document;
 		this.bbox = bbox;
 
 		PDAppearanceStream appearance = new PDAppearanceStream(document);
 		xFormObject = appearance;
-		xFormObject.setResources(resources);
+		xFormObject.setResources(parentGfx == null ? new PDResources() : parentGfx.xFormObject.getResources());
 		xFormObject.setBBox(bbox);
-		contentStream = new PDPageContentStream(document, appearance, xFormObject.getStream().createOutputStream(COSName.FLATE_DECODE));
+		contentStream = new PDPageContentStream(document, appearance,
+				xFormObject.getStream().createOutputStream(COSName.FLATE_DECODE));
 		contentStreamSaveState();
+
+		if (parentGfx != null) {
+			this.colorMapper = parentGfx.colorMapper;
+			this.fontTextDrawer = parentGfx.fontTextDrawer;
+			this.imageEncoder = parentGfx.imageEncoder;
+			this.paintApplier = parentGfx.paintApplier;
+		}
 
 		baseTransform = new AffineTransform();
 		baseTransform.translate(0, bbox.getHeight());
@@ -257,7 +266,11 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		this.colorMapper = gfx.colorMapper;
 		this.fontTextDrawer = gfx.fontTextDrawer;
 		this.imageEncoder = gfx.imageEncoder;
+		this.paintApplier = gfx.paintApplier;
+		this.composite = gfx.composite;
+		this.renderingHints = new HashMap<Key, Object>(gfx.renderingHints);
 		this.xorColor = gfx.xorColor;
+		this.saveCounter = 0;
 
 		contentStreamSaveState();
 	}
@@ -275,7 +288,8 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			return;
 		}
 		if (cloneList.size() > 0)
-			throw new RuntimeException("Not all PdfGraphics2D clones where destroyed! Please call dispose() correctly on them.");
+			throw new RuntimeException(
+					"Not all PdfGraphics2D clones where destroyed! Please call dispose() correctly on them.");
 		try {
 			contentStreamRestoreState();
 			contentStream.close();
@@ -480,8 +494,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 				drawStringUsingText(iterator, x, y);
 			} else {
 				/*
-				 * Otherwise we fall back to draw using shapes. This works
-				 * always
+				 * Otherwise we fall back to draw using shapes. This works always
 				 */
 				drawStringUsingShapes(iterator, x, y);
 			}
@@ -493,8 +506,8 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		}
 	}
 
-	private void drawStringUsingText(AttributedCharacterIterator iterator, float x, float y) throws IOException,
-			FontFormatException {
+	private void drawStringUsingText(AttributedCharacterIterator iterator, float x, float y)
+			throws IOException, FontFormatException {
 		contentStreamSaveState();
 
 		AffineTransform tf = new AffineTransform(baseTransform);
@@ -580,16 +593,14 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			walkShape(s);
 			if (shading != null) {
 				/*
-				 * NB: the shading fill doesn't work with shapes with zero or
-				 * negative dimensions (width and/or height): in these cases a
-				 * normal fill is used
+				 * NB: the shading fill doesn't work with shapes with zero or negative
+				 * dimensions (width and/or height): in these cases a normal fill is used
 				 */
 				Rectangle2D r2d = s.getBounds2D();
 				if ((r2d.getWidth() <= 0) || (r2d.getHeight() <= 0)) {
 					/*
-					 * But we apply the shading as color, we usually want to
-					 * avoid that because it creates another nested XForm for
-					 * that ...
+					 * But we apply the shading as color, we usually want to avoid that because it
+					 * creates another nested XForm for that ...
 					 */
 					applyShadingAsColor(shading);
 					contentStream.fill();
@@ -608,8 +619,8 @@ public class PdfBoxGraphics2D extends Graphics2D {
 
 	private void applyShadingAsColor(PDShading shading) throws IOException {
 		/*
-		 * If the paint has a shading we must create a tiling pattern and set
-		 * that as stroke color...
+		 * If the paint has a shading we must create a tiling pattern and set that as
+		 * stroke color...
 		 */
 		PDTilingPattern pattern = new PDTilingPattern();
 		pattern.setPaintType(PDTilingPattern.PAINT_COLORED);
@@ -669,6 +680,11 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			@Override
 			public Composite getComposite() {
 				return PdfBoxGraphics2D.this.getComposite();
+			}
+
+			@Override
+			public PdfBoxGraphics2D getGraphics2D() {
+				return PdfBoxGraphics2D.this;
 			}
 		});
 	}
