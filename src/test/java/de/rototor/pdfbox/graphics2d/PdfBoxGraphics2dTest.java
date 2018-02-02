@@ -18,6 +18,7 @@ package de.rototor.pdfbox.graphics2d;
 import org.junit.Test;
 
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
 import java.awt.*;
 import java.awt.font.TextAttribute;
 import java.awt.geom.AffineTransform;
@@ -27,6 +28,7 @@ import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.text.AttributedString;
+import java.util.Iterator;
 
 public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase {
 
@@ -118,6 +120,10 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase {
 
 	@Test
 	public void testSimpleGraphics2d() {
+		Iterator<ImageReader> readers = ImageIO.getImageReadersByFormatName("JPEG");
+		while (readers.hasNext()) {
+			System.out.println("reader: " + readers.next());
+		}
 		exportGraphic("simple", "simple", new GraphicsExporter() {
 			@Override
 			public void draw(Graphics2D gfx) throws IOException, FontFormatException {
@@ -125,12 +131,14 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase {
 						.read(PdfBoxGraphics2dTest.class.getResourceAsStream("colortest.png"));
 				BufferedImage img2 = ImageIO.read(PdfBoxGraphics2dTest.class.getResourceAsStream("pixeltest.png"));
 				BufferedImage img3 = ImageIO.read(PdfBoxGraphics2dTest.class.getResourceAsStream("Rose-ProPhoto.jpg"));
+				BufferedImage img4 = ImageIO.read(PdfBoxGraphics2dTest.class.getResourceAsStream("Italy-P3.jpg"));
 
 				gfx.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
 				gfx.drawImage(imgColorTest, 70, 50, 100, 50, null);
 
 				gfx.drawImage(img3, 30, 200, 75, 50, null);
 				gfx.drawImage(img3, 110, 200, 50, 50, null);
+				gfx.drawImage(img4, 170, 10, 60, 40, null);
 
 				gfx.setColor(Color.YELLOW);
 				gfx.drawRect(20, 20, 100, 100);

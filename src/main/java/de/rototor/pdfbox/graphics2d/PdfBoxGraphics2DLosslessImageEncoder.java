@@ -23,6 +23,7 @@ import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
 import java.awt.*;
+import java.awt.color.ColorSpace;
 import java.awt.color.ICC_ColorSpace;
 import java.awt.color.ICC_Profile;
 import java.awt.image.BufferedImage;
@@ -78,7 +79,8 @@ public class PdfBoxGraphics2DLosslessImageEncoder implements IPdfBoxGraphics2DIm
 					/*
 					 * Only tag a profile if it is not the default sRGB profile.
 					 */
-					if (bi.getColorModel().getColorSpace() != ICC_ColorSpace.getInstance(ICC_ColorSpace.CS_sRGB)) {
+					if (((ICC_ColorSpace) bi.getColorModel().getColorSpace()).getProfile() != ICC_Profile
+							.getInstance(ColorSpace.CS_sRGB)) {
 
 						SoftReference<PDICCBased> pdProfileRef = profileMap.get(new ProfileSoftReference(profile));
 
@@ -89,6 +91,7 @@ public class PdfBoxGraphics2DLosslessImageEncoder implements IPdfBoxGraphics2DIm
 									.createOutputStream(COSName.FLATE_DECODE);
 							outputStream.write(profile.getData());
 							outputStream.close();
+							pdProfile.getPDStream().getCOSObject().setInt(COSName.N, profile.getNumComponents());
 							profileMap.put(new ProfileSoftReference(profile), new SoftReference<PDICCBased>(pdProfile));
 						}
 						imageXObject.setColorSpace(pdProfile);
