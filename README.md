@@ -40,7 +40,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.10</version>
+	<version>0.11</version>
 </dependency>
 ```
 
@@ -258,6 +258,10 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 (which are draw using Graphics2D using this library) with &lt;object&gt; HTML tags.
 
 ## Changes
+
+Version 0.11:
+ - Support Batik SVG PatternPaint. Thanks @vipcxj for [pointing this out and providing a testfile](https://github.com/danfickle/openhtmltopdf/issues/170#issuecomment-362294830).
+ - Compress embedded image ICC Profile Data
 
 Version 0.10:
  - Don't export the same extended graphics state over and over again. Same for shadings. [#8](https://github.com/rototor/pdfbox-graphics2d/issues/8)
