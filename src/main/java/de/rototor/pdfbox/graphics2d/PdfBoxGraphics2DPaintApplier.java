@@ -140,12 +140,13 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 		pattern.setYStep((float) anchorRect.getHeight());
 
 		AffineTransform patternTransform = new AffineTransform();
-		patternTransform.translate(anchorRect.getWidth(), -anchorRect.getHeight());
-		patternTransform.scale(1f, -1f);
-		if (paintPatternTransform != null)
+		if (paintPatternTransform != null) {
+			paintPatternTransform = new AffineTransform(paintPatternTransform);
+			paintPatternTransform.preConcatenate(tf);
 			patternTransform.concatenate(paintPatternTransform);
-		//patternTransform.translate(-tf.getTranslateX(), tf.getTranslateY() );
-		patternTransform.concatenate(tf);
+		} else
+			patternTransform.concatenate(tf);
+		patternTransform.scale(1f, -1f);
 		pattern.setMatrix(patternTransform);
 
 		PDAppearanceStream appearance = new PDAppearanceStream(document);
