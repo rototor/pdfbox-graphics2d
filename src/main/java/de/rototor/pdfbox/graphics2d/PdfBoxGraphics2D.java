@@ -193,12 +193,19 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 *             stream of the {@link PDDocument}.
 	 */
 	public PdfBoxGraphics2D(PDDocument document, PDRectangle bbox) throws IOException {
+		this(document,bbox,new PDResources());
+	}
+
+	/*
+	 * @internal
+	 */
+	PdfBoxGraphics2D(PDDocument document, PDRectangle bbox, PDResources resources) throws IOException {
 		this.document = document;
 		this.bbox = bbox;
 
 		PDAppearanceStream appearance = new PDAppearanceStream(document);
 		xFormObject = appearance;
-		xFormObject.setResources(new PDResources());
+		xFormObject.setResources(resources);
 		xFormObject.setBBox(bbox);
 		contentStream = new PDPageContentStream(document, appearance, xFormObject.getStream().createOutputStream(COSName.FLATE_DECODE));
 		contentStreamSaveState();
@@ -211,6 +218,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		calcGfx = calcImage.createGraphics();
 		font = calcGfx.getFont();
 		cloneInfo = null;
+
 	}
 
 	/**

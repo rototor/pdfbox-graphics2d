@@ -10,6 +10,7 @@ import org.apache.pdfbox.pdmodel.common.function.PDFunctionType3;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColorSpace;
 import org.apache.pdfbox.pdmodel.graphics.color.PDPattern;
+import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.graphics.pattern.PDTilingPattern;
 import org.apache.pdfbox.pdmodel.graphics.shading.PDShading;
@@ -18,14 +19,16 @@ import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
 
 import java.awt.*;
-import java.util.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Default paint mapper.
@@ -100,12 +103,15 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 
 	private PDShading applyPaint(Paint paint, AffineTransform tf) throws IOException {
 		applyComposite();
+		String simpleName = paint.getClass().getSimpleName();
 		if (paint instanceof Color) {
 			applyAsStrokingColor((Color) paint);
-		} else if (paint.getClass().getSimpleName().equals("LinearGradientPaint")) {
+		} else if (simpleName.equals("LinearGradientPaint")) {
 			return shadingCache.makeUnqiue(buildLinearGradientShading(paint, tf));
-		} else if (paint.getClass().getSimpleName().equals("RadialGradientPaint")) {
+		} else if (simpleName.equals("RadialGradientPaint")) {
 			return shadingCache.makeUnqiue(buildRadialGradientShading(paint, tf));
+		} else if (simpleName.equals("PatternPaint")) {
+			applyPatternPaint(paint, tf);
 		} else if (paint instanceof GradientPaint) {
 			return shadingCache.makeUnqiue(buildGradientShading(tf, (GradientPaint) paint));
 		} else if (paint instanceof TexturePaint) {
@@ -113,7 +119,63 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 		} else {
 			System.err.println("Don't know paint " + paint.getClass().getName());
 		}
+
 		return null;
+	}
+
+	/*
+	 * Batik SVG Pattern Paint
+	 */
+	private void applyPatternPaint(Paint paint, AffineTransform tf) throws IOException {
+		Rectangle2D anchorRect = getPropertyValue(paint, "getPatternRect");
+
+		AffineTransform paintPatternTransform = getPropertyValue(paint, "getPatternTransform");
+		PDTilingPattern pattern = new PDTilingPattern();
+		pattern.setPaintType(PDTilingPattern.PAINT_COLORED);
+		pattern.setTilingType(PDTilingPattern.TILING_CONSTANT_SPACING_FASTER_TILING);
+
+		pattern.setBBox(new PDRectangle((float) anchorRect.getX(), (float) anchorRect.getY(),
+				(float) anchorRect.getWidth(), (float) anchorRect.getHeight()));
+		pattern.setXStep((float) anchorRect.getWidth());
+		pattern.setYStep((float) anchorRect.getHeight());
+
+		AffineTransform patternTransform = new AffineTransform();
+		patternTransform.translate(anchorRect.getWidth(), -anchorRect.getHeight());
+		patternTransform.scale(1f, -1f);
+		if (paintPatternTransform != null)
+			patternTransform.concatenate(paintPatternTransform);
+		//patternTransform.translate(-tf.getTranslateX(), tf.getTranslateY() );
+		patternTransform.concatenate(tf);
+		pattern.setMatrix(patternTransform);
+
+		PDAppearanceStream appearance = new PDAppearanceStream(document);
+		appearance.setResources(pattern.getResources());
+		appearance.setBBox(pattern.getBBox());
+
+		Object graphicsNode = getPropertyValue(paint, "getGraphicsNode");
+		PdfBoxGraphics2D pdfBoxGraphics2D = new PdfBoxGraphics2D(document, pattern.getBBox(), resources);
+		try {
+			Method paintMethod = graphicsNode.getClass().getMethod("paint", Graphics2D.class);
+			paintMethod.invoke(graphicsNode, pdfBoxGraphics2D);
+		} catch (Exception e) {
+			System.err.println("PdfBoxGraphics2DPaintApplier error while drawing Batik PatternPaint");
+			e.printStackTrace();
+			return;
+		}
+		pdfBoxGraphics2D.dispose();
+		PDFormXObject xFormObject = pdfBoxGraphics2D.getXFormObject();
+
+		PDPageContentStream imageContentStream = new PDPageContentStream(document, appearance,
+				((COSStream) pattern.getCOSObject()).createOutputStream());
+		imageContentStream.drawForm(xFormObject);
+		imageContentStream.close();
+
+		PDColorSpace patternCS1 = new PDPattern(null);
+		COSName tilingPatternName = resources.add(pattern);
+		PDColor patternColor = new PDColor(tilingPatternName, patternCS1);
+
+		contentStream.setNonStrokingColor(patternColor);
+		contentStream.setStrokingColor(patternColor);
 	}
 
 	private void applyComposite() {
