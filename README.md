@@ -1,3 +1,5 @@
+[![Build Status](https://api.travis-ci.org/rototor/pdfbox-graphics2d.svg?branch=master)](https://travis-ci.org/rototor/pdfbox-graphics2d)
+
 # pdfbox-graphics2d
 Graphics2D Bridge for Apache PDFBox
 
