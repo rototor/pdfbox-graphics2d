@@ -119,6 +119,27 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase {
 	}
 
 	@Test
+	public void testImageEncoding() {
+		exportGraphic("imageenc", "imageenc", new GraphicsExporter() {
+			@Override
+			public void draw(Graphics2D gfx) throws IOException, FontFormatException {
+				BufferedImage img2 = ImageIO.read(PdfBoxGraphics2dTest.class.getResourceAsStream("pixeltest.png"));
+				BufferedImage img3 = ImageIO.read(PdfBoxGraphics2dTest.class.getResourceAsStream("Rose-ProPhoto.jpg"));
+				BufferedImage img4 = ImageIO.read(PdfBoxGraphics2dTest.class.getResourceAsStream("Italy-P3.jpg"));
+				BufferedImage img5 = ImageIO.read(PdfBoxGraphics2dTest.class.getResourceAsStream("16bit-image1.png"));
+				BufferedImage img6 = ImageIO.read(PdfBoxGraphics2dTest.class.getResourceAsStream("16bit-image2.png"));
+
+				gfx.drawImage(img2, 70, 50, 100, 50, null);
+				gfx.drawImage(img3, 30, 200, 75, 50, null);
+				gfx.drawImage(img4, 170, 10, 60, 40, null);
+				gfx.drawImage(img5, 270, 10, 16, 16, null);
+				gfx.drawImage(img5, 270, 30, 64, 64, null);
+				gfx.drawImage(img6, 270, 200, 100, 100, null);
+			}
+		});
+	}
+
+	@Test
 	public void testSimpleGraphics2d() {
 		Iterator<ImageReader> readers = ImageIO.getImageReadersByFormatName("JPEG");
 		while (readers.hasNext()) {
