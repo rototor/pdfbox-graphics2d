@@ -42,11 +42,11 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.12</version>
+	<version>0.13</version>
 </dependency>
 ```
 
-This library targets Java 1.6 and should work with Java 1.6. But at the moment it is only tested with Java 1.7 and Java 9.
+This library targets Java 1.6 and should work with Java 1.6. But at the moment it is only tested with Java 8, Java 9 and Java 10.
 
 ## Example Usage
 
@@ -260,6 +260,9 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 (which are draw using Graphics2D using this library) with &lt;object&gt; HTML tags.
 
 ## Changes
+
+Version 0.13:
+ - Ugraded the PDFBox version to 2.0.9
 
 Version 0.12:
  - Don't share resources between XForm's, as Acrobat Reader does not like that.
