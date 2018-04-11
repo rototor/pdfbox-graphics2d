@@ -848,8 +848,8 @@ public class PdfBoxGraphics2D extends Graphics2D {
 					contentStream.closePath();
 					break;
 				}
-				pi.next();
 			}
+			pi.next();
 		}
 	}
 
