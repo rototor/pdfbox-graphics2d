@@ -829,22 +829,25 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		PathIterator pi = clip.getPathIterator(tf);
 		float[] coords = new float[6];
 		while (!pi.isDone()) {
-			switch (pi.currentSegment(coords)) {
-			case PathIterator.SEG_MOVETO:
-				contentStream.moveTo(coords[0], coords[1]);
-				break;
-			case PathIterator.SEG_LINETO:
-				contentStream.lineTo(coords[0], coords[1]);
-				break;
-			case PathIterator.SEG_QUADTO:
-				contentStream.curveTo1(coords[0], coords[1], coords[2], coords[3]);
-				break;
-			case PathIterator.SEG_CUBICTO:
-				contentStream.curveTo(coords[0], coords[1], coords[2], coords[3], coords[4], coords[5]);
-				break;
-			case PathIterator.SEG_CLOSE:
-				contentStream.closePath();
-				break;
+			int segment = pi.currentSegment(coords);
+			if(Float.isFinite(coords[0])) {
+				switch (segment) {
+				case PathIterator.SEG_MOVETO:
+					contentStream.moveTo(coords[0], coords[1]);
+					break;
+				case PathIterator.SEG_LINETO:
+					contentStream.lineTo(coords[0], coords[1]);
+					break;
+				case PathIterator.SEG_QUADTO:
+					contentStream.curveTo1(coords[0], coords[1], coords[2], coords[3]);
+					break;
+				case PathIterator.SEG_CUBICTO:
+					contentStream.curveTo(coords[0], coords[1], coords[2], coords[3], coords[4], coords[5]);
+					break;
+				case PathIterator.SEG_CLOSE:
+					contentStream.closePath();
+					break;
+				}
 			}
 			pi.next();
 		}
