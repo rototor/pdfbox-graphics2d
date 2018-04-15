@@ -821,6 +821,25 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		}
 	}
 
+	/**
+	 * Float#isFinite() is JDK 8+. We just copied the trivial implementation here.
+	 * When we require JDK 8+ we can just drop this method and replace it bei
+	 * Float#isFinite()
+	 */
+	private static boolean isFinite(float f) {
+		return Math.abs(f) <= Float.MAX_VALUE;
+	}
+
+	/**
+	 * @return true when all required values are finite
+	 */
+	private static boolean isFinite(float[] coords, int count) {
+		for (int i = 0; i < count; i++)
+			if (!isFinite(coords[i]))
+				return false;
+		return true;
+	}
+
 	private void walkShape(Shape clip) throws IOException {
 		checkNoCloneActive();
 
@@ -830,24 +849,26 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		float[] coords = new float[6];
 		while (!pi.isDone()) {
 			int segment = pi.currentSegment(coords);
-			if(Float.isFinite(coords[0])) {
-				switch (segment) {
-				case PathIterator.SEG_MOVETO:
+			switch (segment) {
+			case PathIterator.SEG_MOVETO:
+				if (isFinite(coords, 2))
 					contentStream.moveTo(coords[0], coords[1]);
-					break;
-				case PathIterator.SEG_LINETO:
+				break;
+			case PathIterator.SEG_LINETO:
+				if (isFinite(coords, 2))
 					contentStream.lineTo(coords[0], coords[1]);
-					break;
-				case PathIterator.SEG_QUADTO:
+				break;
+			case PathIterator.SEG_QUADTO:
+				if (isFinite(coords, 4))
 					contentStream.curveTo1(coords[0], coords[1], coords[2], coords[3]);
-					break;
-				case PathIterator.SEG_CUBICTO:
+				break;
+			case PathIterator.SEG_CUBICTO:
+				if (isFinite(coords, 6))
 					contentStream.curveTo(coords[0], coords[1], coords[2], coords[3], coords[4], coords[5]);
-					break;
-				case PathIterator.SEG_CLOSE:
-					contentStream.closePath();
-					break;
-				}
+				break;
+			case PathIterator.SEG_CLOSE:
+				contentStream.closePath();
+				break;
 			}
 			pi.next();
 		}

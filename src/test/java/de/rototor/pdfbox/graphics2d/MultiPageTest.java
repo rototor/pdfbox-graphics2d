@@ -7,13 +7,14 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import org.apache.pdfbox.util.Matrix;
 import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.NumberAxis;
-import org.jfree.chart.plot.MultiplePiePlot;
-import org.jfree.chart.plot.PiePlot;
-import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.labels.StandardCategoryToolTipGenerator;
+import org.jfree.chart.plot.*;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.chart.title.LegendTitle;
+import org.jfree.chart.title.TextTitle;
 import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.category.IntervalCategoryDataset;
@@ -24,6 +25,7 @@ import org.jfree.data.time.SimpleTimePeriod;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.ui.RectangleEdge;
 import org.jfree.util.TableOrder;
 import org.junit.Test;
 
@@ -41,7 +43,7 @@ public class MultiPageTest {
 		parentDir.mkdirs();
 		File targetPDF = new File(parentDir, "multipage.pdf");
 		PDDocument document = new PDDocument();
-		for (int i = 0; i < 4; i++) {
+		for (int i = 0; i < 6; i++) {
 			PDPage page = new PDPage(PDRectangle.A4);
 			document.addPage(page);
 
@@ -90,6 +92,24 @@ public class MultiPageTest {
 		case 3: {
 			final XYDataset dataset = createDatasetXY();
 			final JFreeChart chart = createChartXY(dataset);
+			chart.draw(gfx, rectangle);
+			break;
+		}
+		case 4: {
+			final CategoryDataset dataset = createDatasetCategory();
+			final JFreeChart chart = createSpiderChart(dataset);
+			chart.draw(gfx, rectangle);
+			break;
+		}
+		case 5: {
+			final DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+			dataset.addValue(0.0, "Row 0", "Column 0");
+			dataset.addValue(0.0, "Row 0", "Column 1");
+			dataset.addValue(0.0, "Row 0", "Column 2");
+			dataset.addValue(0.0, "Row 0", "Column 3");
+			dataset.addValue(0.0, "Row 0", "Column 4");
+			final JFreeChart chart = createSpiderChart(dataset);
+			chart.setTitle("Invalid Spider Chart");
 			chart.draw(gfx, rectangle);
 			break;
 		}
@@ -378,6 +398,20 @@ public class MultiPageTest {
 		p.setInteriorGap(0.30);
 
 		return chart;
+	}
+
+	private static JFreeChart createSpiderChart(CategoryDataset dataset) {
+		SpiderWebPlot plot = new SpiderWebPlot(dataset);
+		plot.setStartAngle(54);
+		plot.setInteriorGap(0.40);
+		plot.setToolTipGenerator(new StandardCategoryToolTipGenerator());
+		JFreeChart chart = new JFreeChart("Spider Web Chart Demo 1", TextTitle.DEFAULT_FONT, plot, false);
+		LegendTitle legend = new LegendTitle(plot);
+		legend.setPosition(RectangleEdge.BOTTOM);
+		chart.addSubtitle(legend);
+		ChartUtilities.applyCurrentTheme(chart);
+		return chart;
+
 	}
 
 }
