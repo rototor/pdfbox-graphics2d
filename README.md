@@ -42,7 +42,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.13</version>
+	<version>0.14</version>
 </dependency>
 ```
 
@@ -261,6 +261,10 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 
 ## Changes
 
+Version 0.14:
+ - Don't write invalid path commands into the stream, 
+ as this will break rendering in Acrobat Reader. Thanks @FabioVassallo [#12](https://github.com/rototor/pdfbox-graphics2d/pull/12)
+ 
 Version 0.13:
  - Ugraded the PDFBox version to 2.0.9
 
