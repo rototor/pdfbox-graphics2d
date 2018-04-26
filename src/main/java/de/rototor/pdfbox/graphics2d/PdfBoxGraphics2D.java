@@ -745,13 +745,13 @@ public class PdfBoxGraphics2D extends Graphics2D {
 
 	/**
 	 * Creates a copy of this graphics object. Please call {@link #dispose()} always
-	 * on the copy after you have finished drawing with it. <br/>
-	 * <br/>
+	 * on the copy after you have finished drawing with it. <br>
+	 * <br>
 	 * Never draw both in this copy and its parent graphics at the same time, as
 	 * they all write to the same content stream. This will create a broken PDF
 	 * content stream. You should get an {@link IllegalStateException} if you do so,
-	 * but better just don't try. <br/>
-	 * <br/>
+	 * but better just don't try. <br>
+	 * <br>
 	 * The copy allows you to have different transforms, paints, etc. than the
 	 * parent graphics context without affecting the parent. You may also call
 	 * create() on a copy, but always remember to call {@link #dispose()} in reverse
