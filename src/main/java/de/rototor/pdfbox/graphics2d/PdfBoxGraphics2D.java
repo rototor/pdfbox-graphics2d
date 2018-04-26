@@ -760,7 +760,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 * @return a copy of this Graphics.
 	 * 
 	 */
-	public Graphics create() {
+	public PdfBoxGraphics2D create() {
 		try {
 			return new PdfBoxGraphics2D(this);
 		} catch (IOException e) {
