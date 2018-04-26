@@ -70,7 +70,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	private Composite composite;
 	private Shape clipShape;
 	private Color backgroundColor;
-	private final CloneInfo cloneInfo;
+	private final CopyInfo copyInfo;
 	@SuppressWarnings("SpellCheckingInspection")
 	private final PDRectangle bbox;
 
@@ -176,11 +176,11 @@ public class PdfBoxGraphics2D extends Graphics2D {
 
 	private int saveCounter = 0;
 
-	private final List<CloneInfo> cloneList = new ArrayList<CloneInfo>();
+	private final List<CopyInfo> copyList = new ArrayList<CopyInfo>();
 
-	private static class CloneInfo {
+	private static class CopyInfo {
 		PdfBoxGraphics2D sourceGfx;
-		PdfBoxGraphics2D clone;
+		PdfBoxGraphics2D copy;
 
 	}
 
@@ -226,7 +226,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		calcImage = new BufferedImage(100, 100, BufferedImage.TYPE_4BYTE_ABGR);
 		calcGfx = calcImage.createGraphics();
 		font = calcGfx.getFont();
-		cloneInfo = null;
+		copyInfo = null;
 
 	}
 
@@ -238,17 +238,17 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	public PDFormXObject getXFormObject() {
 		if (document != null)
 			throw new IllegalStateException("You can only get the XformObject after you disposed the Graphics2D!");
-		if (cloneInfo != null)
-			throw new IllegalStateException("You can not get the Xform stream from the clone");
+		if (copyInfo != null)
+			throw new IllegalStateException("You can not get the Xform stream from the copy");
 		return xFormObject;
 	}
 
 	private PdfBoxGraphics2D(PdfBoxGraphics2D gfx) throws IOException {
-		CloneInfo info = new CloneInfo();
-		info.clone = this;
+		CopyInfo info = new CopyInfo();
+		info.copy = this;
 		info.sourceGfx = gfx;
-		gfx.cloneList.add(info);
-		this.cloneInfo = info;
+		gfx.copyList.add(info);
+		this.copyInfo = info;
 
 		this.document = gfx.document;
 		this.bbox = gfx.bbox;
@@ -276,20 +276,26 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	public void dispose() {
-		if (cloneInfo != null) {
-			cloneInfo.sourceGfx.cloneList.remove(cloneInfo);
+		if (copyInfo != null) {
+			copyInfo.sourceGfx.copyList.remove(copyInfo);
 			try {
 				contentStreamRestoreState();
 			} catch (IOException e) {
 				throwException(e);
 			}
 			if (this.saveCounter != 0)
-				throw new IllegalStateException("Clone - SaveCounter should be 0, but is " + this.saveCounter);
+				throw new IllegalStateException("Copy - SaveCounter should be 0, but is " + this.saveCounter);
 			return;
 		}
-		if (cloneList.size() > 0)
+		if (copyList.size() > 0)
+			/*
+			 * When not all copies created by create() are disposed(), the resulting PDF
+			 * content stream will be invalid, as the save/restore context commands (q/Q)
+			 * are not balanced. You should always dispose() a graphics context when you are
+			 * done with it.
+			 */
 			throw new RuntimeException(
-					"Not all PdfGraphics2D clones where destroyed! Please call dispose() correctly on them.");
+					"Not all PdfGraphics2D copies were destroyed! Please ensure that all create() calls get a matching dispose() on the returned copies.");
 		try {
 			contentStreamRestoreState();
 			contentStream.close();
@@ -409,6 +415,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	public boolean drawImage(Image img, AffineTransform xform, ImageObserver obs) {
+		checkNoCopyActive();
 		AffineTransform tf = new AffineTransform();
 		tf.concatenate(baseTransform);
 		tf.concatenate(transform);
@@ -579,6 +586,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	public void drawGlyphVector(GlyphVector g, float x, float y) {
+		checkNoCopyActive();
 		AffineTransform transformOrig = (AffineTransform) transform.clone();
 		transform.translate(x, y);
 		fill(g.getOutline());
@@ -586,6 +594,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	public void fill(Shape s) {
+		checkNoCopyActive();
 		try {
 			contentStreamSaveState();
 
@@ -734,6 +743,23 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		return new RenderingHints(renderingHints);
 	}
 
+	/**
+	 * Creates a copy of this graphics object. Please call {@link #dispose()} always
+	 * on the copy after you have finished drawing with it. <br/>
+	 * <br/>
+	 * Never draw both in this copy and its parent graphics at the same time, as
+	 * they all write to the same content stream. This will create a broken PDF
+	 * content stream. You should get an {@link IllegalStateException} if you do so,
+	 * but better just don't try. <br/>
+	 * <br/>
+	 * The copy allows you to have different transforms, paints, etc. than the
+	 * parent graphics context without affecting the parent. You may also call
+	 * create() on a copy, but always remember to call {@link #dispose()} in reverse
+	 * order.
+	 * 
+	 * @return a copy of this Graphics.
+	 * 
+	 */
 	public Graphics create() {
 		try {
 			return new PdfBoxGraphics2D(this);
@@ -801,7 +827,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	public void setClip(Shape clip) {
-		checkNoCloneActive();
+		checkNoCopyActive();
 		this.clipShape = transform.createTransformedShape(clip);
 		/*
 		 * Clip on the content stream
@@ -841,7 +867,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	private void walkShape(Shape clip) throws IOException {
-		checkNoCloneActive();
+		checkNoCopyActive();
 
 		AffineTransform tf = new AffineTransform(baseTransform);
 		tf.concatenate(transform);
@@ -874,12 +900,12 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		}
 	}
 
-	private void checkNoCloneActive() {
+	private void checkNoCopyActive() {
 		/*
-		 * As long as a clone is in use you are not allowed to do anything here
+		 * As long as a copy is in use you are not allowed to do anything here
 		 */
-		if (cloneList.size() > 0)
-			throw new IllegalStateException("Don't use the main context as long as a clone is active!");
+		if (copyList.size() > 0)
+			throw new IllegalStateException("Don't use the main context as long as a copy is active!");
 	}
 
 	private void throwException(Exception e) {
@@ -973,7 +999,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	public void setTransform(AffineTransform Tx) {
-		checkNoCloneActive();
+		checkNoCopyActive();
 		transform = new AffineTransform();
 		transform.concatenate(Tx);
 	}
