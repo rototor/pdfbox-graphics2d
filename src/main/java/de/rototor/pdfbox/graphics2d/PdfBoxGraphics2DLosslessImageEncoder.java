@@ -15,23 +15,22 @@
  */
 package de.rototor.pdfbox.graphics2d;
 
-import org.apache.pdfbox.cos.COSName;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.graphics.color.PDICCBased;
-import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
-import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
-
 import java.awt.*;
 import java.awt.color.ColorSpace;
 import java.awt.color.ICC_ColorSpace;
 import java.awt.color.ICC_Profile;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.ref.SoftReference;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.graphics.color.PDColorSpace;
+import org.apache.pdfbox.pdmodel.graphics.color.PDICCBased;
+import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
 /**
  * Encodes all images using lossless compression. Tries to reuse images as much
@@ -40,7 +39,7 @@ import java.util.Map;
  */
 public class PdfBoxGraphics2DLosslessImageEncoder implements IPdfBoxGraphics2DImageEncoder {
 	private Map<ImageSoftReference, SoftReference<PDImageXObject>> imageMap = new HashMap<ImageSoftReference, SoftReference<PDImageXObject>>();
-	private Map<ProfileSoftReference, SoftReference<PDICCBased>> profileMap = new HashMap<ProfileSoftReference, SoftReference<PDICCBased>>();
+	private Map<ProfileSoftReference, SoftReference<PDColorSpace>> profileMap = new HashMap<ProfileSoftReference, SoftReference<PDColorSpace>>();
 	private SoftReference<PDDocument> doc;
 
 	@Override
@@ -62,7 +61,7 @@ public class PdfBoxGraphics2DLosslessImageEncoder implements IPdfBoxGraphics2DIm
 		try {
 			if (doc == null || doc.get() != document) {
 				imageMap = new HashMap<ImageSoftReference, SoftReference<PDImageXObject>>();
-				profileMap = new HashMap<ProfileSoftReference, SoftReference<PDICCBased>>();
+				profileMap = new HashMap<ProfileSoftReference, SoftReference<PDColorSpace>>();
 				doc = new SoftReference<PDDocument>(document);
 			}
 			SoftReference<PDImageXObject> pdImageXObjectSoftReference = imageMap.get(new ImageSoftReference(image));
@@ -82,17 +81,20 @@ public class PdfBoxGraphics2DLosslessImageEncoder implements IPdfBoxGraphics2DIm
 					if (((ICC_ColorSpace) bi.getColorModel().getColorSpace()).getProfile() != ICC_Profile
 							.getInstance(ColorSpace.CS_sRGB)) {
 
-						SoftReference<PDICCBased> pdProfileRef = profileMap.get(new ProfileSoftReference(profile));
+						SoftReference<PDColorSpace> pdProfileRef = profileMap.get(new ProfileSoftReference(profile));
 
-						PDICCBased pdProfile = pdProfileRef == null ? null : pdProfileRef.get();
+						/*
+						 * We try to reduce the copies of the same ICC profile in the PDF file. If the
+						 * image already has a profile, it will be the right one. Otherwise we must
+						 * assume that the image is now in sRGB.
+						 */
+						PDColorSpace pdProfile = pdProfileRef == null ? null : pdProfileRef.get();
 						if (pdProfile == null) {
-							pdProfile = new PDICCBased(document);
-							OutputStream outputStream = pdProfile.getPDStream()
-									.createOutputStream(COSName.FLATE_DECODE);
-							outputStream.write(profile.getData());
-							outputStream.close();
-							pdProfile.getPDStream().getCOSObject().setInt(COSName.N, profile.getNumComponents());
-							profileMap.put(new ProfileSoftReference(profile), new SoftReference<PDICCBased>(pdProfile));
+							pdProfile = imageXObject.getColorSpace();
+							if (pdProfile instanceof PDICCBased) {
+								profileMap.put(new ProfileSoftReference(profile),
+										new SoftReference<PDColorSpace>(pdProfile));
+							}
 						}
 						imageXObject.setColorSpace(pdProfile);
 					}
