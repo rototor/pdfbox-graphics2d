@@ -70,19 +70,16 @@ class PdfBoxGraphics2DTestBase {
 				switch (m) {
 				case FontTextIfPossible:
 					fontTextDrawer = new PdfBoxGraphics2DFontTextDrawer();
-					fontTextDrawer.registerFont(
-							new File("src/test/resources/de/rototor/pdfbox/graphics2d/DejaVuSerifCondensed.ttf"));
+					registerFots(fontTextDrawer);
 					break;
 				case DefaultFontText: {
 					fontTextDrawer = new PdfBoxGraphics2DFontTextDrawerDefaultFonts();
-					fontTextDrawer.registerFont(
-							new File("src/test/resources/de/rototor/pdfbox/graphics2d/DejaVuSerifCondensed.ttf"));
+					registerFots(fontTextDrawer);
 					break;
 				}
 				case ForceFontText:
 					fontTextDrawer = new PdfBoxGraphics2DFontTextForcedDrawer();
-					fontTextDrawer.registerFont(
-							PdfBoxGraphics2DTestBase.class.getResourceAsStream("DejaVuSerifCondensed.ttf"));
+					registerFots(fontTextDrawer);
 					fontTextDrawer.registerFont("Arial", pdArial);
 					break;
 				case DefaultVectorized:
@@ -115,6 +112,14 @@ class PdfBoxGraphics2DTestBase {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private void registerFots(PdfBoxGraphics2DFontTextDrawer fontTextDrawer)
+	{
+		fontTextDrawer.registerFont(new File(
+				"src/test/resources/de/rototor/pdfbox/graphics2d/DejaVuSerifCondensed.ttf"));
+		fontTextDrawer.registerFont(new File(
+				"src/test/resources/de/rototor/pdfbox/graphics2d/antonio/Antonio-Regular.ttf"));
 	}
 
 	interface GraphicsExporter {
