@@ -105,6 +105,8 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 	 */
 	@SuppressWarnings("WeakerAccess")
 	public void registerFont(String fontName, File fontFile) {
+		if (!fontFile.exists())
+			throw new IllegalArgumentException("Font " + fontFile + " does not exist!");
 		FontEntry entry = new FontEntry();
 		entry.overrideName = fontName;
 		entry.file = fontFile;
