@@ -42,7 +42,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.15</version>
+	<version>0.16</version>
 </dependency>
 ```
 
@@ -260,6 +260,10 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 (which are draw using Graphics2D using this library) with &lt;object&gt; HTML tags.
 
 ## Changes
+
+Versoin 0.16:
+ - Added new method ```disposeDanglingChildGraphics()``` to cleanup all dangling child graphics. This allows to use this graphics adapter with
+ old legacy code which does not correctly call ```dispose()``` on the graphics it used. 
 
 Version 0.15:
  - Upgrade the PDFBox version to 2.0.11
