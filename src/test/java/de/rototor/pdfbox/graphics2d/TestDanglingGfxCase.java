@@ -43,7 +43,10 @@ public class TestDanglingGfxCase {
 		contentStream.drawForm(appearanceStream);
 		contentStream.close();
 
-		document.save(new File("target/test/dangling_test.pdf"));
+		File file = new File("target/test/dangling_test.pdf");
+		//noinspection ResultOfMethodCallIgnored
+		file.getParentFile().mkdirs();
+		document.save(file);
 		document.close();
 	}
 
