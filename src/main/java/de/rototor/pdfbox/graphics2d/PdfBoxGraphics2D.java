@@ -265,7 +265,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 * And you may not always be able to fix this uses, as it may be in some 3rdparty library.
 	 * In this case this method can help you. It will cleanup all dangling child graphics. The child graphics can not be used after that.
 	 * This method is a workaround for a buggy old code. You should only use it if you have to.
-	 * <br/>
+	 * <br>
 	 * <p>
 	 * Note: You can only call this method on the "main" graphics, not on a child created with {@link #create()}
 	 */
