@@ -307,8 +307,8 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 									isStrikeThrough, isUnderline, isLigatures, text);
 							e = null;
 						}
-					} catch (IllegalArgumentException ignored) {
-						e = ignored;
+					} catch (IllegalArgumentException e1) {
+						e = e1;
 					}
 				}
 
@@ -337,9 +337,12 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 		if (windir == null)
 			windir = javaFontDir;
 		File[] paths = new File[] { new File(new File(windir), "fonts"), new File(System.getProperty("user.dir", ".")),
-				new File("/Library/Fonts"), new File("/usr/share/fonts/truetype"), new File(javaFontDir) };
+				new File("/Library/Fonts"), new File("/usr/share/fonts/truetype"),
+				new File("/usr/share/fonts/truetype/dejavu"), new File("/usr/share/fonts/truetype/liberation"),
+				new File("/usr/share/fonts/truetype/noto"), new File(javaFontDir) };
 		File foundFontFile = null;
-		for (String fontFileName : new String[] { "LucidaSansRegular.ttf", "arial.ttf", "Arial.ttf" }) {
+		for (String fontFileName : new String[] { "LucidaSansRegular.ttf", "arial.ttf", "Arial.ttf", "DejaVuSans.ttf",
+				"LiberationMono-Regular.ttf", "NotoSerif-Regular.ttf" }) {
 			for (File path : paths) {
 				File arialFile = new File(path, fontFileName);
 				if (arialFile.exists()) {
@@ -350,6 +353,11 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 			if (foundFontFile != null)
 				break;
 		}
+		/*
+		 * If we did not find any font, we can't do anything :(
+		 */
+		if (foundFontFile == null)
+			return null;
 		return PDType0Font.load(env.getDocument(), foundFontFile);
 	}
 
