@@ -42,11 +42,11 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.16</version>
+	<version>0.17</version>
 </dependency>
 ```
 
-This library targets Java 1.6 and should work with Java 1.6. But at the moment it is only tested with Java 8, Java 9 and Java 10.
+This library targets Java 1.6. Currently it's test with Java 6, Java 8, Java 9, Java 10 and Java 11.
 
 ## Example Usage
 
@@ -260,6 +260,9 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 (which are draw using Graphics2D using this library) with &lt;object&gt; HTML tags.
 
 ## Changes
+
+Version 0.17:
+ - Upgrade the PDFBox version to 2.0.12
 
 Versoin 0.16:
  - Added new method ```disposeDanglingChildGraphics()``` to cleanup all dangling child graphics. This allows to use this graphics adapter with
