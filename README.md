@@ -46,7 +46,7 @@ This library is available through Maven:
 </dependency>
 ```
 
-This library targets Java 1.6. Currently it's test with Java 6, Java 8, Java 9, Java 10 and Java 11.
+This library targets Java 1.6 and should work with Java 1.6. But at the moment it is only tested with Java 8, Java 9, Java 10 and Java 11.
 
 ## Example Usage
 
