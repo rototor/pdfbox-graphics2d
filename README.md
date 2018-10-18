@@ -5,7 +5,9 @@ Graphics2D Bridge for Apache PDFBox
 
 ## Intro
 Using this library you can use any Graphics2D API based SVG / graph / chart library 
-to embed those graphics as vector drawing in a PDF.
+to embed those graphics as vector drawing in a PDF. In combination with PDFBox PDFRenderer/PageDrawer 
+you can also "rerender" PDF pages and change certain aspects 
+(e.g. [change the color mapping](src/test/java/de/rototor/pdfbox/graphics2d/PdfRerenderTest.java)).
 
 The following features are supported:
 
@@ -42,7 +44,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.17</version>
+	<version>0.18</version>
 </dependency>
 ```
 
@@ -260,6 +262,13 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 (which are draw using Graphics2D using this library) with &lt;object&gt; HTML tags.
 
 ## Changes
+
+Version 0.18:
+ - setPaint(null) will cause the following fillXXX() and drawXXX() operations to be ignored. This allows in combination with 
+ PDFRenderer/PageDrawer to extract parts of a PDF page. E.g. you can draw only certain seperation colors into the resulting PDF if you 
+ filter the paints in PageDrawer.getPaint() and extract a seperation color from a PDF in that way.
+ - New class PdfBoxGraphics2DCMYKColor() which derives from java.awt.Color to be able to specify a CMYK color when painting.
+ - The default PdfBoxGraphics2DColorMapper now also supports mapping of "legacy" old iText 2 CMYKColor's.
 
 Version 0.17:
  - Upgrade the PDFBox version to 2.0.12
