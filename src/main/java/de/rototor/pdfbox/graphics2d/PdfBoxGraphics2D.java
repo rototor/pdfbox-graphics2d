@@ -77,9 +77,10 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	/**
 	 * Set a new color mapper.
 	 *
-	 * @param colorMapper the color mapper which maps Color to PDColor.
+	 * @param colorMapper
+	 *            the color mapper which maps Color to PDColor.
 	 */
-	@SuppressWarnings({"WeakerAccess", "unused"})
+	@SuppressWarnings({ "WeakerAccess", "unused" })
 	public void setColorMapper(IPdfBoxGraphics2DColorMapper colorMapper) {
 		this.colorMapper = colorMapper;
 	}
@@ -87,9 +88,10 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	/**
 	 * Set a new image encoder
 	 *
-	 * @param imageEncoder the image encoder, which encodes a image as PDImageXForm.
+	 * @param imageEncoder
+	 *            the image encoder, which encodes a image as PDImageXForm.
 	 */
-	@SuppressWarnings({"WeakerAccess", "unused"})
+	@SuppressWarnings({ "WeakerAccess", "unused" })
 	public void setImageEncoder(IPdfBoxGraphics2DImageEncoder imageEncoder) {
 		this.imageEncoder = imageEncoder;
 	}
@@ -103,7 +105,8 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 * the mapping using reflection please feel free to send a pull request to
 	 * extend the default paint mapper.
 	 *
-	 * @param paintApplier the paint applier responsible for mapping the paint correctly
+	 * @param paintApplier
+	 *            the paint applier responsible for mapping the paint correctly
 	 */
 	@SuppressWarnings("unused")
 	public void setPaintApplier(IPdfBoxGraphics2DPaintApplier paintApplier) {
@@ -119,9 +122,12 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 * within this Graphics2D. They do not affect how big the XForm is finally
 	 * displayed in the PDF.
 	 *
-	 * @param document    The document the graphics should be used to create a XForm in.
-	 * @param pixelWidth  the width in pixel of the drawing area.
-	 * @param pixelHeight the height in pixel of the drawing area.
+	 * @param document
+	 *            The document the graphics should be used to create a XForm in.
+	 * @param pixelWidth
+	 *            the width in pixel of the drawing area.
+	 * @param pixelHeight
+	 *            the height in pixel of the drawing area.
 	 */
 	@SuppressWarnings("WeakerAccess")
 	public PdfBoxGraphics2D(PDDocument document, int pixelWidth, int pixelHeight) throws IOException {
@@ -137,11 +143,15 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 * within this Graphics2D. They do not affect how big the XForm is finally
 	 * displayed in the PDF.
 	 *
-	 * @param document    The document the graphics should be used to create a XForm in.
-	 * @param pixelWidth  the width in pixel of the drawing area.
-	 * @param pixelHeight the height in pixel of the drawing area.
-	 * @throws IOException if something goes wrong with writing into the content stream of
-	 *                     the {@link PDDocument}.
+	 * @param document
+	 *            The document the graphics should be used to create a XForm in.
+	 * @param pixelWidth
+	 *            the width in pixel of the drawing area.
+	 * @param pixelHeight
+	 *            the height in pixel of the drawing area.
+	 * @throws IOException
+	 *             if something goes wrong with writing into the content stream of
+	 *             the {@link PDDocument}.
 	 */
 	@SuppressWarnings("WeakerAccess")
 	public PdfBoxGraphics2D(PDDocument document, float pixelWidth, float pixelHeight) throws IOException {
@@ -156,7 +166,8 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 * also must perform the text layout. If it can not map the text or font
 	 * correctly, the font drawing falls back to vectoring the text.
 	 *
-	 * @param fontTextDrawer The text drawer, which can draw text using fonts
+	 * @param fontTextDrawer
+	 *            The text drawer, which can draw text using fonts
 	 */
 	@SuppressWarnings("WeakerAccess")
 	public void setFontTextDrawer(IPdfBoxGraphics2DFontTextDrawer fontTextDrawer) {
@@ -174,10 +185,13 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	/**
-	 * @param document The document the graphics should be used to create a XForm in.
-	 * @param bbox     Bounding Box of the graphics
-	 * @throws IOException when something goes wrong with writing into the content stream of
-	 *                     the {@link PDDocument}.
+	 * @param document
+	 *            The document the graphics should be used to create a XForm in.
+	 * @param bbox
+	 *            Bounding Box of the graphics
+	 * @throws IOException
+	 *             when something goes wrong with writing into the content stream of
+	 *             the {@link PDDocument}.
 	 */
 	public PdfBoxGraphics2D(PDDocument document, PDRectangle bbox) throws IOException {
 		this(document, bbox, null);
@@ -261,13 +275,15 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	/**
-	 * Sometimes the users of {@link #create()} don't correctly {@link #dispose()} the child graphics they create.
-	 * And you may not always be able to fix this uses, as it may be in some 3rdparty library.
-	 * In this case this method can help you. It will cleanup all dangling child graphics. The child graphics can not be used after that.
-	 * This method is a workaround for a buggy old code. You should only use it if you have to.
-	 * <br>
+	 * Sometimes the users of {@link #create()} don't correctly {@link #dispose()}
+	 * the child graphics they create. And you may not always be able to fix this
+	 * uses, as it may be in some 3rdparty library. In this case this method can
+	 * help you. It will cleanup all dangling child graphics. The child graphics can
+	 * not be used after that. This method is a workaround for a buggy old code. You
+	 * should only use it if you have to. <br>
 	 * <p>
-	 * Note: You can only call this method on the "main" graphics, not on a child created with {@link #create()}
+	 * Note: You can only call this method on the "main" graphics, not on a child
+	 * created with {@link #create()}
 	 */
 	@SuppressWarnings("WeakerAccess")
 	public void disposeDanglingChildGraphics() {
@@ -321,6 +337,11 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	public void draw(Shape s) {
+		/*
+		 * Don't try to draw with no paint, just ignore that.
+		 */
+		if (paint == null)
+			return;
 		try {
 			contentStreamSaveState();
 
@@ -419,7 +440,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	public boolean drawImage(Image img, int dx1, int dy1, int dx2, int dy2, int sx1, int sy1, int sx2, int sy2,
-							 ImageObserver observer) {
+			ImageObserver observer) {
 		return drawImage(img, dx1, dy1, dx2, dy2, sx1, sy2, sx2, sy2, null, observer);
 	}
 
@@ -450,7 +471,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	public boolean drawImage(Image img, int dx1, int dy1, int dx2, int dy2, int sx1, int sy1, int sx2, int sy2,
-							 Color bgcolor, ImageObserver observer) {
+			Color bgcolor, ImageObserver observer) {
 		try {
 			contentStreamSaveState();
 			int width = dx2 - dx1;
@@ -501,6 +522,12 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	public void drawString(AttributedCharacterIterator iterator, float x, float y) {
+		/*
+		 * Don't try to draw with no paint, just ignore that.
+		 */
+		if (paint == null)
+			return;
+
 		try {
 			contentStreamSaveState();
 			/*
@@ -604,6 +631,13 @@ public class PdfBoxGraphics2D extends Graphics2D {
 
 	public void fill(Shape s) {
 		checkNoCopyActive();
+
+		/*
+		 * Don't try to draw with no paint, just ignore that.
+		 */
+		if (paint == null)
+			return;
+
 		try {
 			contentStreamSaveState();
 
@@ -758,8 +792,8 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 * <br>
 	 * Never draw both in this copy and its parent graphics at the same time, as
 	 * they all write to the same content stream. This will create a broken PDF
-	 * content stream. You should get an {@link IllegalStateException} if you do so,
-	 * but better just don't try. <br>
+	 * content stream. You should get an {@link java.lang.IllegalStateException} if
+	 * you do so, but better just don't try. <br>
 	 * <br>
 	 * The copy allows you to have different transforms, paints, etc. than the
 	 * parent graphics context without affecting the parent. You may also call
@@ -888,25 +922,25 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		while (!pi.isDone()) {
 			int segment = pi.currentSegment(coords);
 			switch (segment) {
-				case PathIterator.SEG_MOVETO:
-					if (isFinite(coords, 2))
-						contentStream.moveTo(coords[0], coords[1]);
-					break;
-				case PathIterator.SEG_LINETO:
-					if (isFinite(coords, 2))
-						contentStream.lineTo(coords[0], coords[1]);
-					break;
-				case PathIterator.SEG_QUADTO:
-					if (isFinite(coords, 4))
-						contentStream.curveTo1(coords[0], coords[1], coords[2], coords[3]);
-					break;
-				case PathIterator.SEG_CUBICTO:
-					if (isFinite(coords, 6))
-						contentStream.curveTo(coords[0], coords[1], coords[2], coords[3], coords[4], coords[5]);
-					break;
-				case PathIterator.SEG_CLOSE:
-					contentStream.closePath();
-					break;
+			case PathIterator.SEG_MOVETO:
+				if (isFinite(coords, 2))
+					contentStream.moveTo(coords[0], coords[1]);
+				break;
+			case PathIterator.SEG_LINETO:
+				if (isFinite(coords, 2))
+					contentStream.lineTo(coords[0], coords[1]);
+				break;
+			case PathIterator.SEG_QUADTO:
+				if (isFinite(coords, 4))
+					contentStream.curveTo1(coords[0], coords[1], coords[2], coords[3]);
+				break;
+			case PathIterator.SEG_CUBICTO:
+				if (isFinite(coords, 6))
+					contentStream.curveTo(coords[0], coords[1], coords[2], coords[3], coords[4], coords[5]);
+				break;
+			case PathIterator.SEG_CLOSE:
+				contentStream.closePath();
+				break;
 			}
 			pi.next();
 		}

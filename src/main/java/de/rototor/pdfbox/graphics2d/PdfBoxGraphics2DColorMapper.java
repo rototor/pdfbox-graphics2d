@@ -17,6 +17,7 @@ package de.rototor.pdfbox.graphics2d;
 
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
+import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceCMYK;
 import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceRGB;
 
 import java.awt.*;
@@ -26,6 +27,21 @@ public class PdfBoxGraphics2DColorMapper implements IPdfBoxGraphics2DColorMapper
 	public PDColor mapColor(PDPageContentStream contentStream, Color color) {
 		if (color == null)
 			return new PDColor(new float[] { 1f, 1f, 1f }, PDDeviceRGB.INSTANCE);
+
+		// Support for legacy iText 2 CMYK Color Class
+		if (color.getClass().getSimpleName().equals("CMYKColor")) {
+			float c = PdfBoxGraphics2DPaintApplier.getPropertyValue(color, "getCyan");
+			float m = PdfBoxGraphics2DPaintApplier.getPropertyValue(color, "getMagenta");
+			float y = PdfBoxGraphics2DPaintApplier.getPropertyValue(color, "getYellow");
+			float k = PdfBoxGraphics2DPaintApplier.getPropertyValue(color, "getBlack");
+			return new PDColor(new float[] { c, m, y, k }, PDDeviceCMYK.INSTANCE);
+		}
+
+		// Our own CMYK Color class
+		if (color instanceof PdfBoxGraphics2DCMYKColor) {
+			return ((PdfBoxGraphics2DCMYKColor) color).toPDColor();
+		}
+
 		float[] components = new float[] { color.getRed() / 255f, color.getGreen() / 255f, color.getBlue() / 255f };
 		return new PDColor(components, PDDeviceRGB.INSTANCE);
 	}

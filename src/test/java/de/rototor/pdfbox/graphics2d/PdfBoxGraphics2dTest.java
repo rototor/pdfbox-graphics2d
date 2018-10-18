@@ -83,10 +83,10 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase {
 						.deriveFont(15f);
 				Font monoFont = Font.decode(Font.MONOSPACED).deriveFont(15f);
 				Font serifFont = Font.decode(Font.SERIF).deriveFont(15f);
-				gfx.setPaint(Color.BLACK);
 				int y = 50;
 				for (Font f : new Font[] { sansSerif, embeddedFont, monoFont, serifFont }) {
 					int x = 10;
+					gfx.setPaint(Color.BLACK);
 					gfx.setFont(f);
 					String txt = f.getFontName() + ": ";
 					gfx.drawString(txt, x, y);
@@ -96,16 +96,19 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase {
 					gfx.drawString(txt, x, y);
 					x += gfx.getFontMetrics().stringWidth(txt);
 
+					gfx.setPaint(new PdfBoxGraphics2DCMYKColor(1f, 0.5f, 1f, 0.1f, 128));
 					txt = "Bold ";
 					gfx.setFont(f.deriveFont(Font.BOLD));
 					gfx.drawString(txt, x, y);
 					x += gfx.getFontMetrics().stringWidth(txt);
 
+					gfx.setPaint(new PdfBoxGraphics2DCMYKColor(128, 128, 128, 0));
 					txt = "Italic ";
 					gfx.setFont(f.deriveFont(Font.ITALIC));
 					gfx.drawString(txt, x, y);
 					x += gfx.getFontMetrics().stringWidth(txt);
 
+					gfx.setPaint(new PdfBoxGraphics2DCMYKColor(255, 255, 255, 255));
 					txt = "Bold-Italic ";
 					gfx.setFont(f.deriveFont(Font.ITALIC | Font.BOLD));
 					gfx.drawString(txt, x, y);
@@ -166,7 +169,7 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase {
 				gfx.setColor(Color.GREEN);
 				gfx.fillRect(10, 10, 50, 50);
 
-				gfx.setColor(Color.RED);
+				gfx.setColor(new PdfBoxGraphics2DCMYKColor(255, 128, 0, 128, 200));
 				gfx.drawString("Hello World!", 30, 120);
 				gfx.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
 						RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);

@@ -112,6 +112,13 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 
 	private PDShading applyPaint(Paint paint, PaintApplierState state) throws IOException {
 		applyComposite(state);
+
+		/*
+		 * We can not apply not existing paints
+		 */
+		if (paint == null)
+			return null;
+
 		String simpleName = paint.getClass().getSimpleName();
 		if (paint instanceof Color) {
 			applyAsStrokingColor((Color) paint, state);
@@ -488,7 +495,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 	 * @return the value read from the object
 	 */
 	@SuppressWarnings({ "unchecked", "WeakerAccess" })
-	protected <T> T getPropertyValue(Object obj, String propertyGetter) {
+	protected static <T> T getPropertyValue(Object obj, String propertyGetter) {
 		try {
 			Class c = obj.getClass();
 			while (c != null) {
