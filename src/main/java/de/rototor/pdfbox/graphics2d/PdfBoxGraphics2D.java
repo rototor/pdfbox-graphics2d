@@ -16,6 +16,7 @@
 package de.rototor.pdfbox.graphics2d;
 
 import de.rototor.pdfbox.graphics2d.IPdfBoxGraphics2DDrawControl.IDrawControlEnv;
+import de.rototor.pdfbox.graphics2d.IPdfBoxGraphics2DPaintApplier.IPaintEnv;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.cos.COSStream;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -750,40 +751,42 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		return applyPaint(paint);
 	}
 
+	private IPaintEnv paintEnv = new IPaintEnv() {
+		@Override
+		public IPdfBoxGraphics2DColorMapper getColorMapper() {
+			return colorMapper;
+		}
+
+		@Override
+		public IPdfBoxGraphics2DImageEncoder getImageEncoder() {
+			return imageEncoder;
+		}
+
+		@Override
+		public PDDocument getDocument() {
+			return document;
+		}
+
+		@Override
+		public PDResources getResources() {
+			return xFormObject.getResources();
+		}
+
+		@Override
+		public Composite getComposite() {
+			return PdfBoxGraphics2D.this.getComposite();
+		}
+
+		@Override
+		public PdfBoxGraphics2D getGraphics2D() {
+			return PdfBoxGraphics2D.this;
+		}
+	};
+
 	private PDShading applyPaint(Paint paintToApply) throws IOException {
 		AffineTransform tf = new AffineTransform(baseTransform);
 		tf.concatenate(transform);
-		return paintApplier.applyPaint(paintToApply, contentStream, tf, new IPdfBoxGraphics2DPaintApplier.IPaintEnv() {
-			@Override
-			public IPdfBoxGraphics2DColorMapper getColorMapper() {
-				return colorMapper;
-			}
-
-			@Override
-			public IPdfBoxGraphics2DImageEncoder getImageEncoder() {
-				return imageEncoder;
-			}
-
-			@Override
-			public PDDocument getDocument() {
-				return document;
-			}
-
-			@Override
-			public PDResources getResources() {
-				return xFormObject.getResources();
-			}
-
-			@Override
-			public Composite getComposite() {
-				return PdfBoxGraphics2D.this.getComposite();
-			}
-
-			@Override
-			public PdfBoxGraphics2D getGraphics2D() {
-				return PdfBoxGraphics2D.this;
-			}
-		});
+		return paintApplier.applyPaint(paintToApply, contentStream, tf, paintEnv);
 	}
 
 	public boolean hit(Rectangle rect, Shape s, boolean onStroke) {
