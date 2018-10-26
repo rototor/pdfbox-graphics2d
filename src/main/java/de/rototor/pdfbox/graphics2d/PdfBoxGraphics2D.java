@@ -16,6 +16,7 @@
 package de.rototor.pdfbox.graphics2d;
 
 import de.rototor.pdfbox.graphics2d.IPdfBoxGraphics2DDrawControl.IDrawControlEnv;
+import de.rototor.pdfbox.graphics2d.IPdfBoxGraphics2DFontTextDrawer.IFontTextDrawerEnv;
 import de.rototor.pdfbox.graphics2d.IPdfBoxGraphics2DPaintApplier.IPaintEnv;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.cos.COSStream;
@@ -352,7 +353,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		calcImage = null;
 	}
 
-	private IDrawControlEnv drawControlEnv = new IDrawControlEnv() {
+	private final IDrawControlEnv drawControlEnv = new IDrawControlEnv() {
 		@Override
 		public Paint getPaint() {
 			return paint;
@@ -575,7 +576,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			/*
 			 * If we can draw the text using fonts, we do this
 			 */
-			if (fontTextDrawer.canDrawText((AttributedCharacterIterator) iterator.clone(), fontDrawerEnv())) {
+			if (fontTextDrawer.canDrawText((AttributedCharacterIterator) iterator.clone(), fontDrawerEnv)) {
 				drawStringUsingText(iterator, x, y);
 			} else {
 				/*
@@ -600,7 +601,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		tf.translate(x, y);
 		contentStream.transform(new Matrix(tf));
 
-		fontTextDrawer.drawText(iterator, fontDrawerEnv());
+		fontTextDrawer.drawText(iterator, fontDrawerEnv);
 
 		contentStreamRestoreState();
 	}
@@ -617,51 +618,49 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		contentStream.restoreGraphicsState();
 	}
 
-	private IPdfBoxGraphics2DFontTextDrawer.IFontTextDrawerEnv fontDrawerEnv() {
-		return new IPdfBoxGraphics2DFontTextDrawer.IFontTextDrawerEnv() {
-			@Override
-			public PDDocument getDocument() {
-				return document;
-			}
+	private final IFontTextDrawerEnv fontDrawerEnv = new IPdfBoxGraphics2DFontTextDrawer.IFontTextDrawerEnv() {
+		@Override
+		public PDDocument getDocument() {
+			return document;
+		}
 
-			@Override
-			public PDPageContentStream getContentStream() {
-				return contentStream;
-			}
+		@Override
+		public PDPageContentStream getContentStream() {
+			return contentStream;
+		}
 
-			@Override
-			public Font getFont() {
-				return font;
-			}
+		@Override
+		public Font getFont() {
+			return font;
+		}
 
-			@Override
-			public Paint getPaint() {
-				return paint;
-			}
+		@Override
+		public Paint getPaint() {
+			return paint;
+		}
 
-			@Override
-			public void applyPaint(Paint paint) throws IOException {
-				PDShading pdShading = PdfBoxGraphics2D.this.applyPaint(paint);
-				if (pdShading != null)
-					applyShadingAsColor(pdShading);
-			}
+		@Override
+		public void applyPaint(Paint paint) throws IOException {
+			PDShading pdShading = PdfBoxGraphics2D.this.applyPaint(paint);
+			if (pdShading != null)
+				applyShadingAsColor(pdShading);
+		}
 
-			@Override
-			public FontRenderContext getFontRenderContext() {
-				return PdfBoxGraphics2D.this.getFontRenderContext();
-			}
+		@Override
+		public FontRenderContext getFontRenderContext() {
+			return PdfBoxGraphics2D.this.getFontRenderContext();
+		}
 
-			@Override
-			public PDRectangle getGraphicsBBox() {
-				return bbox;
-			}
+		@Override
+		public PDRectangle getGraphicsBBox() {
+			return bbox;
+		}
 
-			@Override
-			public PDResources getResources() {
-				return xFormObject.getResources();
-			}
-		};
-	}
+		@Override
+		public PDResources getResources() {
+			return xFormObject.getResources();
+		}
+	};
 
 	public void drawGlyphVector(GlyphVector g, float x, float y) {
 		checkNoCopyActive();
@@ -754,7 +753,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		return applyPaint(paint);
 	}
 
-	private IPaintEnv paintEnv = new IPaintEnv() {
+	private final IPaintEnv paintEnv = new IPaintEnv() {
 		@Override
 		public IPdfBoxGraphics2DColorMapper getColorMapper() {
 			return colorMapper;
