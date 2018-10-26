@@ -44,7 +44,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.19</version>
+	<version>0.20</version>
 </dependency>
 ```
 
@@ -262,6 +262,11 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 (which are draw using Graphics2D using this library) with &lt;object&gt; HTML tags.
 
 ## Changes
+Version 0.20:
+ - Handle null transforms in drawImage() correctly. I.e. dont throw a NullPointerException, just ignore the
+  not existing transform.
+ - Cache the different environments for the mapper/drawer/applier. This is a minor memory saving.
+
 Version 0.19:
  - You can now influence the shape fill/draw operations by setting a custom IPdfBoxGraphics2DDrawControl. This allows
   to do different things like e.g. draw an overfill for shapes (i.e. make shapes have a additional border). This can
