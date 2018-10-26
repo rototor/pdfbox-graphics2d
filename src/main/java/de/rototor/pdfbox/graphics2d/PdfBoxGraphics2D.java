@@ -15,6 +15,7 @@
  */
 package de.rototor.pdfbox.graphics2d;
 
+import de.rototor.pdfbox.graphics2d.IPdfBoxGraphics2DDrawControl.IDrawControlEnv;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.cos.COSStream;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -63,6 +64,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	private IPdfBoxGraphics2DColorMapper colorMapper = new PdfBoxGraphics2DColorMapper();
 	private IPdfBoxGraphics2DPaintApplier paintApplier = new PdfBoxGraphics2DPaintApplier();
 	private IPdfBoxGraphics2DFontTextDrawer fontTextDrawer = new PdfBoxGraphics2DFontTextDrawer();
+	private IPdfBoxGraphics2DDrawControl drawControl = PdfBoxGraphics2DDrawControlDefault.INSTANCE;
 	private Paint paint;
 	private Stroke stroke;
 	private Color xorColor;
@@ -98,7 +100,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 
 	/**
 	 * Set a new paint applier. You should always derive your custom paint applier
-	 * from the {@link PdfBoxGraphics2DPaintApplier} and just extend the paint
+	 * from the {@link IPdfBoxGraphics2DPaintApplier} and just extend the paint
 	 * mapping for custom paint.
 	 * <p>
 	 * If the paint you map is a paint from a standard library and you can implement
@@ -111,6 +113,18 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	@SuppressWarnings("unused")
 	public void setPaintApplier(IPdfBoxGraphics2DPaintApplier paintApplier) {
 		this.paintApplier = paintApplier;
+	}
+
+	/**
+	 * Set a new draw control. This allows you to influence fill() and draw()
+	 * operations. drawString() is only influence if the text is drawn as vector
+	 * shape.
+	 * 
+	 * @param drawControl
+	 *            the draw control
+	 */
+	public void setDrawControl(IPdfBoxGraphics2DDrawControl drawControl) {
+		this.drawControl = drawControl;
 	}
 
 	/**
@@ -266,6 +280,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		this.fontTextDrawer = gfx.fontTextDrawer;
 		this.imageEncoder = gfx.imageEncoder;
 		this.paintApplier = gfx.paintApplier;
+		this.drawControl = gfx.drawControl;
 		this.composite = gfx.composite;
 		this.renderingHints = new HashMap<Key, Object>(gfx.renderingHints);
 		this.xorColor = gfx.xorColor;
@@ -336,7 +351,20 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		calcImage = null;
 	}
 
+	private IDrawControlEnv drawControlEnv = new IDrawControlEnv() {
+		@Override
+		public Paint getPaint() {
+			return paint;
+		}
+
+		@Override
+		public PdfBoxGraphics2D getGraphics() {
+			return PdfBoxGraphics2D.this;
+		}
+	};
+
 	public void draw(Shape s) {
+		checkNoCopyActive();
 		/*
 		 * Don't try to draw with no paint, just ignore that.
 		 */
@@ -345,37 +373,47 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		try {
 			contentStreamSaveState();
 
-			PDShading pdShading = applyPaint();
-			if (pdShading != null)
-				applyShadingAsColor(pdShading);
-			if (stroke instanceof BasicStroke) {
-				BasicStroke basicStroke = (BasicStroke) this.stroke;
+			Shape shapeToDraw = drawControl.transformShapeBeforeDraw(s, drawControlEnv);
 
-				// Cap Style maps 1:1 between Java and PDF Spec
-				contentStream.setLineCapStyle(basicStroke.getEndCap());
-				// Line Join Style maps 1:1 between Java and PDF Spec
-				contentStream.setLineJoinStyle(basicStroke.getLineJoin());
-				if (basicStroke.getMiterLimit() > 0) {
-					// Also Miter maps 1:1 between Java and PDF Spec
-					// (NB: set the miter-limit only if value is > 0)
-					contentStream.setMiterLimit(basicStroke.getMiterLimit());
+			if (shapeToDraw != null) {
+				PDShading pdShading = applyPaint();
+				if (pdShading != null)
+					applyShadingAsColor(pdShading);
+
+				if (stroke instanceof BasicStroke) {
+					BasicStroke basicStroke = (BasicStroke) this.stroke;
+
+					// Cap Style maps 1:1 between Java and PDF Spec
+					contentStream.setLineCapStyle(basicStroke.getEndCap());
+					// Line Join Style maps 1:1 between Java and PDF Spec
+					contentStream.setLineJoinStyle(basicStroke.getLineJoin());
+					if (basicStroke.getMiterLimit() > 0) {
+						// Also Miter maps 1:1 between Java and PDF Spec
+						// (NB: set the miter-limit only if value is > 0)
+						contentStream.setMiterLimit(basicStroke.getMiterLimit());
+					}
+
+					AffineTransform tf = new AffineTransform();
+					tf.concatenate(baseTransform);
+					tf.concatenate(transform);
+
+					double scaleX = tf.getScaleX();
+					contentStream.setLineWidth((float) Math.abs(basicStroke.getLineWidth() * scaleX));
+					float[] dashArray = basicStroke.getDashArray();
+					if (dashArray != null) {
+						for (int i = 0; i < dashArray.length; i++)
+							dashArray[i] = (float) Math.abs(dashArray[i] * scaleX);
+						contentStream.setLineDashPattern(dashArray,
+								(float) Math.abs(basicStroke.getDashPhase() * scaleX));
+					}
 				}
 
-				AffineTransform tf = new AffineTransform();
-				tf.concatenate(baseTransform);
-				tf.concatenate(transform);
-
-				double scaleX = tf.getScaleX();
-				contentStream.setLineWidth((float) Math.abs(basicStroke.getLineWidth() * scaleX));
-				float[] dashArray = basicStroke.getDashArray();
-				if (dashArray != null) {
-					for (int i = 0; i < dashArray.length; i++)
-						dashArray[i] = (float) Math.abs(dashArray[i] * scaleX);
-					contentStream.setLineDashPattern(dashArray, (float) Math.abs(basicStroke.getDashPhase() * scaleX));
-				}
+				walkShape(shapeToDraw);
+				contentStream.stroke();
 			}
-			walkShape(s);
-			contentStream.stroke();
+
+			drawControl.afterShapeDraw(s, drawControlEnv);
+
 			contentStreamRestoreState();
 		} catch (IOException e) {
 			throwException(e);
@@ -641,28 +679,35 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		try {
 			contentStreamSaveState();
 
-			PDShading shading = applyPaint();
-			walkShape(s);
-			if (shading != null) {
-				/*
-				 * NB: the shading fill doesn't work with shapes with zero or negative
-				 * dimensions (width and/or height): in these cases a normal fill is used
-				 */
-				Rectangle2D r2d = s.getBounds2D();
-				if ((r2d.getWidth() <= 0) || (r2d.getHeight() <= 0)) {
+			Shape shapeToFill = drawControl.transformShapeBeforeFill(s, drawControlEnv);
+
+			if (shapeToFill != null) {
+				PDShading shading = applyPaint();
+				walkShape(shapeToFill);
+				if (shading != null) {
 					/*
-					 * But we apply the shading as color, we usually want to avoid that because it
-					 * creates another nested XForm for that ...
+					 * NB: the shading fill doesn't work with shapes with zero or negative
+					 * dimensions (width and/or height): in these cases a normal fill is used
 					 */
-					applyShadingAsColor(shading);
-					contentStream.fill();
+					Rectangle2D r2d = s.getBounds2D();
+					if ((r2d.getWidth() <= 0) || (r2d.getHeight() <= 0)) {
+						/*
+						 * But we apply the shading as color, we usually want to avoid that because it
+						 * creates another nested XForm for that ...
+						 */
+						applyShadingAsColor(shading);
+						contentStream.fill();
+					} else {
+						contentStream.clip();
+						contentStream.shadingFill(shading);
+					}
 				} else {
-					contentStream.clip();
-					contentStream.shadingFill(shading);
+					contentStream.fill();
 				}
-			} else {
-				contentStream.fill();
 			}
+
+			drawControl.afterShapeFill(s, drawControlEnv);
+
 			contentStreamRestoreState();
 		} catch (IOException e) {
 			throwException(e);
@@ -1021,26 +1066,32 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	}
 
 	public void translate(double tx, double ty) {
+		checkNoCopyActive();
 		transform.translate(tx, ty);
 	}
 
 	public void rotate(double theta) {
+		checkNoCopyActive();
 		transform.rotate(theta);
 	}
 
 	public void rotate(double theta, double x, double y) {
+		checkNoCopyActive();
 		transform.rotate(theta, x, y);
 	}
 
 	public void scale(double sx, double sy) {
+		checkNoCopyActive();
 		transform.scale(sx, sy);
 	}
 
 	public void shear(double shx, double shy) {
+		checkNoCopyActive();
 		transform.shear(shx, shy);
 	}
 
 	public void transform(AffineTransform Tx) {
+		checkNoCopyActive();
 		transform.concatenate(Tx);
 	}
 

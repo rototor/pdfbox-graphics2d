@@ -7,7 +7,7 @@ Graphics2D Bridge for Apache PDFBox
 Using this library you can use any Graphics2D API based SVG / graph / chart library 
 to embed those graphics as vector drawing in a PDF. In combination with PDFBox PDFRenderer/PageDrawer 
 you can also "rerender" PDF pages and change certain aspects 
-(e.g. [change the color mapping](src/test/java/de/rototor/pdfbox/graphics2d/PdfRerenderTest.java)).
+(e.g. [change the color mapping and perform an overfill](src/test/java/de/rototor/pdfbox/graphics2d/PdfRerenderTest.java)).
 
 The following features are supported:
 
@@ -44,7 +44,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.18</version>
+	<version>0.19</version>
 </dependency>
 ```
 
@@ -262,6 +262,10 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 (which are draw using Graphics2D using this library) with &lt;object&gt; HTML tags.
 
 ## Changes
+Version 0.19:
+ - You can now influence the shape fill/draw operations by setting a custom IPdfBoxGraphics2DDrawControl. This allows
+  to do different things like e.g. draw an overfill for shapes (i.e. make shapes have a additional border). This can
+  be useful if you need to preprocess a PDF for pre-press.
 
 Version 0.18:
  - setPaint(null) will cause the following fillXXX() and drawXXX() operations to be ignored. This allows in combination with 

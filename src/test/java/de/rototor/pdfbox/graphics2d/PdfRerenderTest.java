@@ -33,12 +33,55 @@ public class PdfRerenderTest {
 
 		PDDocument document = new PDDocument();
 		PDDocument sourceDoc = PDDocument.load(PdfRerenderTest.class.getResourceAsStream(name));
+
 		for (PDPage sourcePage : sourceDoc.getPages()) {
 			PDPage rerenderedPage = new PDPage(sourcePage.getMediaBox());
 			document.addPage(rerenderedPage);
 			PDPageContentStream cb = new PDPageContentStream(document, rerenderedPage);
 			try {
 				PdfBoxGraphics2D gfx = new PdfBoxGraphics2D(document, sourcePage.getMediaBox());
+
+				// Do overfill for red with a transparent green
+				gfx.setDrawControl(new PdfBoxGraphics2DDrawControlDefault() {
+					boolean insideOwnDraw = false;
+
+					@Override
+					public void afterShapeFill(Shape shape, IDrawControlEnv env) {
+						afterShapeDraw(shape, env);
+					}
+
+					@Override
+					public void afterShapeDraw(Shape shape, IDrawControlEnv env) {
+						if (insideOwnDraw)
+							return;
+						insideOwnDraw = true;
+						Paint paint = env.getPaint();
+						if (paint instanceof Color) {
+							if (paint.equals(Color.RED)) {
+								// We overfill with black a little bit
+								PdfBoxGraphics2D graphics = env.getGraphics();
+								Stroke prevStroke = graphics.getStroke();
+								float additinalStrokeWidth = 1f;
+								if (prevStroke instanceof BasicStroke) {
+									BasicStroke basicStroke = ((BasicStroke) prevStroke);
+									graphics.setStroke(new BasicStroke(
+											basicStroke.getLineWidth() + additinalStrokeWidth, basicStroke.getEndCap(),
+											basicStroke.getLineJoin(), basicStroke.getMiterLimit(),
+											basicStroke.getDashArray(), basicStroke.getDashPhase()));
+								} else {
+									graphics.setStroke(new BasicStroke(additinalStrokeWidth));
+								}
+								graphics.setPaint(new Color(0, 255, 0, 128));
+								graphics.draw(shape);
+
+								graphics.setPaint(paint);
+								graphics.setStroke(prevStroke);
+							}
+						}
+						insideOwnDraw = false;
+					}
+				});
+
 				PDFRenderer pdfRenderer = new PDFRenderer(sourceDoc) {
 					@Override
 					protected PageDrawer createPageDrawer(PageDrawerParameters parameters) throws IOException {
