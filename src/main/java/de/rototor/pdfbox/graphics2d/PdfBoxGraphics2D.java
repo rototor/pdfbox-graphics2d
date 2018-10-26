@@ -488,7 +488,10 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		AffineTransform tf = new AffineTransform();
 		tf.concatenate(baseTransform);
 		tf.concatenate(transform);
-		tf.concatenate((AffineTransform) xform.clone());
+
+		// Sometimes the xform can be null
+		if (xform != null)
+			tf.concatenate((AffineTransform) xform.clone());
 
 		PDImageXObject pdImage = imageEncoder.encodeImage(document, contentStream, img);
 		try {
