@@ -13,8 +13,10 @@ import org.apache.pdfbox.pdmodel.graphics.color.PDPattern;
 import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.graphics.pattern.PDTilingPattern;
+import org.apache.pdfbox.pdmodel.graphics.shading.AxialShadingPaint;
 import org.apache.pdfbox.pdmodel.graphics.shading.PDShading;
 import org.apache.pdfbox.pdmodel.graphics.shading.PDShadingType3;
+import org.apache.pdfbox.pdmodel.graphics.shading.RadialShadingPaint;
 import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
 
@@ -132,11 +134,25 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 			return shadingCache.makeUnqiue(buildGradientShading((GradientPaint) paint, state));
 		} else if (paint instanceof TexturePaint) {
 			applyTexturePaint((TexturePaint) paint, state);
+		} else if (isPDFBoxShadingPaint(paint)) {
+			// PDFBox paint, we can import the shading directly
+			System.err.println("Can't handle PDFBox shadings yet: " + paint.getClass().getName());
 		} else {
 			System.err.println("Don't know paint " + paint.getClass().getName());
 		}
 
 		return null;
+	}
+
+	private static boolean isPDFBoxShadingPaint(Paint paint) {
+		if (paint instanceof AxialShadingPaint || paint instanceof RadialShadingPaint)
+			return true;
+		String simpleName = paint.getClass().getSimpleName();
+		for (int i = 1; i <= 7; i++) {
+			if (simpleName.equals("Type" + i + "ShadingPaint "))
+				return true;
+		}
+		return false;
 	}
 
 	/*
