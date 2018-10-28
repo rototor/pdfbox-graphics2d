@@ -75,7 +75,6 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	private Shape clipShape;
 	private Color backgroundColor;
 	private final CopyInfo copyInfo;
-	@SuppressWarnings("SpellCheckingInspection")
 	private final PDRectangle bbox;
 
 	/**
@@ -84,7 +83,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 * @param colorMapper
 	 *            the color mapper which maps Color to PDColor.
 	 */
-	@SuppressWarnings({ "WeakerAccess", "unused" })
+	@SuppressWarnings({  "unused" })
 	public void setColorMapper(IPdfBoxGraphics2DColorMapper colorMapper) {
 		this.colorMapper = colorMapper;
 	}
@@ -95,7 +94,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 * @param imageEncoder
 	 *            the image encoder, which encodes a image as PDImageXForm.
 	 */
-	@SuppressWarnings({ "WeakerAccess", "unused" })
+	@SuppressWarnings({ "unused" })
 	public void setImageEncoder(IPdfBoxGraphics2DImageEncoder imageEncoder) {
 		this.imageEncoder = imageEncoder;
 	}
@@ -125,6 +124,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 * @param drawControl
 	 *            the draw control
 	 */
+	@SuppressWarnings({ "unused", "WeakerAccess" })
 	public void setDrawControl(IPdfBoxGraphics2DDrawControl drawControl) {
 		this.drawControl = drawControl;
 	}
@@ -145,7 +145,6 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 * @param pixelHeight
 	 *            the height in pixel of the drawing area.
 	 */
-	@SuppressWarnings("WeakerAccess")
 	public PdfBoxGraphics2D(PDDocument document, int pixelWidth, int pixelHeight) throws IOException {
 		this(document, new PDRectangle(pixelWidth, pixelHeight));
 	}
@@ -169,7 +168,6 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 *             if something goes wrong with writing into the content stream of
 	 *             the {@link PDDocument}.
 	 */
-	@SuppressWarnings("WeakerAccess")
 	public PdfBoxGraphics2D(PDDocument document, float pixelWidth, float pixelHeight) throws IOException {
 		this(document, new PDRectangle(pixelWidth, pixelHeight));
 	}
