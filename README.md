@@ -262,6 +262,9 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 (which are draw using Graphics2D using this library) with &lt;object&gt; HTML tags.
 
 ## Changes
+Version 0.21 (to be released):
+ - Handle PDFBox PDShading-Paint's.
+
 Version 0.20:
  - Handle null transforms in drawImage() correctly. I.e. dont throw a NullPointerException, just ignore the
   not existing transform.
