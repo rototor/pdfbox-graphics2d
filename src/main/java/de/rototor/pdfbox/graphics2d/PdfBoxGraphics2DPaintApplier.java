@@ -1,6 +1,7 @@
 package de.rototor.pdfbox.graphics2d;
 
 import org.apache.pdfbox.cos.*;
+import org.apache.pdfbox.multipdf.PDFCloneUtility;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.PDResources;
@@ -19,6 +20,7 @@ import org.apache.pdfbox.pdmodel.graphics.shading.PDShadingType3;
 import org.apache.pdfbox.pdmodel.graphics.shading.RadialShadingPaint;
 import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
+import org.apache.pdfbox.util.Matrix;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
@@ -34,14 +36,13 @@ import java.util.Map;
 
 /**
  * Default paint mapper.
- * 
+ *
  * NOTE: Objects of this class are stateful and *not* thread safe!
  */
 public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintApplier {
 	@SuppressWarnings("WeakerAccess")
 	protected class PaintApplierState {
 		protected PDDocument document;
-		@SuppressWarnings("WeakerAccess")
 		protected PDPageContentStream contentStream;
 		@SuppressWarnings("WeakerAccess")
 		protected IPdfBoxGraphics2DColorMapper colorMapper;
@@ -136,12 +137,28 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 			applyTexturePaint((TexturePaint) paint, state);
 		} else if (isPDFBoxShadingPaint(paint)) {
 			// PDFBox paint, we can import the shading directly
-			System.err.println("Can't handle PDFBox shadings yet: " + paint.getClass().getName());
+			return shadingCache.makeUnqiue(importPDFBoxShadingPaint(paint, state));
 		} else {
 			System.err.println("Don't know paint " + paint.getClass().getName());
 		}
 
 		return null;
+	}
+
+    private PDShading importPDFBoxShadingPaint(Paint paint, PaintApplierState state)
+            throws IOException {
+
+        PDFCloneUtility pdfCloneUtility = new PDFCloneUtility(state.document);
+
+		Matrix matrix = PrivateFieldAccessor.getPrivateField(paint, "matrix");
+		PDShading shading = PrivateFieldAccessor.getPrivateField(paint, "shading");
+		// TODO: Replace with PDShadingPaint as soon as it becomes possible
+        //Matrix matrix = ((PDShadingPaint) paint).getMatrix();
+		//PDShading shading = ((PDShadingPaint) paint).getShading();
+
+        state.contentStream.transform(matrix);
+		return PDShading.create((COSDictionary) pdfCloneUtility
+				.cloneForNewDocument(shading.getCOSObject()));
 	}
 
 	private static boolean isPDFBoxShadingPaint(Paint paint) {
@@ -341,7 +358,6 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 		state.tf.transform(centerPoint, centerPoint);
 		state.tf.transform(focusPoint, focusPoint);
 
-		@SuppressWarnings("ConstantConditions")
 		float radius = getPropertyValue(paint, "getRadius");
 		radius = (float) Math.abs(radius * state.tf.getScaleX());
 
@@ -503,7 +519,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 
 	/**
 	 * Get a property value from an object using reflection
-	 * 
+	 *
 	 * @param obj
 	 *            The object to get a property from.
 	 * @param propertyGetter
@@ -517,7 +533,6 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 			while (c != null) {
 				try {
 					Method m = c.getMethod(propertyGetter, (Class<?>[]) null);
-					// noinspection JavaReflectionInvocation
 					return (T) m.invoke(obj);
 				} catch (NoSuchMethodException ignored) {
 				}

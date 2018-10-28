@@ -24,9 +24,10 @@ public class PdfRerenderTest {
 	public void testPDFRerender() throws IOException {
 		rerenderPDF("heart.pdf");
 		rerenderPDF("barChart.pdf");
+		rerenderPDF("compuserver_msn_Ford_Focus.pdf");
 	}
 
-	protected void rerenderPDF(String name) throws IOException {
+	private void rerenderPDF(String name) throws IOException {
 		File parentDir = new File("target/test");
 		// noinspection ResultOfMethodCallIgnored
 		parentDir.mkdirs();

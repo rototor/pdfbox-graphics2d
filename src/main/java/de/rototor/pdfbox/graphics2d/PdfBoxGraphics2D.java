@@ -378,6 +378,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			Shape shapeToDraw = drawControl.transformShapeBeforeDraw(s, drawControlEnv);
 
 			if (shapeToDraw != null) {
+				walkShape(shapeToDraw);
 				PDShading pdShading = applyPaint();
 				if (pdShading != null)
 					applyShadingAsColor(pdShading);
@@ -410,7 +411,6 @@ public class PdfBoxGraphics2D extends Graphics2D {
 					}
 				}
 
-				walkShape(shapeToDraw);
 				contentStream.stroke();
 			}
 
@@ -685,8 +685,8 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			Shape shapeToFill = drawControl.transformShapeBeforeFill(s, drawControlEnv);
 
 			if (shapeToFill != null) {
-				PDShading shading = applyPaint();
 				walkShape(shapeToFill);
+				PDShading shading = applyPaint();
 				if (shading != null) {
 					/*
 					 * NB: the shading fill doesn't work with shapes with zero or negative
