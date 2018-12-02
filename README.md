@@ -260,7 +260,8 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 
 ## Changes
 Version 0.21 (to be released):
- - Handle PDFBox PDShading-Paint's.
+ - Upgrade the PDFBox version to 2.0.13
+ - Handle PDFBox ShadingPaint's.
 
 Version 0.20:
  - Handle null transforms in drawImage() correctly. I.e. dont throw a NullPointerException, just ignore the
