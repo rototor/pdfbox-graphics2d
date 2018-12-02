@@ -13,10 +13,7 @@ The following features are supported:
 
 - Drawing any shape using ```draw...()``` and ```fill...()``` methods from Graphics2D.
 - Drawing images. The default is to always lossless compress them. You could plugin 
-  your own ```Image``` -> ```PDImageXObject``` conversion if you want to encode the images as jpeg. 
-  **Note:** At the moment PDFBox only writes 8 bit images. So even if you draw 
-  a 16 bit image it will be reduced to 8 bit. Depending on the colorspaces this may be 
-  bad and cause colorshifts in the embedded image (e.g. with 16 Bit ProPhoto color profile).
+  your own ```Image``` -> ```PDImageXObject``` conversion if you want to encode the images as jpeg.  
 - All ```BasicStroke``` attributes.
 - ```Paint```:
 	- ```Color```. You can specify your own color mapping implementation to special map the (RGB) 
