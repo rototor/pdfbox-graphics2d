@@ -885,6 +885,13 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		xorColor = null;
 	}
 
+	/**
+	 * XOR Mode is currently not implemented as it's not possible in PDF. This mode
+	 * is ignored.
+	 * 
+	 * @param c1
+	 *            the XORMode Color
+	 */
 	public void setXORMode(Color c1) {
 		xorColor = c1;
 	}
