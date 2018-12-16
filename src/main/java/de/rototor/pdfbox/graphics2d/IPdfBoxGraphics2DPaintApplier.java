@@ -15,7 +15,7 @@ import java.io.IOException;
 public interface IPdfBoxGraphics2DPaintApplier {
 	/**
 	 * Apply the paint on the ContentStream
-	 * 
+	 *
 	 * @param paint
 	 *            the paint which should be applied
 	 * @param contentStream
@@ -67,5 +67,10 @@ public interface IPdfBoxGraphics2DPaintApplier {
 		 */
 		PdfBoxGraphics2D getGraphics2D();
 
+		/**
+		 * @return the {@link Graphics2D} XOR Mode {@link Color} or null if paint mode
+		 *         is active.
+		 */
+		Color getXORMode();
 	}
 }

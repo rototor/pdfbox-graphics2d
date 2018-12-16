@@ -32,6 +32,8 @@ The following features are not supported (yet):
 - ```(Alpha-)Composite``` with a rule different then ```AlphaComposite.SRC_OVER```.
 - ```copyArea()```. This is not possible to implement.
 - ```hit()```. Why would you want to use that?
+- ```setXORMode(()```. Their is no blend mode in PDF which would allow to emulate this, so this is not
+possible to be implemeted.
 
 ## Download
 
@@ -260,6 +262,10 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 
 ## Changes
 Version 0.21 (to be released):
+ - Provide the current XORMode color in the IPaintEnv. And document that XORMode is not working as it's
+ not possible to emulate. Thanks @gredler for pointing this 
+ out [#14](https://github.com/rototor/pdfbox-graphics2d/issues/14). But you can do whatever you 
+ want with that information in your IPdfBoxGraphics2DPaintAplier subclass.
  - Upgrade the PDFBox version to 2.0.13
  - Handle PDFBox ShadingPaint's.
 

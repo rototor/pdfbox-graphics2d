@@ -83,7 +83,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 * @param colorMapper
 	 *            the color mapper which maps Color to PDColor.
 	 */
-	@SuppressWarnings({  "unused" })
+	@SuppressWarnings({ "unused" })
 	public void setColorMapper(IPdfBoxGraphics2DColorMapper colorMapper) {
 		this.colorMapper = colorMapper;
 	}
@@ -120,7 +120,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 * Set a new draw control. This allows you to influence fill() and draw()
 	 * operations. drawString() is only influence if the text is drawn as vector
 	 * shape.
-	 * 
+	 *
 	 * @param drawControl
 	 *            the draw control
 	 */
@@ -780,6 +780,11 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		@Override
 		public PdfBoxGraphics2D getGraphics2D() {
 			return PdfBoxGraphics2D.this;
+		}
+
+		@Override
+		public Color getXORMode() {
+			return xorColor;
 		}
 	};
 
