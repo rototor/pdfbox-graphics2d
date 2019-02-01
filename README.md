@@ -32,7 +32,7 @@ The following features are not supported (yet):
 - ```(Alpha-)Composite``` with a rule different then ```AlphaComposite.SRC_OVER```.
 - ```copyArea()```. This is not possible to implement.
 - ```hit()```. Why would you want to use that?
-- ```setXORMode(()```. Their is no blend mode in PDF which would allow to emulate this, so this is not
+- ```setXORMode()```. Their is no blend mode in PDF which would allow to emulate this, so this is not
 possible to be implemeted.
 
 ## Download
