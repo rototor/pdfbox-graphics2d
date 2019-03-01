@@ -266,7 +266,7 @@ Version 0.21 (to be released):
  not possible to emulate. Thanks @gredler for pointing this 
  out [#14](https://github.com/rototor/pdfbox-graphics2d/issues/14). But you can do whatever you 
  want with that information in your IPdfBoxGraphics2DPaintAplier subclass.
- - Upgrade the PDFBox version to 2.0.13
+ - Upgrade the PDFBox version to 2.0.14
  - Handle PDFBox ShadingPaint's.
 
 Version 0.20:
