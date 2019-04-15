@@ -43,7 +43,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.20</version>
+	<version>0.21</version>
 </dependency>
 ```
 
@@ -261,7 +261,8 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 (which are draw using Graphics2D using this library) with &lt;object&gt; HTML tags.
 
 ## Changes
-Version 0.21 (to be released):
+
+Version 0.21:
  - Provide the current XORMode color in the IPaintEnv. And document that XORMode is not working as it's
  not possible to emulate. Thanks @gredler for pointing this 
  out [#14](https://github.com/rototor/pdfbox-graphics2d/issues/14). But you can do whatever you 
