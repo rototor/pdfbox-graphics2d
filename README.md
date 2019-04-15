@@ -262,12 +262,15 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 
 ## Changes
 
+Version 0.22:
+ - Upgrade the PDFBox version to 2.0.15
+
 Version 0.21:
  - Provide the current XORMode color in the IPaintEnv. And document that XORMode is not working as it's
  not possible to emulate. Thanks @gredler for pointing this 
  out [#14](https://github.com/rototor/pdfbox-graphics2d/issues/14). But you can do whatever you 
  want with that information in your IPdfBoxGraphics2DPaintAplier subclass.
- - Upgrade the PDFBox version to 2.0.15
+ - Upgrade the PDFBox version to 2.0.14
  - Handle PDFBox ShadingPaint's.
 
 Version 0.20:
