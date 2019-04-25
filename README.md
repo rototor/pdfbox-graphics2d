@@ -43,7 +43,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.21</version>
+	<version>0.22</version>
 </dependency>
 ```
 
