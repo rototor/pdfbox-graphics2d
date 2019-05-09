@@ -683,7 +683,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			Shape shapeToFill = drawControl.transformShapeBeforeFill(s, drawControlEnv);
 
 			if (shapeToFill != null) {
-				walkShape(shapeToFill);
+				boolean useEvenOdd = walkShape(shapeToFill);
 				PDShading shading = applyPaint();
 				if (shading != null) {
 					/*
@@ -697,13 +697,13 @@ public class PdfBoxGraphics2D extends Graphics2D {
 						 * creates another nested XForm for that ...
 						 */
 						applyShadingAsColor(shading);
-						contentStream.fill();
+						fill(useEvenOdd);
 					} else {
-						contentStream.clip();
+						clip(useEvenOdd);
 						contentStream.shadingFill(shading);
 					}
 				} else {
-					contentStream.fill();
+					fill(useEvenOdd);
 				}
 			}
 
@@ -713,6 +713,13 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		} catch (IOException e) {
 			throwException(e);
 		}
+	}
+
+	private void fill(boolean useEvenOdd) throws IOException {
+		if (useEvenOdd)
+			contentStream.fillEvenOdd();
+		else
+			contentStream.fill();
 	}
 
 	private void applyShadingAsColor(PDShading shading) throws IOException {
@@ -945,12 +952,18 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			 * clip can be null, only set a clipping if not null
 			 */
 			if (clip != null) {
-				walkShape(clip);
-				contentStream.clip();
+				clip(walkShape(clip));
 			}
 		} catch (IOException e) {
 			throwException(e);
 		}
+	}
+
+	private void clip(boolean useEvenOdd) throws IOException {
+		if (useEvenOdd)
+			contentStream.clipEvenOdd();
+		else
+			contentStream.clip();
 	}
 
 	/**
@@ -972,7 +985,12 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		return true;
 	}
 
-	private void walkShape(Shape clip) throws IOException {
+	/**
+	 * Walk the path and return true if we need to use the even odd winding rule.
+	 * 
+	 * @return true if we need to use the even odd winding rule
+	 */
+	private boolean walkShape(Shape clip) throws IOException {
 		checkNoCopyActive();
 
 		AffineTransform tf = new AffineTransform(baseTransform);
@@ -1004,6 +1022,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			}
 			pi.next();
 		}
+		return pi.getWindingRule() == PathIterator.WIND_EVEN_ODD;
 	}
 
 	private void checkNoCopyActive() {

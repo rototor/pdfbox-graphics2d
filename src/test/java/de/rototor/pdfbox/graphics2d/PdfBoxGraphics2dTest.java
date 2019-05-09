@@ -21,10 +21,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import java.awt.*;
 import java.awt.font.TextAttribute;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Rectangle2D;
-import java.awt.geom.RoundRectangle2D;
+import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.text.AttributedString;
@@ -125,7 +122,7 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase {
 	public void testImageEncoding() {
 		exportGraphic("imageenc", "imageenc", new GraphicsExporter() {
 			@Override
-			public void draw(Graphics2D gfx) throws IOException, FontFormatException {
+			public void draw(Graphics2D gfx) throws IOException {
 				BufferedImage img2 = ImageIO.read(PdfBoxGraphics2dTest.class.getResourceAsStream("pixeltest.png"));
 				BufferedImage img3 = ImageIO.read(PdfBoxGraphics2dTest.class.getResourceAsStream("Rose-ProPhoto.jpg"));
 				BufferedImage img4 = ImageIO.read(PdfBoxGraphics2dTest.class.getResourceAsStream("Italy-P3.jpg"));
@@ -138,6 +135,32 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase {
 				gfx.drawImage(img5, 270, 10, 16, 16, null);
 				gfx.drawImage(img5, 270, 30, 64, 64, null);
 				gfx.drawImage(img6, 270, 200, 100, 100, null);
+			}
+		});
+	}
+
+	@Test
+	public void testEvenOddRules() {
+
+		exportGraphic("simple", "evenOdd", new GraphicsExporter() {
+			@Override
+			public void draw(Graphics2D gfx) {
+				gfx.setColor(Color.YELLOW);
+				gfx.fillPolygon(new int[] { 80, 129, 0, 160, 31 }, new int[] { 0, 152, 58, 58, 152 }, 5);
+				Path2D.Double s = new Path2D.Double();
+				s.moveTo(80, 0);
+				s.lineTo(129, 152);
+				s.lineTo(0, 58);
+				s.lineTo(160, 58);
+				s.lineTo(31, 152);
+				s.setWindingRule(Path2D.WIND_EVEN_ODD);
+				gfx.setColor(Color.BLUE);
+				gfx.translate(200, 0);
+				gfx.fill(s);
+				s.setWindingRule(Path2D.WIND_NON_ZERO);
+				gfx.setColor(Color.GREEN);
+				gfx.translate(0, 200);
+				gfx.fill(s);
 			}
 		});
 	}
