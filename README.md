@@ -43,17 +43,17 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.22</version>
+	<version>0.23</version>
 </dependency>
 ```
 
-This library targets Java 1.6 and should work with Java 1.6. But at the moment it is only tested with Java 8, Java 9, Java 10 and Java 11.
+This library targets Java 1.6 and should work with Java 1.6. But at the moment it is only tested with Java 8 and Java 11.
 
 ## Example Usage
 
 ```java
 public class PDFGraphics2DSample {
-	public static main(String[] argv) {
+	public stati3 main(String[] argv) {
 		PDDocument document = new PDDocument();
 		PDPage page = new PDPage(PDRectangle.A4);
 		document.addPage(page);
@@ -261,6 +261,9 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 (which are draw using Graphics2D using this library) with &lt;object&gt; HTML tags.
 
 ## Changes
+
+Version 0.23:
+ - Correctly handle even odd winding rules when clipping and filling shapes.
 
 Version 0.22:
  - Upgrade the PDFBox version to 2.0.15
