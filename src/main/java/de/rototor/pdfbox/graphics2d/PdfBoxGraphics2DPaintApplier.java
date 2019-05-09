@@ -134,7 +134,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 			applyTexturePaint((TexturePaint) paint, state);
 		} else if (paint instanceof ShadingPaint) {
 			// PDFBox paint, we can import the shading directly
-			return shadingCache.makeUnqiue(importPDFBoxShadingPaint((ShadingPaint)paint, state));
+			return shadingCache.makeUnqiue(importPDFBoxShadingPaint((ShadingPaint) paint, state));
 		} else {
 			System.err.println("Don't know paint " + paint.getClass().getName());
 		}
@@ -142,16 +142,14 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 		return null;
 	}
 
-    private PDShading importPDFBoxShadingPaint(ShadingPaint paint, PaintApplierState state)
-            throws IOException {
-        PDFCloneUtility pdfCloneUtility = new PDFCloneUtility(state.document);
+	private PDShading importPDFBoxShadingPaint(ShadingPaint paint, PaintApplierState state) throws IOException {
+		PDFCloneUtility pdfCloneUtility = new PDFCloneUtility(state.document);
 
-        Matrix matrix = paint.getMatrix();
+		Matrix matrix = paint.getMatrix();
 		PDShading shading = paint.getShading();
 
-        state.contentStream.transform(matrix);
-		return PDShading.create((COSDictionary) pdfCloneUtility
-				.cloneForNewDocument(shading.getCOSObject()));
+		state.contentStream.transform(matrix);
+		return PDShading.create((COSDictionary) pdfCloneUtility.cloneForNewDocument(shading.getCOSObject()));
 	}
 
 	/*
@@ -506,6 +504,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 	 *            The object to get a property from.
 	 * @param propertyGetter
 	 *            method name of the getter, i.e. "getXY".
+	 * @param <T>
+	 *            the type of the property you want to get.
 	 * @return the value read from the object
 	 */
 	@SuppressWarnings({ "unchecked", "WeakerAccess" })

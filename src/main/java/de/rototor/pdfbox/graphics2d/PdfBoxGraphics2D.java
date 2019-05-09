@@ -144,6 +144,9 @@ public class PdfBoxGraphics2D extends Graphics2D {
 	 *            the width in pixel of the drawing area.
 	 * @param pixelHeight
 	 *            the height in pixel of the drawing area.
+	 * @throws IOException
+	 *             if something goes wrong with writing into the content stream of
+	 *             the {@link PDDocument}.
 	 */
 	public PdfBoxGraphics2D(PDDocument document, int pixelWidth, int pixelHeight) throws IOException {
 		this(document, new PDRectangle(pixelWidth, pixelHeight));

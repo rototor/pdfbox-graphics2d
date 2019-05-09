@@ -73,7 +73,7 @@ public interface IPdfBoxGraphics2DDrawControl {
 		Paint getPaint();
 
 		/**
-		 * The graphics currently drawn on
+		 * @return the graphics currently drawn on
 		 */
 		PdfBoxGraphics2D getGraphics();
 	}

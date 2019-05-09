@@ -95,6 +95,8 @@ public interface IPdfBoxGraphics2DFontTextDrawer {
 	 *         to have the text drawn as vector shapes
 	 * @throws IOException
 	 *             when a font can not be loaded or a paint can't be applied.
+	 * @throws FontFormatException
+	 *             when the font file can not be loaded
 	 */
 	boolean canDrawText(AttributedCharacterIterator iterator, IFontTextDrawerEnv env)
 			throws IOException, FontFormatException;
@@ -104,6 +106,10 @@ public interface IPdfBoxGraphics2DFontTextDrawer {
 	 *            The text with all properties
 	 * @param env
 	 *            Environment
+	 * @throws IOException
+	 *             when a font can not be loaded or a paint can't be applied.
+	 * @throws FontFormatException
+	 *             when the font file can not be loaded
 	 */
 	void drawText(AttributedCharacterIterator iterator, IFontTextDrawerEnv env) throws IOException, FontFormatException;
 }

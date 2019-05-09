@@ -78,6 +78,9 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 	 *            the input stream of the font. This file must be a ttf/otf file!
 	 *            You have to close the stream outside, this method will not close
 	 *            the stream.
+	 * @throws IOException
+	 *             when something goes wrong with reading the font or writing the
+	 *             font to the content stream of the PDF:
 	 */
 	@SuppressWarnings("WeakerAccess")
 	public void registerFont(String fontName, InputStream fontStream) throws IOException {
@@ -404,6 +407,10 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 	 * @param env
 	 *            environment of the font mapper
 	 * @return the PDFont or null if none can be found.
+	 * @throws IOException
+	 *             when the font can not be loaded
+	 * @throws FontFormatException
+	 *             when the font file can not be loaded
 	 */
 	@SuppressWarnings("WeakerAccess")
 	protected PDFont mapFont(final Font font, final IFontTextDrawerEnv env) throws IOException, FontFormatException {
