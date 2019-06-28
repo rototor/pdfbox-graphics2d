@@ -43,7 +43,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.23</version>
+	<version>0.24</version>
 </dependency>
 ```
 
@@ -261,6 +261,9 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 (which are draw using Graphics2D using this library) with &lt;object&gt; HTML tags.
 
 ## Changes
+
+Version 0.24:
+ - Upgrade to PDFBox 2.0.16
 
 Version 0.23:
  - Correctly handle even odd winding rules when clipping and filling shapes.
