@@ -130,6 +130,20 @@
 					<pushChanges>false</pushChanges>
 				</configuration>
 			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>3.1.2</version>
+				<configuration>
+					<archive>
+						<manifestEntries>
+							<Automatic-Module-Name>de.rototor.pdfbox.graphics2d</Automatic-Module-Name>
+						</manifestEntries>
+					</archive>
+				</configuration>
+			</plugin>
+
 		</plugins>
 	</build>
 
