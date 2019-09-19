@@ -69,6 +69,29 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase {
 	}
 
 	@Test
+	public void testGradients() {
+		exportGraphic("simple", "gradients", new GraphicsExporter() {
+			@Override
+			public void draw(Graphics2D gfx) {
+				LinearGradientPaint linearGradientPaint = new LinearGradientPaint(0, 0, 100, 200,
+						new float[] { 0.0f, .2f, .4f, .9f, 1f },
+						new Color[] { Color.YELLOW, Color.GREEN, Color.RED, Color.BLUE, Color.GRAY });
+				gfx.setPaint(linearGradientPaint);
+				gfx.fill(new Rectangle.Float(10, 10, 100, 50));
+				gfx.fill(new Rectangle.Float(120, 10, 50, 50));
+				gfx.fill(new Rectangle.Float(200, 10, 50, 100));
+				RadialGradientPaint radialGradientPaint = new RadialGradientPaint(200, 200, 200,
+						new float[] { 0.0f, .2f, .4f, .9f, 1f },
+						new Color[] { Color.YELLOW, Color.GREEN, Color.RED, Color.BLUE, Color.GRAY });
+				gfx.setPaint(radialGradientPaint);
+				gfx.fill(new Rectangle.Float(10, 120, 100, 50));
+				gfx.fill(new Rectangle.Float(120, 120, 50, 50));
+				gfx.fill(new Rectangle.Float(200, 120, 50, 100));
+			}
+		});
+	}
+
+	@Test
 	public void testDifferentFonts() {
 		exportGraphic("simple", "fonts", new GraphicsExporter() {
 			@Override
