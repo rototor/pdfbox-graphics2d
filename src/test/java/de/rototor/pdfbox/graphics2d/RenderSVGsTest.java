@@ -21,6 +21,7 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase {
 		renderSVG("displayWebStats.svg", 200);
 		renderSVG("compuserver_msn_Ford_Focus.svg", 0.7);
 		renderSVG("watermark.svg", 0.4);
+		renderSVG("long-gradient.svg", 0.55);
 	}
 
 	private void renderSVG(String name, final double scale) throws IOException {
