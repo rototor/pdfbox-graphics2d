@@ -14,13 +14,16 @@ import org.apache.pdfbox.pdmodel.graphics.color.PDPattern;
 import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.graphics.pattern.PDTilingPattern;
-import org.apache.pdfbox.pdmodel.graphics.shading.*;
+import org.apache.pdfbox.pdmodel.graphics.shading.PDShading;
+import org.apache.pdfbox.pdmodel.graphics.shading.PDShadingType3;
+import org.apache.pdfbox.pdmodel.graphics.shading.ShadingPaint;
 import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
 import org.apache.pdfbox.util.Matrix;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Area;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
@@ -276,12 +279,19 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 		state.dictExtendedState.setItem(COSName.BM, blendMode);
 	}
 
+	private Point2D clonePoint(Point2D point2D) {
+		return new Point2D.Double(point2D.getX(), point2D.getY());
+	}
+
 	private PDShading buildLinearGradientShading(Paint paint, PaintApplierState state) throws IOException {
 		/*
 		 * Batik has a copy of RadialGradientPaint, but it has the same structure as the
 		 * AWT RadialGradientPaint. So we use Reflection to access the fields of both
 		 * these classes.
 		 */
+		boolean isAWTGradient = paint.getClass().getPackage().getName().equals("java.awt");
+		boolean isBatikGradient = paint.getClass().getPackage().getName().equals("org.apache.batik.ext.awt");
+
 		Color[] colors = getPropertyValue(paint, "getColors");
 		Color firstColor = colors[0];
 		PDColor firstColorMapped = state.colorMapper.mapColor(state.contentStream, firstColor);
@@ -291,11 +301,29 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 		shading.setShadingType(PDShading.SHADING_TYPE2);
 		shading.setColorSpace(firstColorMapped.getColorSpace());
 		float[] fractions = getPropertyValue(paint, "getFractions");
-		Point2D startPoint = getPropertyValue(paint, "getStartPoint");
-		Point2D endPoint = getPropertyValue(paint, "getEndPoint");
+		Point2D startPoint = clonePoint((Point2D.Double) getPropertyValue(paint, "getStartPoint"));
+		Point2D endPoint = clonePoint((Point2D.Double) getPropertyValue(paint, "getEndPoint"));
 		AffineTransform gradientTransform = getPropertyValue(paint, "getTransform");
 		state.tf.concatenate(gradientTransform);
 
+		Shape shapeToDraw = state.env.getShapeToDraw();
+		if (shapeToDraw != null) {
+			Rectangle2D bounds2D = shapeToDraw.getBounds2D();
+			Area area = new Area(bounds2D);
+			area.transform(state.tf);
+			bounds2D = area.getBounds2D();
+			double height = bounds2D.getHeight();
+			double width = bounds2D.getWidth();
+			double min = Math.min(width, height);
+			double ratioH = min / height;
+			double ratioW = min / width;
+
+			AffineTransform pointTransform = new AffineTransform();
+
+			// pointTransform.scale(ratioW, ratioH);
+			state.tf.concatenate(pointTransform);
+
+		}
 		state.tf.transform(startPoint, startPoint);
 		state.tf.transform(endPoint, endPoint);
 
@@ -331,8 +359,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 		shading.setShadingType(PDShading.SHADING_TYPE3);
 		shading.setColorSpace(firstColorMapped.getColorSpace());
 		float[] fractions = getPropertyValue(paint, "getFractions");
-		Point2D centerPoint = getPropertyValue(paint, "getCenterPoint");
-		Point2D focusPoint = getPropertyValue(paint, "getFocusPoint");
+		Point2D centerPoint = clonePoint((Point2D) getPropertyValue(paint, "getCenterPoint"));
+		Point2D focusPoint = clonePoint((Point2D) getPropertyValue(paint, "getFocusPoint"));
 		AffineTransform gradientTransform = getPropertyValue(paint, "getTransform");
 		state.tf.concatenate(gradientTransform);
 		state.tf.transform(centerPoint, centerPoint);

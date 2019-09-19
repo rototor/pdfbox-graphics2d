@@ -17,6 +17,7 @@ package de.rototor.pdfbox.graphics2d;
 
 import org.apache.fontbox.ttf.TrueTypeCollection;
 import org.apache.fontbox.ttf.TrueTypeFont;
+import org.apache.fontbox.util.BoundingBox;
 import org.apache.pdfbox.io.IOUtils;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDFont;
@@ -27,6 +28,7 @@ import org.apache.pdfbox.util.Matrix;
 import java.awt.*;
 import java.awt.font.LineMetrics;
 import java.awt.font.TextAttribute;
+import java.awt.geom.Rectangle2D;
 import java.io.*;
 import java.text.AttributedCharacterIterator;
 import java.util.*;
@@ -274,11 +276,6 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 			if (paint == null)
 				paint = env.getPaint();
 
-			/*
-			 * Apply the paint
-			 */
-			env.applyPaint(paint);
-
 			boolean isStrikeThrough = TextAttribute.STRIKETHROUGH_ON
 					.equals(iterator.getAttribute(TextAttribute.STRIKETHROUGH));
 			boolean isUnderline = TextAttribute.UNDERLINE_ON.equals(iterator.getAttribute(TextAttribute.UNDERLINE));
@@ -287,6 +284,14 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
 			run = iterateRun(iterator, sb);
 			String text = sb.toString();
 
+			/*
+			 * Apply the paint
+			 */
+			float w = font.getStringWidth(text);
+			BoundingBox boundingBox = font.getBoundingBox();
+
+			env.applyPaint(paint, new Rectangle2D.Float(0, 0, w, boundingBox.getHeight()));
+			
 			/*
 			 * If we force the text write we may encounter situations where the font can not
 			 * display the characters. PDFBox will throw an exception in this case. We will

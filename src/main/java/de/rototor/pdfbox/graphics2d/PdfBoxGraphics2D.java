@@ -380,7 +380,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 
 			if (shapeToDraw != null) {
 				walkShape(shapeToDraw);
-				PDShading pdShading = applyPaint();
+				PDShading pdShading = applyPaint(shapeToDraw);
 				if (pdShading != null)
 					applyShadingAsColor(pdShading);
 
@@ -641,8 +641,8 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		}
 
 		@Override
-		public void applyPaint(Paint paint) throws IOException {
-			PDShading pdShading = PdfBoxGraphics2D.this.applyPaint(paint);
+		public void applyPaint(Paint paint, Shape shapeToDraw) throws IOException {
+			PDShading pdShading = PdfBoxGraphics2D.this.applyPaint(paint, shapeToDraw);
 			if (pdShading != null)
 				applyShadingAsColor(pdShading);
 		}
@@ -687,7 +687,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 
 			if (shapeToFill != null) {
 				boolean useEvenOdd = walkShape(shapeToFill);
-				PDShading shading = applyPaint();
+				PDShading shading = applyPaint(shapeToFill);
 				if (shading != null) {
 					/*
 					 * NB: the shading fill doesn't work with shapes with zero or negative
@@ -757,50 +757,16 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		contentStream.setStrokingColor(patternColor);
 	}
 
-	private PDShading applyPaint() throws IOException {
-		return applyPaint(paint);
+	private PDShading applyPaint(Shape shapeToDraw) throws IOException {
+		return applyPaint(paint, shapeToDraw);
 	}
 
-	private final IPaintEnv paintEnv = new IPaintEnv() {
-		@Override
-		public IPdfBoxGraphics2DColorMapper getColorMapper() {
-			return colorMapper;
-		}
+	private final PaintEnvImpl paintEnv = new PaintEnvImpl();
 
-		@Override
-		public IPdfBoxGraphics2DImageEncoder getImageEncoder() {
-			return imageEncoder;
-		}
-
-		@Override
-		public PDDocument getDocument() {
-			return document;
-		}
-
-		@Override
-		public PDResources getResources() {
-			return xFormObject.getResources();
-		}
-
-		@Override
-		public Composite getComposite() {
-			return PdfBoxGraphics2D.this.getComposite();
-		}
-
-		@Override
-		public PdfBoxGraphics2D getGraphics2D() {
-			return PdfBoxGraphics2D.this;
-		}
-
-		@Override
-		public Color getXORMode() {
-			return xorColor;
-		}
-	};
-
-	private PDShading applyPaint(Paint paintToApply) throws IOException {
+	private PDShading applyPaint(Paint paintToApply, Shape shapeToDraw) throws IOException {
 		AffineTransform tf = new AffineTransform(baseTransform);
 		tf.concatenate(transform);
+		paintEnv.shapeToDraw = shapeToDraw;
 		return paintApplier.applyPaint(paintToApply, contentStream, tf, paintEnv);
 	}
 
@@ -1178,4 +1144,47 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		return calcGfx.getFontRenderContext();
 	}
 
+	private class PaintEnvImpl implements IPaintEnv {
+		public Shape shapeToDraw;
+
+		@Override
+		public Shape getShapeToDraw() {
+			return shapeToDraw;
+		}
+
+		@Override
+		public IPdfBoxGraphics2DColorMapper getColorMapper() {
+			return colorMapper;
+		}
+
+		@Override
+		public IPdfBoxGraphics2DImageEncoder getImageEncoder() {
+			return imageEncoder;
+		}
+
+		@Override
+		public PDDocument getDocument() {
+			return document;
+		}
+
+		@Override
+		public PDResources getResources() {
+			return xFormObject.getResources();
+		}
+
+		@Override
+		public Composite getComposite() {
+			return PdfBoxGraphics2D.this.getComposite();
+		}
+
+		@Override
+		public PdfBoxGraphics2D getGraphics2D() {
+			return PdfBoxGraphics2D.this;
+		}
+
+		@Override
+		public Color getXORMode() {
+			return xorColor;
+		}
+	}
 }

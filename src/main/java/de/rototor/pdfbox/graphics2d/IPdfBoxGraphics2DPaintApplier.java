@@ -72,5 +72,13 @@ public interface IPdfBoxGraphics2DPaintApplier {
 		 *         is active.
 		 */
 		Color getXORMode();
+
+		/**
+		 * The shape information is need to be able to correctly render grandients.
+		 * 
+		 * @return get the shape which will be drawn or filled with this paint. Null is
+		 *         returned if no shape is known.
+		 */
+		Shape getShapeToDraw();
 	}
 }

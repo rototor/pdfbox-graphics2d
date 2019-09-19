@@ -64,11 +64,14 @@ public interface IPdfBoxGraphics2DFontTextDrawer {
 		 * 
 		 * @param paint
 		 *            Paint to apply
+		 * @param shapeToDraw
+		 *            the shape to draw of the text, if known. This is needed to
+		 *            calculate correct gradients.
 		 * @throws IOException
 		 *             if an IO error occurs when writing the paint to the content
 		 *             stream.
 		 */
-		void applyPaint(Paint paint) throws IOException;
+		void applyPaint(Paint paint, Shape shapeToDraw) throws IOException;
 
 		/**
 		 * @return the {@link Graphics2D} {@link FontRenderContext}
