@@ -262,6 +262,11 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 
 ## Changes
 
+Version 0.25:
+ - Upgrade to PDFBox 2.0.17
+ - Internal API breakage to support non quadratic SVG gradients 
+   correctly [#19](https://github.com/rototor/pdfbox-graphics2d/issues/19)
+
 Version 0.24:
  - Upgrade to PDFBox 2.0.16
 
