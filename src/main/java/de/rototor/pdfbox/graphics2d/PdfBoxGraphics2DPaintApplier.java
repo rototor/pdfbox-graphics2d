@@ -391,7 +391,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
                 /*
                  * We only need to do something here if the bound rectangle is not square.
                  */
-                if (Math.abs(ratioH - ratioW) > 0.0001)
+                if (Math.abs(ratioH - ratioW) > EPSILON)
                 {
                     AffineTransform pointTransform = new AffineTransform();
 
