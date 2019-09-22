@@ -358,19 +358,20 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         //noinspection unused
         MultipleGradientPaint.ColorSpaceType colorSpaceType = getColorSpaceType(paint);
 
-        /*
-         *  Is the normal vector of the gradient parallel to x or y?
-         */
-        final boolean isNormalParallel = Math.abs(startPoint.getX() - endPoint.getX()) < EPSILON
-                || Math.abs(startPoint.getY() - endPoint.getY()) < EPSILON;
 
         Shape shapeToDraw = state.env.getShapeToDraw();
         if (isBatikGradient && shapeToDraw != null)
         {
             /*
+             *  Is the normal vector of the gradient parallel to x or y?
+             */
+            final boolean isNormalParallel = Math.abs(startPoint.getX() - endPoint.getX()) < EPSILON
+                    || Math.abs(startPoint.getY() - endPoint.getY()) < EPSILON;
+
+            /*
              * Special handling for Batik
              */
-            if (!isNormalParallel)
+            if (!isNormalParallel && false)
             {
                 Rectangle2D originalBounds2D = shapeToDraw.getBounds2D();
                 Area area = new Area(originalBounds2D);
@@ -378,14 +379,19 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
                 Rectangle2D bounds2D = area.getBounds2D();
                 final double transformedHeight = bounds2D.getHeight();
                 final double transformedWidth = bounds2D.getWidth();
+                final double originalHeight = originalBounds2D.getHeight();
+                final double originalWidth = originalBounds2D.getWidth();
                 final double min = Math.min(transformedWidth, transformedHeight);
                 final double ratioH = min / transformedHeight;
                 final double ratioW = min / transformedWidth;
+                final double minOriginal = Math.min(originalWidth, originalHeight);
+                final double ratioHOriginal = minOriginal / originalHeight;
+                final double ratioWOriginal = minOriginal / originalWidth;
 
                 /*
                  * We only need to do something here if the bound rectangle is not square.
                  */
-                if (Math.abs(ratioH - ratioW) > 0.0001 && false)
+                if (Math.abs(ratioH - ratioW) > 0.0001)
                 {
                     AffineTransform pointTransform = new AffineTransform();
 
@@ -393,21 +399,29 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
                             startPoint.getY() - endPoint.getY());
 
                     pointTransform.scale(ratioW, ratioH);
+                    //pointTransform.scale(ratioWOriginal, ratioHOriginal);
                     pointTransform.translate(-v.getX() / 2, -v.getY() / 2);
+
                     if (false)
                     {
-                        final double originalHeight = originalBounds2D.getHeight();
-                        final double originalWidth = originalBounds2D.getWidth();
-                        if (originalHeight > originalWidth)
-                        {
-                            final double scaleFactor = originalHeight / originalWidth;
-                            pointTransform.scale(1, scaleFactor);
-                        }
-                        else
-                        {
-                            final double scaleFactor = originalWidth / originalHeight;
-                            pointTransform.scale(scaleFactor, 1);
-                        }
+                        //noinspection UnnecessaryLocalVariable
+                        final double a = originalHeight;
+                        //noinspection UnnecessaryLocalVariable
+                        final double b = originalWidth;
+                        final double c = Math.sqrt(a * a + b * b);
+
+                        double sin90 = 1;
+                        double sinBeta = ((sin90 * a) / c);
+                        double radBeta = Math.asin(sinBeta);
+                        pointTransform.rotate(radBeta);
+                        final double smallerSize = Math.min(a, b);
+                        final double biggerSize = Math.max(a, b);
+                        final double missingDiagonale = c - smallerSize;
+                        final double scaleFactor = (biggerSize - smallerSize)
+                                / smallerSize; // missingDiagonale / smallerSize;
+
+                        pointTransform.scale(scaleFactor, scaleFactor);
+                        pointTransform.rotate(-radBeta);
                     }
 
                     state.tf.concatenate(pointTransform);
