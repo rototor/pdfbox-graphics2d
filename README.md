@@ -20,8 +20,6 @@ The following features are supported:
 	colors to ```PDColor```. Beside using CMYK colors you can also use spot colors.
 	- ```GradientPaint```, ```LinearGradientPaint``` and ```RadialGradientPaint```. There are some restrictions:
 	  - ```GradientPaint``` always generates acyclic gradients. 
-	  - ```LinearGradientPaint``` and ```RadialGradientPaint``` always assume even split fractions. 
-	  The actual given fractions are ignored at the moment.
 	- ```TexturePaint```. 
 - Drawing text. By default all text is drawn as vector shapes, so no fonts are embedded. 
 RTL languages are supported. It's possible to use fonts, but this loses some features (especially RTL support) 
