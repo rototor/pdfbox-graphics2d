@@ -32,6 +32,15 @@ import java.io.File;
 import java.io.IOException;
 
 class PdfBoxGraphics2DTestBase {
+
+	class GraphicsExporterExtended implements GraphicsExporter {
+		boolean emulateObjectBoundingBox = false;
+		public boolean getEmulateObjectBoundingBox(){return emulateObjectBoundingBox;}
+		public void setEmulateObjectBoundingBox(boolean newFlag){this.emulateObjectBoundingBox = newFlag;}
+		public void draw(Graphics2D gfx){
+		}
+	}
+
 	enum Mode {
 		DefaultVectorized, FontTextIfPossible, ForceFontText, DefaultFontText
 	}
@@ -125,4 +134,5 @@ class PdfBoxGraphics2DTestBase {
 	interface GraphicsExporter {
 		void draw(Graphics2D gfx) throws IOException, FontFormatException;
 	}
+
 }
