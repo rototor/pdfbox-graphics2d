@@ -32,6 +32,15 @@ import java.io.File;
 import java.io.IOException;
 
 class PdfBoxGraphics2DTestBase {
+
+	class GraphicsExporterExtended implements GraphicsExporter {
+		boolean emulateObjectBoundingBox = false;
+		public boolean getEmulateObjectBoundingBox(){return emulateObjectBoundingBox;}
+		public void setEmulateObjectBoundingBox(boolean newFlag){this.emulateObjectBoundingBox = newFlag;}
+		public void draw(Graphics2D gfx){
+		}
+	}
+
 	enum Mode {
 		DefaultVectorized, FontTextIfPossible, ForceFontText, DefaultFontText
 	}
@@ -60,6 +69,14 @@ class PdfBoxGraphics2DTestBase {
 				PDPageContentStream contentStream = new PDPageContentStream(document, page);
 				PdfBoxGraphics2D pdfBoxGraphics2D = new PdfBoxGraphics2D(document, 400, 400);
 				PdfBoxGraphics2DFontTextDrawer fontTextDrawer = null;
+				if (exporter instanceof GraphicsExporterExtended) {
+					GraphicsExporterExtended castedExporter = (GraphicsExporterExtended) exporter;
+					if (castedExporter.getEmulateObjectBoundingBox()) {
+						PdfBoxGraphics2DPaintApplier customPaintApplier = new PdfBoxGraphics2DPaintApplier();
+						customPaintApplier.setEmulateObjectBoundingBox(true);
+						pdfBoxGraphics2D.setPaintApplier(customPaintApplier);
+					}
+				}
 				contentStream.beginText();
 				contentStream.setStrokingColor(0, 0, 0);
 				contentStream.setNonStrokingColor(0, 0, 0);
@@ -125,4 +142,5 @@ class PdfBoxGraphics2DTestBase {
 	interface GraphicsExporter {
 		void draw(Graphics2D gfx) throws IOException, FontFormatException;
 	}
+
 }

@@ -39,6 +39,7 @@ import java.util.List;
  */
 public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintApplier
 {
+
     @SuppressWarnings("WeakerAccess")
     protected static class PaintApplierState
     {
@@ -66,6 +67,16 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 
     private ExtGStateCache extGStateCache = new ExtGStateCache();
     private PDShadingCache shadingCache = new PDShadingCache();
+
+    protected  boolean emulateObjectBoundingBox = false;
+
+    public boolean getEmulateObjectBoundingBox(){
+        return this.emulateObjectBoundingBox;
+    }
+
+    public void setEmulateObjectBoundingBox(boolean newVal){
+        this.emulateObjectBoundingBox = newVal;
+    }
 
     @Override
     public PDShading applyPaint(Paint paint, PDPageContentStream contentStream, AffineTransform tf,
@@ -328,6 +339,103 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
     private static final double EPSILON = 0.00001;
 
     private PDShading buildLinearGradientShading(Paint paint, PaintApplierState state)
+            throws IOException {
+        if (!this.emulateObjectBoundingBox) {
+            return linearGradientUserSpaceOnUseShading(paint, state);
+        }
+        else {
+            return linearGradientObjectBoundingBoxShading(paint, state);
+        }
+    }
+
+    private PDShading linearGradientObjectBoundingBoxShading(Paint paint, PaintApplierState state)
+            throws IOException
+    {
+        /*
+         * I found this Stack Overflow question to be useful:
+         * https://stackoverflow.com/questions/50617275/svg-linear-gradients-objectboundingbox-vs-userspaceonuse
+         * SVG has 2 different gradient display modes objectBoundingBox & userSpaceOnUse
+         * The default is objectBoundingBox.  PDF Axial gradients seem to be
+         * capable of displaying in any manner, but the default is the normal
+         * rendered at a 90 degree angle from the gradient vector.  This looks
+         * like an SVG in userSpaceOnUse mode.  So the task becomes how can we
+         * map the default of one format to a non-default mode in another so that
+         * the PDF an axial gradient looks like an SVG with a linear gradient.
+         *
+         * The approach I've used is as follows:
+         * Draw the axial gradient on a 1x1 box.  A perfect square is a special case
+         * where the PDF defaults display matches the SVG default display.
+         * Then, use the gradient transform attached to the paint to warp the
+         * space containing the box & distort it to a larger rectangle (which
+         * may, or may not, still be a square).  This makes the gradient in the PDF
+         * look like the gradient in an SVG if the SVG is using the objectBoundingBox
+         * mode.
+         *
+         * Note: there is some trickery with shape inversion because SVGs lay out
+         * from the top down & PDFs lay out from the bottom up.
+         */
+
+        Color[] colors = getPropertyValue(paint, "getColors");
+        Color firstColor = colors[0];
+        PDColor firstColorMapped = state.colorMapper.mapColor(state.contentStream, firstColor);
+        applyAsStrokingColor(firstColor, state);
+
+        PDShadingType3 shading = new PDShadingType3(new COSDictionary());
+        shading.setAntiAlias(true);
+        shading.setShadingType(PDShading.SHADING_TYPE2);
+        shading.setColorSpace(firstColorMapped.getColorSpace());
+        float[] fractions = getPropertyValue(paint, "getFractions");
+        Point2D startPoint = clonePoint((Point2D.Double) getPropertyValue(paint, "getStartPoint"));
+        Point2D endPoint = clonePoint((Point2D.Double) getPropertyValue(paint, "getEndPoint"));
+        AffineTransform gradientTransform = getPropertyValue(paint, "getTransform");
+        state.tf.concatenate(gradientTransform);
+
+        //noinspection unused
+        MultipleGradientPaint.CycleMethod cycleMethod = getCycleMethod(paint);
+        //noinspection unused
+        MultipleGradientPaint.ColorSpaceType colorSpaceType = getColorSpaceType(paint);
+
+        COSArray coords = new COSArray();
+
+        // Note: all of the start and end points I've seen for linear gradients
+        // that use the objectBoundingBox mode define a 1x1 box.  I don't know if
+        // this can be guaranteed.
+        coords.add(new COSFloat((float) startPoint.getX()));
+        coords.add(new COSFloat((float) startPoint.getY()));
+        coords.add(new COSFloat((float) endPoint.getX()));
+        coords.add(new COSFloat((float) endPoint.getY()));
+        shading.setCoords(coords);
+
+        PDFunctionType3 type3 = buildType3Function(colors, fractions, state);
+
+        shading.setFunction(type3);
+        shading.setExtend(setupExtends());
+        // We need the rectangle here so that the call to clip(useEvenOdd)
+        // in PdfBoxGraphics2D.java clips to the right frame of reference
+        //
+        // Note: tricky stuff follows . . .
+        // We're deliberately creating  a bounding box with a negative height.
+        // Why?  Because that contentsStream.transform() is going to invert it
+        // so that it has a positive height.  It will always invert because
+        // SVGs & PDFs have opposite layout directions.
+        // If we started with a positive height, then inverted to a negative height
+        // we end up with a negative height clipping box in the output PDF
+        // and some PDF viewers cannot handle that.
+        // e.g. Adobe acrobat will display the PDF one way & Mac Preview
+        // will display it another.
+        float calculatedX = (float) Math.min(startPoint.getX(), endPoint.getX());
+        float calculatedY = (float) Math.max(startPoint.getY(), endPoint.getY());
+        float calculatedWidth = Math.abs( (float) (endPoint.getX() - startPoint.getX()));
+        float negativeHeight = -1.0f *  Math.abs( (float) (endPoint.getY() - startPoint.getY()));
+
+        state.contentStream.addRect(calculatedX, calculatedY, calculatedWidth, negativeHeight);
+        // Warp the 1x1 box containing the gradient to fill a larger rectangular space
+        state.contentStream.transform(new Matrix(state.tf));
+
+        return shading;
+    }
+
+    private PDShading linearGradientUserSpaceOnUseShading(Paint paint, PaintApplierState state)
             throws IOException
     {
         /*
