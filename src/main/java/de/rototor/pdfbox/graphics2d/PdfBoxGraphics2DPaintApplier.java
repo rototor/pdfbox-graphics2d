@@ -420,9 +420,9 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         // e.g. Adobe acrobat will display the PDF one way & Mac Preview
         // will display it another.
         float calculatedX = (float) Math.min(startPoint.getX(), endPoint.getX());
-        float calculatedY = (float) Math.max(startPoint.getY(), endPoint.getY());
-        float calculatedWidth = Math.abs((float) (endPoint.getX() - startPoint.getX()));
-        float negativeHeight = -1.0f * Math.abs((float) (endPoint.getY() - startPoint.getY()));
+        float calculatedY = (float) Math.max(1.0f, Math.max(startPoint.getY(), endPoint.getY()));
+        float calculatedWidth = Math.max(1.0f, Math.abs( (float) (endPoint.getX() - startPoint.getX())));
+        float negativeHeight = -1.0f *  Math.max(1.0f, Math.abs( (float) (endPoint.getY() - startPoint.getY())));
 
         state.contentStream.addRect(calculatedX, calculatedY, calculatedWidth, negativeHeight);
         // Warp the 1x1 box containing the gradient to fill a larger rectangular space
