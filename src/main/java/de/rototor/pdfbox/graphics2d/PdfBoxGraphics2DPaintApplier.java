@@ -23,14 +23,13 @@ import org.apache.pdfbox.util.Matrix;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Area;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * Default paint mapper.
@@ -168,7 +167,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         else if (paint instanceof ShadingPaint)
         {
             // PDFBox paint, we can import the shading directly
-            return shadingCache.makeUnqiue(importPDFBoxShadingPaint((ShadingPaint) paint, state));
+            return shadingCache.makeUnqiue(importPDFBoxShadingPaint((ShadingPaint<?>) paint, state));
         }
         else
         {
@@ -178,7 +177,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         return null;
     }
 
-    private PDShading importPDFBoxShadingPaint(ShadingPaint paint, PaintApplierState state)
+    private PDShading importPDFBoxShadingPaint(ShadingPaint<?> paint, PaintApplierState state)
             throws IOException
     {
         PDFCloneUtility pdfCloneUtility = new PDFCloneUtility(state.document);
@@ -813,7 +812,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
     {
         try
         {
-            Class c = obj.getClass();
+            Class<?> c = obj.getClass();
             while (c != null)
             {
                 try
