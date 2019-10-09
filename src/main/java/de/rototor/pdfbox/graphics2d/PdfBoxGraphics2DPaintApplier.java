@@ -350,13 +350,13 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         boolean isBatikGradient = paint.getClass().getPackage().getName()
                 .equals("org.apache.batik.ext.awt");
 
-        if (!isBatikGradient || !this.emulateObjectBoundingBox)
+        if (isBatikGradient && this.emulateObjectBoundingBox)
         {
-            return linearGradientUserSpaceOnUseShading(paint, state);
+            return linearGradientObjectBoundingBoxShading(paint, state);
         }
         else
         {
-            return linearGradientObjectBoundingBoxShading(paint, state);
+            return linearGradientUserSpaceOnUseShading(paint, state);
         }
     }
 
