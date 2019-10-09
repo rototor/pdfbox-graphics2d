@@ -67,18 +67,6 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
     private ExtGStateCache extGStateCache = new ExtGStateCache();
     private PDShadingCache shadingCache = new PDShadingCache();
 
-    protected boolean emulateObjectBoundingBox = false;
-
-    public boolean getEmulateObjectBoundingBox()
-    {
-        return this.emulateObjectBoundingBox;
-    }
-
-    public void setEmulateObjectBoundingBox(boolean newVal)
-    {
-        this.emulateObjectBoundingBox = newVal;
-    }
-
     @Override
     public PDShading applyPaint(Paint paint, PDPageContentStream contentStream, AffineTransform tf,
             IPaintEnv env) throws IOException
@@ -167,7 +155,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         else if (paint instanceof ShadingPaint)
         {
             // PDFBox paint, we can import the shading directly
-            return shadingCache.makeUnqiue(importPDFBoxShadingPaint((ShadingPaint<?>) paint, state));
+            return shadingCache
+                    .makeUnqiue(importPDFBoxShadingPaint((ShadingPaint<?>) paint, state));
         }
         else
         {
@@ -349,8 +338,22 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
          */
         boolean isBatikGradient = paint.getClass().getPackage().getName()
                 .equals("org.apache.batik.ext.awt");
+        boolean isObjectBoundingBox = false;
+        if (isBatikGradient)
+        {
+            AffineTransform gradientTransform = getPropertyValue(paint, "getTransform");
+            if (!gradientTransform.isIdentity())
+            {
+                /*
+                 * If the scale is not square, we need to use the object bounding box logic
+                 */
+                if (Math.abs(gradientTransform.getScaleX() - gradientTransform.getScaleY())
+                        > EPSILON)
+                    isObjectBoundingBox = true;
+            }
+        }
 
-        if (isBatikGradient && this.emulateObjectBoundingBox)
+        if (isObjectBoundingBox)
         {
             return linearGradientObjectBoundingBoxShading(paint, state);
         }
@@ -398,16 +401,10 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         //noinspection unused
         MultipleGradientPaint.ColorSpaceType colorSpaceType = getColorSpaceType(paint);
 
-        COSArray coords = new COSArray();
-
         // Note: all of the start and end points I've seen for linear gradients
         // that use the objectBoundingBox mode define a 1x1 box.  I don't know if
         // this can be guaranteed.
-        coords.add(new COSFloat((float) startPoint.getX()));
-        coords.add(new COSFloat((float) startPoint.getY()));
-        coords.add(new COSFloat((float) endPoint.getX()));
-        coords.add(new COSFloat((float) endPoint.getY()));
-        shading.setCoords(coords);
+        setupShadingCoords(shading, startPoint, endPoint);
 
         // We need the rectangle here so that the call to clip(useEvenOdd)
         // in PdfBoxGraphics2D.java clips to the right frame of reference
@@ -434,6 +431,16 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         return shading;
     }
 
+    private void setupShadingCoords(PDShadingType3 shading, Point2D startPoint, Point2D endPoint)
+    {
+        COSArray coords = new COSArray();
+        coords.add(new COSFloat((float) startPoint.getX()));
+        coords.add(new COSFloat((float) startPoint.getY()));
+        coords.add(new COSFloat((float) endPoint.getX()));
+        coords.add(new COSFloat((float) endPoint.getY()));
+        shading.setCoords(coords);
+    }
+
     /**
      * This is the default gradient mode for both SVG and java.awt gradients.
      */
@@ -456,12 +463,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         state.tf.transform(startPoint, startPoint);
         state.tf.transform(endPoint, endPoint);
 
-        COSArray coords = new COSArray();
-        coords.add(new COSFloat((float) startPoint.getX()));
-        coords.add(new COSFloat((float) startPoint.getY()));
-        coords.add(new COSFloat((float) endPoint.getX()));
-        coords.add(new COSFloat((float) endPoint.getY()));
-        shading.setCoords(coords);
+        setupShadingCoords(shading, startPoint, endPoint);
 
         return shading;
     }
@@ -637,12 +639,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         state.tf.transform(startPoint, startPoint);
         state.tf.transform(endPoint, endPoint);
 
-        COSArray coords = new COSArray();
-        coords.add(new COSFloat((float) startPoint.getX()));
-        coords.add(new COSFloat((float) startPoint.getY()));
-        coords.add(new COSFloat((float) endPoint.getX()));
-        coords.add(new COSFloat((float) endPoint.getY()));
-        shading.setCoords(coords);
+        setupShadingCoords(shading, startPoint, endPoint);
 
         shading.setFunction(type3);
         shading.setExtend(setupExtends());
