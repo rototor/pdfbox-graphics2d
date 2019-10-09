@@ -45,7 +45,6 @@ class PdfBoxGraphics2DTestBase {
 		DefaultVectorized, FontTextIfPossible, ForceFontText, DefaultFontText
 	}
 
-	@SuppressWarnings("SpellCheckingInspection")
 	void exportGraphic(String dir, String name, GraphicsExporter exporter) {
 		try {
 			PDDocument document = new PDDocument();

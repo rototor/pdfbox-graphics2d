@@ -68,13 +68,15 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
     private ExtGStateCache extGStateCache = new ExtGStateCache();
     private PDShadingCache shadingCache = new PDShadingCache();
 
-    protected  boolean emulateObjectBoundingBox = false;
+    protected boolean emulateObjectBoundingBox = false;
 
-    public boolean getEmulateObjectBoundingBox(){
+    public boolean getEmulateObjectBoundingBox()
+    {
         return this.emulateObjectBoundingBox;
     }
 
-    public void setEmulateObjectBoundingBox(boolean newVal){
+    public void setEmulateObjectBoundingBox(boolean newVal)
+    {
         this.emulateObjectBoundingBox = newVal;
     }
 
@@ -339,11 +341,22 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
     private static final double EPSILON = 0.00001;
 
     private PDShading buildLinearGradientShading(Paint paint, PaintApplierState state)
-            throws IOException {
-        if (!this.emulateObjectBoundingBox) {
+            throws IOException
+    {
+        /*
+         * Batik has a copy of RadialGradientPaint, but it has the same structure as the
+         * AWT RadialGradientPaint. So we use Reflection to access the fields of both
+         * these classes.
+         */
+        boolean isBatikGradient = paint.getClass().getPackage().getName()
+                .equals("org.apache.batik.ext.awt");
+
+        if (!isBatikGradient || !this.emulateObjectBoundingBox)
+        {
             return linearGradientUserSpaceOnUseShading(paint, state);
         }
-        else {
+        else
+        {
             return linearGradientObjectBoundingBoxShading(paint, state);
         }
     }
@@ -374,17 +387,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
          * Note: there is some trickery with shape inversion because SVGs lay out
          * from the top down & PDFs lay out from the bottom up.
          */
+        PDShadingType3 shading = setupBasicLinearShading(paint, state);
 
-        Color[] colors = getPropertyValue(paint, "getColors");
-        Color firstColor = colors[0];
-        PDColor firstColorMapped = state.colorMapper.mapColor(state.contentStream, firstColor);
-        applyAsStrokingColor(firstColor, state);
-
-        PDShadingType3 shading = new PDShadingType3(new COSDictionary());
-        shading.setAntiAlias(true);
-        shading.setShadingType(PDShading.SHADING_TYPE2);
-        shading.setColorSpace(firstColorMapped.getColorSpace());
-        float[] fractions = getPropertyValue(paint, "getFractions");
         Point2D startPoint = clonePoint((Point2D.Double) getPropertyValue(paint, "getStartPoint"));
         Point2D endPoint = clonePoint((Point2D.Double) getPropertyValue(paint, "getEndPoint"));
         AffineTransform gradientTransform = getPropertyValue(paint, "getTransform");
@@ -406,10 +410,6 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         coords.add(new COSFloat((float) endPoint.getY()));
         shading.setCoords(coords);
 
-        PDFunctionType3 type3 = buildType3Function(colors, fractions, state);
-
-        shading.setFunction(type3);
-        shading.setExtend(setupExtends());
         // We need the rectangle here so that the call to clip(useEvenOdd)
         // in PdfBoxGraphics2D.java clips to the right frame of reference
         //
@@ -425,8 +425,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         // will display it another.
         float calculatedX = (float) Math.min(startPoint.getX(), endPoint.getX());
         float calculatedY = (float) Math.max(startPoint.getY(), endPoint.getY());
-        float calculatedWidth = Math.abs( (float) (endPoint.getX() - startPoint.getX()));
-        float negativeHeight = -1.0f *  Math.abs( (float) (endPoint.getY() - startPoint.getY()));
+        float calculatedWidth = Math.abs((float) (endPoint.getX() - startPoint.getX()));
+        float negativeHeight = -1.0f * Math.abs((float) (endPoint.getY() - startPoint.getY()));
 
         state.contentStream.addRect(calculatedX, calculatedY, calculatedWidth, negativeHeight);
         // Warp the 1x1 box containing the gradient to fill a larger rectangular space
@@ -435,27 +435,15 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         return shading;
     }
 
+    /**
+     * This is the default gradient mode for both SVG and java.awt gradients.
+     */
     private PDShading linearGradientUserSpaceOnUseShading(Paint paint, PaintApplierState state)
             throws IOException
     {
-        /*
-         * Batik has a copy of RadialGradientPaint, but it has the same structure as the
-         * AWT RadialGradientPaint. So we use Reflection to access the fields of both
-         * these classes.
-         */
-        boolean isBatikGradient = paint.getClass().getPackage().getName()
-                .equals("org.apache.batik.ext.awt");
 
-        Color[] colors = getPropertyValue(paint, "getColors");
-        Color firstColor = colors[0];
-        PDColor firstColorMapped = state.colorMapper.mapColor(state.contentStream, firstColor);
-        applyAsStrokingColor(firstColor, state);
+        PDShadingType3 shading = setupBasicLinearShading(paint, state);
 
-        PDShadingType3 shading = new PDShadingType3(new COSDictionary());
-        shading.setAntiAlias(true);
-        shading.setShadingType(PDShading.SHADING_TYPE2);
-        shading.setColorSpace(firstColorMapped.getColorSpace());
-        float[] fractions = getPropertyValue(paint, "getFractions");
         Point2D startPoint = clonePoint((Point2D.Double) getPropertyValue(paint, "getStartPoint"));
         Point2D endPoint = clonePoint((Point2D.Double) getPropertyValue(paint, "getEndPoint"));
         AffineTransform gradientTransform = getPropertyValue(paint, "getTransform");
@@ -465,77 +453,6 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         MultipleGradientPaint.CycleMethod cycleMethod = getCycleMethod(paint);
         //noinspection unused
         MultipleGradientPaint.ColorSpaceType colorSpaceType = getColorSpaceType(paint);
-
-
-        Shape shapeToDraw = state.env.getShapeToDraw();
-        if (isBatikGradient && shapeToDraw != null)
-        {
-            /*
-             *  Is the normal vector of the gradient parallel to x or y?
-             */
-            final boolean isNormalParallel = Math.abs(startPoint.getX() - endPoint.getX()) < EPSILON
-                    || Math.abs(startPoint.getY() - endPoint.getY()) < EPSILON;
-
-            /*
-             * Special handling for Batik
-             */
-            if (!isNormalParallel && false)
-            {
-                Rectangle2D originalBounds2D = shapeToDraw.getBounds2D();
-                Area area = new Area(originalBounds2D);
-                area.transform(state.tf);
-                Rectangle2D bounds2D = area.getBounds2D();
-                final double transformedHeight = bounds2D.getHeight();
-                final double transformedWidth = bounds2D.getWidth();
-                final double originalHeight = originalBounds2D.getHeight();
-                final double originalWidth = originalBounds2D.getWidth();
-                final double min = Math.min(transformedWidth, transformedHeight);
-                final double ratioH = min / transformedHeight;
-                final double ratioW = min / transformedWidth;
-                final double minOriginal = Math.min(originalWidth, originalHeight);
-                final double ratioHOriginal = minOriginal / originalHeight;
-                final double ratioWOriginal = minOriginal / originalWidth;
-
-                /*
-                 * We only need to do something here if the bound rectangle is not square.
-                 */
-                if (Math.abs(ratioH - ratioW) > EPSILON)
-                {
-                    AffineTransform pointTransform = new AffineTransform();
-
-                    Point2D v = new Point2D.Double(startPoint.getX() - endPoint.getX(),
-                            startPoint.getY() - endPoint.getY());
-
-                    pointTransform.scale(ratioW, ratioH);
-                    //pointTransform.scale(ratioWOriginal, ratioHOriginal);
-                    pointTransform.translate(-v.getX() / 2, -v.getY() / 2);
-
-                    if (false)
-                    {
-                        //noinspection UnnecessaryLocalVariable
-                        final double a = originalHeight;
-                        //noinspection UnnecessaryLocalVariable
-                        final double b = originalWidth;
-                        final double c = Math.sqrt(a * a + b * b);
-
-                        double sin90 = 1;
-                        double sinBeta = ((sin90 * a) / c);
-                        double radBeta = Math.asin(sinBeta);
-                        pointTransform.rotate(radBeta);
-                        final double smallerSize = Math.min(a, b);
-                        final double biggerSize = Math.max(a, b);
-                        final double missingDiagonale = c - smallerSize;
-                        final double scaleFactor = (biggerSize - smallerSize)
-                                / smallerSize; // missingDiagonale / smallerSize;
-
-                        pointTransform.scale(scaleFactor, scaleFactor);
-                        pointTransform.rotate(-radBeta);
-                    }
-
-                    state.tf.concatenate(pointTransform);
-                }
-            }
-        }
 
         state.tf.transform(startPoint, startPoint);
         state.tf.transform(endPoint, endPoint);
@@ -547,8 +464,22 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         coords.add(new COSFloat((float) endPoint.getY()));
         shading.setCoords(coords);
 
-        PDFunctionType3 type3 = buildType3Function(colors, fractions, state);
+        return shading;
+    }
 
+    private PDShadingType3 setupBasicLinearShading(Paint paint, PaintApplierState state)
+            throws IOException
+    {
+        PDShadingType3 shading = new PDShadingType3(new COSDictionary());
+        Color[] colors = getPropertyValue(paint, "getColors");
+        Color firstColor = colors[0];
+        PDColor firstColorMapped = state.colorMapper.mapColor(state.contentStream, firstColor);
+        applyAsStrokingColor(firstColor, state);
+        float[] fractions = getPropertyValue(paint, "getFractions");
+        PDFunctionType3 type3 = buildType3Function(colors, fractions, state);
+        shading.setAntiAlias(true);
+        shading.setShadingType(PDShading.SHADING_TYPE2);
+        shading.setColorSpace(firstColorMapped.getColorSpace());
         shading.setFunction(type3);
         shading.setExtend(setupExtends());
         return shading;
@@ -699,6 +630,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         shading.setShadingType(PDShading.SHADING_TYPE2);
         shading.setColorSpace(firstColorMapped.getColorSpace());
         float[] fractions = new float[] { 0, 1 };
+        PDFunctionType3 type3 = buildType3Function(colors, fractions, state);
+
         Point2D startPoint = gradientPaint.getPoint1();
         Point2D endPoint = gradientPaint.getPoint2();
 
@@ -711,8 +644,6 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         coords.add(new COSFloat((float) endPoint.getX()));
         coords.add(new COSFloat((float) endPoint.getY()));
         shading.setCoords(coords);
-
-        PDFunctionType3 type3 = buildType3Function(colors, fractions, state);
 
         shading.setFunction(type3);
         shading.setExtend(setupExtends());
@@ -768,7 +699,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
      *
      * @param colors    The colors to encode
      * @param fractions the fractions for encoding
-     * @param state     our state
+     * @param state     our state, this is needed for color mapping
      * @return the type3 function
      */
     private PDFunctionType3 buildType3Function(Color[] colors, float[] fractions,
@@ -833,7 +764,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
      * @param colors the color to encode
      * @param domain the domain which should already been setuped. It will be used for the Type2 function
      * @param encode will get the domain information per color channel, i.e. colors.length x [0, 1]
-     * @param state  our internal state
+     * @param state  our internal state, this is needed for color mapping
      * @return the Type2 function COSArray
      */
     private COSArray buildType2Functions(List<Color> colors, COSArray domain, COSArray encode,
