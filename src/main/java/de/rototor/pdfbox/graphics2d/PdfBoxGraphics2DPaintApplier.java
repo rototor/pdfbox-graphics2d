@@ -44,11 +44,16 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
     {
         protected PDDocument document;
         protected PDPageContentStream contentStream;
-        @SuppressWarnings("WeakerAccess") protected IPdfBoxGraphics2DColorMapper colorMapper;
-        @SuppressWarnings("WeakerAccess") protected IPdfBoxGraphics2DImageEncoder imageEncoder;
-        @SuppressWarnings("WeakerAccess") protected PDResources resources;
-        @SuppressWarnings("WeakerAccess") protected PDExtendedGraphicsState pdExtendedGraphicsState;
-        @SuppressWarnings("WeakerAccess") protected Composite composite;
+        @SuppressWarnings("WeakerAccess")
+        protected IPdfBoxGraphics2DColorMapper colorMapper;
+        @SuppressWarnings("WeakerAccess")
+        protected IPdfBoxGraphics2DImageEncoder imageEncoder;
+        @SuppressWarnings("WeakerAccess")
+        protected PDResources resources;
+        @SuppressWarnings("WeakerAccess")
+        protected PDExtendedGraphicsState pdExtendedGraphicsState;
+        @SuppressWarnings("WeakerAccess")
+        protected Composite composite;
         private COSDictionary dictExtendedState;
         private IPaintEnv env;
         public AffineTransform tf;
@@ -175,8 +180,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         PDShading shading = paint.getShading();
 
         state.contentStream.transform(matrix);
-        return PDShading.create((COSDictionary) pdfCloneUtility
-                .cloneForNewDocument(shading.getCOSObject()));
+        return PDShading.create(
+                (COSDictionary) pdfCloneUtility.cloneForNewDocument(shading.getCOSObject()));
     }
 
     /*
@@ -332,9 +337,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
             throws IOException
     {
         /*
-         * Batik has a copy of RadialGradientPaint, but it has the same structure as the
-         * AWT RadialGradientPaint. So we use Reflection to access the fields of both
-         * these classes.
+         * Batik has a copy of RadialGradientPaint, but it has the same structure as the AWT RadialGradientPaint. So we use
+         * Reflection to access the fields of both these classes.
          */
         boolean isBatikGradient = paint.getClass().getPackage().getName()
                 .equals("org.apache.batik.ext.awt");
@@ -347,8 +351,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
                 /*
                  * If the scale is not square, we need to use the object bounding box logic
                  */
-                if (Math.abs(gradientTransform.getScaleX() - gradientTransform.getScaleY())
-                        > EPSILON)
+                if (Math.abs(
+                        gradientTransform.getScaleX() - gradientTransform.getScaleY()) > EPSILON)
                     isObjectBoundingBox = true;
             }
         }
@@ -367,27 +371,20 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
             throws IOException
     {
         /*
-         * I found this Stack Overflow question to be useful:
-         * https://stackoverflow.com/questions/50617275/svg-linear-gradients-objectboundingbox-vs-userspaceonuse
-         * SVG has 2 different gradient display modes objectBoundingBox & userSpaceOnUse
-         * The default is objectBoundingBox.  PDF Axial gradients seem to be
-         * capable of displaying in any manner, but the default is the normal
-         * rendered at a 90 degree angle from the gradient vector.  This looks
-         * like an SVG in userSpaceOnUse mode.  So the task becomes how can we
-         * map the default of one format to a non-default mode in another so that
-         * the PDF an axial gradient looks like an SVG with a linear gradient.
+         * I found this Stack Overflow question to be useful: https://stackoverflow.com/questions/50617275/svg-linear-gradients-
+         * objectboundingbox-vs-userspaceonuse SVG has 2 different gradient display modes objectBoundingBox & userSpaceOnUse The
+         * default is objectBoundingBox. PDF Axial gradients seem to be capable of displaying in any manner, but the default is
+         * the normal rendered at a 90 degree angle from the gradient vector. This looks like an SVG in userSpaceOnUse mode. So
+         * the task becomes how can we map the default of one format to a non-default mode in another so that the PDF an axial
+         * gradient looks like an SVG with a linear gradient.
          *
-         * The approach I've used is as follows:
-         * Draw the axial gradient on a 1x1 box.  A perfect square is a special case
-         * where the PDF defaults display matches the SVG default display.
-         * Then, use the gradient transform attached to the paint to warp the
-         * space containing the box & distort it to a larger rectangle (which
-         * may, or may not, still be a square).  This makes the gradient in the PDF
-         * look like the gradient in an SVG if the SVG is using the objectBoundingBox
-         * mode.
+         * The approach I've used is as follows: Draw the axial gradient on a 1x1 box. A perfect square is a special case where
+         * the PDF defaults display matches the SVG default display. Then, use the gradient transform attached to the paint to
+         * warp the space containing the box & distort it to a larger rectangle (which may, or may not, still be a square). This
+         * makes the gradient in the PDF look like the gradient in an SVG if the SVG is using the objectBoundingBox mode.
          *
-         * Note: there is some trickery with shape inversion because SVGs lay out
-         * from the top down & PDFs lay out from the bottom up.
+         * Note: there is some trickery with shape inversion because SVGs lay out from the top down & PDFs lay out from the
+         * bottom up.
          */
         PDShadingType3 shading = setupBasicLinearShading(paint, state);
 
@@ -396,13 +393,13 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         AffineTransform gradientTransform = getPropertyValue(paint, "getTransform");
         state.tf.concatenate(gradientTransform);
 
-        //noinspection unused
+        // noinspection unused
         MultipleGradientPaint.CycleMethod cycleMethod = getCycleMethod(paint);
-        //noinspection unused
+        // noinspection unused
         MultipleGradientPaint.ColorSpaceType colorSpaceType = getColorSpaceType(paint);
 
         // Note: all of the start and end points I've seen for linear gradients
-        // that use the objectBoundingBox mode define a 1x1 box.  I don't know if
+        // that use the objectBoundingBox mode define a 1x1 box. I don't know if
         // this can be guaranteed.
         setupShadingCoords(shading, startPoint, endPoint);
 
@@ -410,9 +407,9 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         // in PdfBoxGraphics2D.java clips to the right frame of reference
         //
         // Note: tricky stuff follows . . .
-        // We're deliberately creating  a bounding box with a negative height.
-        // Why?  Because that contentsStream.transform() is going to invert it
-        // so that it has a positive height.  It will always invert because
+        // We're deliberately creating a bounding box with a negative height.
+        // Why? Because that contentsStream.transform() is going to invert it
+        // so that it has a positive height. It will always invert because
         // SVGs & PDFs have opposite layout directions.
         // If we started with a positive height, then inverted to a negative height
         // we end up with a negative height clipping box in the output PDF
@@ -421,10 +418,16 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         // will display it another.
         float calculatedX = (float) Math.min(startPoint.getX(), endPoint.getX());
         float calculatedY = (float) Math.max(1.0f, Math.max(startPoint.getY(), endPoint.getY()));
-        float calculatedWidth = Math.max(1.0f, Math.abs( (float) (endPoint.getX() - startPoint.getX())));
-        float negativeHeight = -1.0f *  Math.max(1.0f, Math.abs( (float) (endPoint.getY() - startPoint.getY())));
+        float calculatedWidth = Math.max(1.0f,
+                Math.abs((float) (endPoint.getX() - startPoint.getX())));
+        float negativeHeight = -1.0f
+                * Math.max(1.0f, Math.abs((float) (endPoint.getY() - startPoint.getY())));
 
         state.contentStream.addRect(calculatedX, calculatedY, calculatedWidth, negativeHeight);
+
+        state.env.getGraphics2D().markPathIsOnStream();
+        state.env.getGraphics2D().internalClip(false);
+
         // Warp the 1x1 box containing the gradient to fill a larger rectangular space
         state.contentStream.transform(new Matrix(state.tf));
 
@@ -455,9 +458,9 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         AffineTransform gradientTransform = getPropertyValue(paint, "getTransform");
         state.tf.concatenate(gradientTransform);
 
-        //noinspection unused
+        // noinspection unused
         MultipleGradientPaint.CycleMethod cycleMethod = getCycleMethod(paint);
-        //noinspection unused
+        // noinspection unused
         MultipleGradientPaint.ColorSpaceType colorSpaceType = getColorSpaceType(paint);
 
         state.tf.transform(startPoint, startPoint);
@@ -498,11 +501,9 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
     }
 
     /**
-     * Map the cycleMethod of the GradientPaint to the java.awt.MultipleGradientPaint.CycleMethod
-     * enum.
+     * Map the cycleMethod of the GradientPaint to the java.awt.MultipleGradientPaint.CycleMethod enum.
      *
-     * @param paint the paint to get the cycleMethod from (if not in any other way possible
-     *              using reflection)
+     * @param paint the paint to get the cycleMethod from (if not in any other way possible using reflection)
      * @return the CycleMethod
      */
     private MultipleGradientPaint.CycleMethod getCycleMethod(Paint paint)
@@ -548,8 +549,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
     private void setupBatikReflectionAccess(Paint paint)
     {
         /*
-         * As we don't have Batik on our class path we need to access it by reflection if the
-         * user application is using Batik
+         * As we don't have Batik on our class path we need to access it by reflection if the user application is using Batik
          */
         if (BATIK_GRADIENT_NO_CYCLE != null)
             return;
@@ -578,9 +578,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
             throws IOException
     {
         /*
-         * Batik has a copy of RadialGradientPaint, but it has the same structure as the
-         * AWT RadialGradientPaint. So we use Reflection to access the fields of both
-         * these classes.
+         * Batik has a copy of RadialGradientPaint, but it has the same structure as the AWT RadialGradientPaint. So we use
+         * Reflection to access the fields of both these classes.
          */
         Color[] colors = getPropertyValue(paint, "getColors");
         Color firstColor = colors[0];
@@ -671,8 +670,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         PDPageContentStream imageContentStream = new PDPageContentStream(state.document, appearance,
                 ((COSStream) pattern.getCOSObject()).createOutputStream());
         BufferedImage texturePaintImage = texturePaint.getImage();
-        PDImageXObject imageXObject = state.imageEncoder
-                .encodeImage(state.document, imageContentStream, texturePaintImage);
+        PDImageXObject imageXObject = state.imageEncoder.encodeImage(state.document,
+                imageContentStream, texturePaintImage);
 
         float ratioW = (float) ((anchorRect.getWidth()) / texturePaintImage.getWidth());
         float ratioH = (float) ((anchorRect.getHeight()) / texturePaintImage.getHeight());
@@ -693,9 +692,9 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
     /**
      * Encode a color gradient as a type3 function
      *
-     * @param colors    The colors to encode
+     * @param colors The colors to encode
      * @param fractions the fractions for encoding
-     * @param state     our state, this is needed for color mapping
+     * @param state our state, this is needed for color mapping
      * @return the type3 function
      */
     private PDFunctionType3 buildType3Function(Color[] colors, float[] fractions,
@@ -719,15 +718,14 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         if (Math.abs(fractions[0]) > EPSILON)
         {
             /*
-             * We need to insert a "keyframe" for fraction 0.
-             * See also java.awt.LinearGradientPaint for future information
+             * We need to insert a "keyframe" for fraction 0. See also java.awt.LinearGradientPaint for future information
              */
             colorList.add(0, colors[0]);
             bounds.add(new COSFloat(fractions[0]));
         }
 
         /*
-         *  We always add the inner fractions
+         * We always add the inner fractions
          */
         for (int i = 1; i < fractions.length - 1; i++)
         {
@@ -760,7 +758,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
      * @param colors the color to encode
      * @param domain the domain which should already been setuped. It will be used for the Type2 function
      * @param encode will get the domain information per color channel, i.e. colors.length x [0, 1]
-     * @param state  our internal state, this is needed for color mapping
+     * @param state our internal state, this is needed for color mapping
      * @return the Type2 function COSArray
      */
     private COSArray buildType2Functions(List<Color> colors, COSArray domain, COSArray encode,
@@ -799,9 +797,9 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
     /**
      * Get a property value from an object using reflection
      *
-     * @param obj            The object to get a property from.
+     * @param obj The object to get a property from.
      * @param propertyGetter method name of the getter, i.e. "getXY".
-     * @param <T>            the type of the property you want to get.
+     * @param <T> the type of the property you want to get.
      * @return the value read from the object
      */
     @SuppressWarnings({ "unchecked", "WeakerAccess" })

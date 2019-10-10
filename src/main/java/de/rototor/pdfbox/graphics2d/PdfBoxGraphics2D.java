@@ -265,7 +265,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 		info.sourceGfx = gfx;
 		gfx.copyList.add(info);
 		this.copyInfo = info;
-
+		this.hasPathOnStream = false;
 		this.document = gfx.document;
 		this.bbox = gfx.bbox;
 		this.xFormObject = gfx.xFormObject;
@@ -413,6 +413,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 				}
 
 				contentStream.stroke();
+				hasPathOnStream = false;
 			}
 
 			drawControl.afterShapeDraw(s, drawControlEnv);
@@ -702,12 +703,13 @@ public class PdfBoxGraphics2D extends Graphics2D {
 						applyShadingAsColor(shading);
 						fill(useEvenOdd);
 					} else {
-						clip(useEvenOdd);
+						internalClip(useEvenOdd);
 						contentStream.shadingFill(shading);
 					}
 				} else {
 					fill(useEvenOdd);
 				}
+				hasPathOnStream = false;
 			}
 
 			drawControl.afterShapeFill(s, drawControlEnv);
@@ -921,18 +923,27 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			 * clip can be null, only set a clipping if not null
 			 */
 			if (clip != null) {
-				clip(walkShape(clip));
+				internalClip(walkShape(clip));
 			}
 		} catch (IOException e) {
 			throwException(e);
 		}
 	}
 
-	private void clip(boolean useEvenOdd) throws IOException {
-		if (useEvenOdd)
-			contentStream.clipEvenOdd();
-		else
-			contentStream.clip();
+	/**
+	 * Perform a clip, but only if we really have an active clipping path
+	 * 
+	 * @param useEvenOdd
+	 *            true when we should use the evenOdd rule.
+	 */
+	void internalClip(boolean useEvenOdd) throws IOException {
+		if (hasPathOnStream) {
+			if (useEvenOdd)
+				contentStream.clipEvenOdd();
+			else
+				contentStream.clip();
+			hasPathOnStream = false;
+		}
 	}
 
 	/**
@@ -952,6 +963,25 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			if (!isFinite(coords[i]))
 				return false;
 		return true;
+	}
+
+	/**
+	 * Do we currently have an active path on the content stream, which has not been
+	 * closed?
+	 * 
+	 * We need this flag to avoid to clip twice if both the plaint applyer needs to
+	 * clip and we have some clipping. If at the end we try to clip with an empty
+	 * path, then Acrobat Reader does not like that and draws nothing.
+	 */
+	private boolean hasPathOnStream = false;
+
+	/**
+	 * Set an internal flag that some path - which may be added from the paint
+	 * applyer to the content stream or by walkShape() - is on the content stream.
+	 * We can then safely clip() if there is a path on the content stream.
+	 */
+	void markPathIsOnStream() {
+		hasPathOnStream = true;
 	}
 
 	/**
@@ -991,6 +1021,7 @@ public class PdfBoxGraphics2D extends Graphics2D {
 			}
 			pi.next();
 		}
+		markPathIsOnStream();
 		return pi.getWindingRule() == PathIterator.WIND_EVEN_ODD;
 	}
 
