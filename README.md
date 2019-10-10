@@ -41,7 +41,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.24</version>
+	<version>0.25</version>
 </dependency>
 ```
 
@@ -260,11 +260,13 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 
 ## Changes
 
-Version 0.25 (to be released):
+Version 0.25:
  - Upgrade to PDFBox 2.0.17
  - Correctly handle GradientPaint fractions.
+ - Correctly handle SVG LinearGradientPaint's in ObjectBoundingBox mode [#19](https://github.com/rototor/pdfbox-graphics2d/issues/19). 
+   Thanks to @larrylynn-wf for the report and the idea how to fix it.
  - Internal API breakage to support non quadratic SVG gradients 
-   correctly [#19](https://github.com/rototor/pdfbox-graphics2d/issues/19)
+   correctly [#19](https://github.com/rototor/pdfbox-graphics2d/issues/19).
 
 Version 0.24:
  - Upgrade to PDFBox 2.0.16
