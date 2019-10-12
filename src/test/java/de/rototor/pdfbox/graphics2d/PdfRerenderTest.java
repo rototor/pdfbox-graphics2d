@@ -27,6 +27,39 @@ public class PdfRerenderTest {
 		rerenderPDF("compuserver_msn_Ford_Focus.pdf");
 	}
 
+	@Test
+	public void testSimpleRerender() throws IOException {
+		simplePDFRerender("antonio_sample.pdf");
+	}
+
+	public void simplePDFRerender(String name) throws IOException {
+		File parentDir = new File("target/test");
+		// noinspection ResultOfMethodCallIgnored
+		parentDir.mkdirs();
+
+		PDDocument document = new PDDocument();
+		PDDocument sourceDoc = PDDocument.load(PdfRerenderTest.class.getResourceAsStream(name));
+
+		for (PDPage sourcePage : sourceDoc.getPages()) {
+			PDPage rerenderedPage = new PDPage(sourcePage.getMediaBox());
+			document.addPage(rerenderedPage);
+			PDPageContentStream cb = new PDPageContentStream(document, rerenderedPage);
+			try {
+				PdfBoxGraphics2D gfx = new PdfBoxGraphics2D(document, sourcePage.getMediaBox());
+				PDFRenderer pdfRenderer = new PDFRenderer(sourceDoc);
+				pdfRenderer.renderPageToGraphics(sourceDoc.getPages().indexOf(sourcePage), gfx);
+				gfx.dispose();
+
+				PDFormXObject xFormObject = gfx.getXFormObject();
+				cb.drawForm(xFormObject);
+			} finally {
+				cb.close();
+			}
+		}
+		document.save(new File(parentDir, "simple_rerender" + name));
+		document.close();
+	}
+
 	private void rerenderPDF(String name) throws IOException {
 		File parentDir = new File("target/test");
 		// noinspection ResultOfMethodCallIgnored
