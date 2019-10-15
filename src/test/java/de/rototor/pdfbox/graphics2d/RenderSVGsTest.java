@@ -36,6 +36,12 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase
         renderSVG("horizontal-gradient.svg", 0.55);
     }
 
+    @Test
+    public void testSVGinCMYKColorspace() throws IOException
+    {
+        renderSVGCMYK("atmospheric-composiition.svg", 0.7);
+    }
+
     private void renderSVG(String name, final double scale) throws IOException
     {
         String uri = RenderSVGsTest.class.getResource(name).toString();
@@ -54,6 +60,34 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase
         final GraphicsNode gvtRoot = builder.build(bctx, document);
 
         this.exportGraphic("svg", name.replace(".svg", ""), new GraphicsExporter()
+        {
+            @Override
+            public void draw(Graphics2D gfx)
+            {
+                gfx.scale(scale, scale);
+                gvtRoot.paint(gfx);
+            }
+        });
+    }
+
+    private void renderSVGCMYK(String name, final double scale) throws IOException
+    {
+        String uri = RenderSVGsTest.class.getResource(name).toString();
+
+        // create the document
+        String parser = XMLResourceDescriptor.getXMLParserClassName();
+        SAXSVGDocumentFactory f = new SAXSVGDocumentFactory(parser);
+        Document document = f.createDocument(uri, RenderSVGsTest.class.getResourceAsStream(name));
+
+        // create the GVT
+        UserAgent userAgent = new UserAgentAdapter();
+        DocumentLoader loader = new DocumentLoader(userAgent);
+        BridgeContext bctx = new BridgeContext(userAgent, loader);
+        bctx.setDynamicState(BridgeContext.STATIC);
+        GVTBuilder builder = new GVTBuilder();
+        final GraphicsNode gvtRoot = builder.build(bctx, document);
+
+        this.exportGraphicCMYK("svg", name.replace(".svg", ""), new GraphicsExporter()
         {
             @Override
             public void draw(Graphics2D gfx)
