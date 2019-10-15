@@ -114,54 +114,6 @@ class PdfBoxGraphics2DTestBase {
 		}
 	}
 
-	void exportGraphicCMYK(String dir, String name, GraphicsExporter exporter) {
-		try {
-			PDDocument document = new PDDocument();
-
-			File parentDir = new File("target/test/" + dir);
-			// noinspection ResultOfMethodCallIgnored
-			parentDir.mkdirs();
-
-			PDPage page = new PDPage(PDRectangle.A4);
-			document.addPage(page);
-
-			PDPageContentStream contentStream = new PDPageContentStream(document, page);
-			PdfBoxGraphics2D pdfBoxGraphics2D = new PdfBoxGraphics2D(document, 400, 400);
-			PdfBoxGraphics2DColorMapper colorMapper = new RGBtoCMYKColorMapper();
-			pdfBoxGraphics2D.setColorMapper(colorMapper);
-			PdfBoxGraphics2DFontTextDrawer fontTextDrawer = null;
-			contentStream.beginText();
-			contentStream.setStrokingColor(0, 0, 0);
-			contentStream.setNonStrokingColor(0, 0, 0);
-			contentStream.setFont(PDType1Font.HELVETICA_BOLD, 15);
-			contentStream.setTextMatrix(Matrix.getTranslateInstance(10, 800));
-			contentStream.showText("Mode " + Mode.FontTextIfPossible);
-			contentStream.endText();
-			fontTextDrawer = new PdfBoxGraphics2DFontTextDrawer();
-			registerFots(fontTextDrawer);
-
-			if (fontTextDrawer != null) {
-				pdfBoxGraphics2D.setFontTextDrawer(fontTextDrawer);
-			}
-
-			exporter.draw(pdfBoxGraphics2D);
-			pdfBoxGraphics2D.dispose();
-
-			PDFormXObject appearanceStream = pdfBoxGraphics2D.getXFormObject();
-			Matrix matrix = new Matrix();
-			matrix.translate(0, 20);
-			contentStream.transform(matrix);
-			contentStream.drawForm(appearanceStream);
-
-			contentStream.close();
-
-			document.save(new File(parentDir, name + ".pdf"));
-			document.close();
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
 	private void registerFots(PdfBoxGraphics2DFontTextDrawer fontTextDrawer)
 	{
 		fontTextDrawer.registerFont(new File(
