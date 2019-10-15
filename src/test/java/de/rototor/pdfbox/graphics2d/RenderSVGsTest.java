@@ -117,7 +117,7 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase
             contentStream.setNonStrokingColor(0.0f, 0.0f, 0.0f, 1.0f);
             contentStream.setFont(PDType1Font.HELVETICA_BOLD, 15);
             contentStream.setTextMatrix(Matrix.getTranslateInstance(10, 800));
-            contentStream.showText("Mode " + Mode.FontTextIfPossible);
+            contentStream.showText("Mode: CMYK colorspace");
             contentStream.endText();
             fontTextDrawer = new PdfBoxGraphics2DFontTextDrawer();
 
@@ -131,7 +131,7 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase
 
             PDFormXObject appearanceStream = pdfBoxGraphics2D.getXFormObject();
             Matrix matrix = new Matrix();
-            matrix.translate(0, 20);
+            matrix.translate(0, 300);
             contentStream.transform(matrix);
             contentStream.drawForm(appearanceStream);
 
