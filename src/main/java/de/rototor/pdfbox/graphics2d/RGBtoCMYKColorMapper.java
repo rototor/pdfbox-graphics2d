@@ -12,9 +12,12 @@ import java.awt.color.ICC_Profile;
   Usage:
 
   PdfBoxGraphics2D pdfBoxGraphics2D = new PdfBoxGraphics2D(this.doc, (int)(width), (int)(height));
-  PdfBoxGraphics2DColorMapper colorMapper = new RGBtoCMYKColorMapper();
+  PdfBoxGraphics2DColorMapper colorMapper = new RGBtoCMYKColorMapper(icc_profile);
   pdfBoxGraphics2D.setColorMapper(colorMapper);
 
+  Where icc_profile is an instance of java.awt.color.ICC_Profile which supports a CMYK
+  colorspace.  For testing purposes, we're using ISOcoated_v2_300_bas.icc which ships
+  with PDFBox.
  */
 
 
