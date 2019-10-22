@@ -15,6 +15,7 @@ import org.junit.Test;
 import org.w3c.dom.Document;
 
 import java.awt.*;
+import java.awt.color.ICC_Profile;
 import java.io.File;
 import java.io.IOException;
 
@@ -108,7 +109,11 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase
             PDPageContentStream contentStream = new PDPageContentStream(pdfDocument, page);
 
             PdfBoxGraphics2D pdfBoxGraphics2D = new PdfBoxGraphics2D(pdfDocument, 400, 400);
-            PdfBoxGraphics2DColorMapper colorMapper = new RGBtoCMYKColorMapper();
+
+            ICC_Profile icc_profile = ICC_Profile.getInstance(
+                    PDDocument.class.getResourceAsStream("/org/apache/pdfbox/resources/icc/ISOcoated_v2_300_bas.icc")
+            );
+            PdfBoxGraphics2DColorMapper colorMapper = new RGBtoCMYKColorMapper(icc_profile);
             pdfBoxGraphics2D.setColorMapper(colorMapper);
 
             PdfBoxGraphics2DFontTextDrawer fontTextDrawer = null;

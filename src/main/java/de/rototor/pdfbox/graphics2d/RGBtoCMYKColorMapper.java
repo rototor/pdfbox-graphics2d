@@ -1,6 +1,5 @@
 package de.rototor.pdfbox.graphics2d;
 
-import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceCMYK;
@@ -8,7 +7,6 @@ import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceCMYK;
 import java.awt.*;
 import java.awt.color.ICC_ColorSpace;
 import java.awt.color.ICC_Profile;
-import java.io.IOException;
 
 /*
   Usage:
@@ -21,13 +19,13 @@ import java.io.IOException;
 
 
 public class RGBtoCMYKColorMapper extends PdfBoxGraphics2DColorMapper {
-    ICC_Profile icc_profile;
     ICC_ColorSpace icc_colorspace;
 
-    public RGBtoCMYKColorMapper() throws IOException {
-        icc_profile = ICC_Profile.getInstance(
-                PDDocument.class.getResourceAsStream("/org/apache/pdfbox/resources/icc/ISOcoated_v2_300_bas.icc")
-        );
+    public RGBtoCMYKColorMapper(ICC_Profile icc_profile){
+        resetColorSpace(icc_profile);
+    }
+
+    public void resetColorSpace(ICC_Profile icc_profile){
         icc_colorspace = new ICC_ColorSpace(icc_profile);
     }
 
@@ -37,10 +35,6 @@ public class RGBtoCMYKColorMapper extends PdfBoxGraphics2DColorMapper {
         int b = rgbColor.getBlue();
         int[] rgbInts = {r, g, b};
         float[] rgbFoats = rgbIntToFloat(rgbInts);
-//        float rf = rgbFoats[0];
-//        float gf = rgbFoats[1];
-//        float bf = rgbFoats[2];
-//        float[] cmykFloats = convertRGBToCMYK(rf, gf, bf);
         float[] cmykFloats = icc_colorspace.fromRGB(rgbFoats);
 
         PDColor cmykColor = new PDColor(cmykFloats, PDDeviceCMYK.INSTANCE);
@@ -57,29 +51,5 @@ public class RGBtoCMYKColorMapper extends PdfBoxGraphics2DColorMapper {
         return rgbFloats;
     }
 
-    protected static float[] convertRGBToCMYK( float red, float green, float blue )
-    {
-        //
-        // RGB->CMYK from From
-        // http://en.wikipedia.org/wiki/Talk:CMYK_color_model
-        //
-        float c = 1.0f - red;
-        float m = 1.0f - green;
-        float y = 1.0f - blue;
-        float k = 1.0f;
-
-        k = Math.min( Math.min( Math.min( c,k ), m), y );
-        if (k == 1.0){
-            // avoid div by zero errors for pure black
-            c = m = y = 0.0F;
-        }
-        else {
-            c = ( c - k ) / ( 1 - k );
-            m = ( m - k ) / ( 1 - k );
-            y = ( y - k ) / ( 1 - k );
-        }
-
-        return new float[] { c,m,y,k };
-    }
 }
 
