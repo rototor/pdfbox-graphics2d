@@ -113,7 +113,7 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase
             ICC_Profile icc_profile = ICC_Profile.getInstance(
                     PDDocument.class.getResourceAsStream("/org/apache/pdfbox/resources/icc/ISOcoated_v2_300_bas.icc")
             );
-            PdfBoxGraphics2DColorMapper colorMapper = new RGBtoCMYKColorMapper(icc_profile);
+            PdfBoxGraphics2DColorMapper colorMapper = new RGBtoCMYKColorMapper(icc_profile, pdfDocument);
             pdfBoxGraphics2D.setColorMapper(colorMapper);
 
             PdfBoxGraphics2DFontTextDrawer fontTextDrawer = null;

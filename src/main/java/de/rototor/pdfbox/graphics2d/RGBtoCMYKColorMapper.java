@@ -1,12 +1,17 @@
 package de.rototor.pdfbox.graphics2d;
 
+import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceCMYK;
+import org.apache.pdfbox.pdmodel.graphics.color.PDICCBased;
 
 import java.awt.*;
 import java.awt.color.ICC_ColorSpace;
 import java.awt.color.ICC_Profile;
+import java.io.IOException;
+import java.io.OutputStream;
 
 /*
   Usage:
@@ -23,9 +28,16 @@ import java.awt.color.ICC_Profile;
 
 public class RGBtoCMYKColorMapper extends PdfBoxGraphics2DColorMapper {
     ICC_ColorSpace icc_colorspace;
+    PDICCBased pdProfile;
 
-    public RGBtoCMYKColorMapper(ICC_Profile icc_profile){
+    public RGBtoCMYKColorMapper(ICC_Profile icc_profile, PDDocument document) throws IOException {
         icc_colorspace = new ICC_ColorSpace(icc_profile);
+        this.pdProfile = new PDICCBased(document);
+        OutputStream outputStream = pdProfile.getPDStream().createOutputStream(COSName.FLATE_DECODE);
+        outputStream.write(icc_profile.getData());
+        outputStream.close();
+        pdProfile.getPDStream().getCOSObject().setInt(COSName.N, 4);
+        pdProfile.getPDStream().getCOSObject().setItem(COSName.ALTERNATE, COSName.DEVICECMYK);
     }
 
     public PDColor mapColor(PDPageContentStream contentStream, Color rgbColor) {
@@ -36,7 +48,7 @@ public class RGBtoCMYKColorMapper extends PdfBoxGraphics2DColorMapper {
         float[] rgbFoats = rgbIntToFloat(rgbInts);
         float[] cmykFloats = icc_colorspace.fromRGB(rgbFoats);
 
-        PDColor cmykColor = new PDColor(cmykFloats, PDDeviceCMYK.INSTANCE);
+        PDColor cmykColor = new PDColor(cmykFloats, pdProfile);
         return cmykColor;
     }
 
