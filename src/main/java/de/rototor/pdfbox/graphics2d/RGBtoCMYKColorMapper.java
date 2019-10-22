@@ -1,10 +1,14 @@
 package de.rototor.pdfbox.graphics2d;
 
+import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceCMYK;
 
 import java.awt.*;
+import java.awt.color.ICC_ColorSpace;
+import java.awt.color.ICC_Profile;
+import java.io.IOException;
 
 /*
   Usage:
@@ -17,16 +21,27 @@ import java.awt.*;
 
 
 public class RGBtoCMYKColorMapper extends PdfBoxGraphics2DColorMapper {
+    ICC_Profile icc_profile;
+    ICC_ColorSpace icc_colorspace;
+
+    public RGBtoCMYKColorMapper() throws IOException {
+        icc_profile = ICC_Profile.getInstance(
+                PDDocument.class.getResourceAsStream("/org/apache/pdfbox/resources/icc/ISOcoated_v2_300_bas.icc")
+        );
+        icc_colorspace = new ICC_ColorSpace(icc_profile);
+    }
+
     public PDColor mapColor(PDPageContentStream contentStream, Color rgbColor) {
         int r = rgbColor.getRed();
         int g = rgbColor.getGreen();
         int b = rgbColor.getBlue();
         int[] rgbInts = {r, g, b};
         float[] rgbFoats = rgbIntToFloat(rgbInts);
-        float rf = rgbFoats[0];
-        float gf = rgbFoats[1];
-        float bf = rgbFoats[2];
-        float[] cmykFloats = convertRGBToCMYK(rf, gf, bf);
+//        float rf = rgbFoats[0];
+//        float gf = rgbFoats[1];
+//        float bf = rgbFoats[2];
+//        float[] cmykFloats = convertRGBToCMYK(rf, gf, bf);
+        float[] cmykFloats = icc_colorspace.fromRGB(rgbFoats);
 
         PDColor cmykColor = new PDColor(cmykFloats, PDDeviceCMYK.INSTANCE);
         return cmykColor;
