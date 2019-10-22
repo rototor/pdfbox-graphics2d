@@ -15,7 +15,7 @@ import java.awt.color.ICC_Profile;
   PdfBoxGraphics2DColorMapper colorMapper = new RGBtoCMYKColorMapper(icc_profile);
   pdfBoxGraphics2D.setColorMapper(colorMapper);
 
-  Where icc_profile is an instance of java.awt.color.ICC_Profile which supports a CMYK
+  Where icc_profile is an instance of java.awt.color.ICC_Profile that supports a CMYK
   colorspace.  For testing purposes, we're using ISOcoated_v2_300_bas.icc which ships
   with PDFBox.
  */

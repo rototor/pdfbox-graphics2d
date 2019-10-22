@@ -142,7 +142,8 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase
 
             contentStream.close();
 
-            pdfDocument.save(new File(parentDir, name + ".pdf"));
+            String baseName = name.substring(0, name.lastIndexOf('.'));
+            pdfDocument.save(new File(parentDir, baseName + ".pdf"));
             pdfDocument.close();
         } catch (Exception e) {
             throw new RuntimeException(e);
