@@ -25,10 +25,6 @@ public class RGBtoCMYKColorMapper extends PdfBoxGraphics2DColorMapper {
     ICC_ColorSpace icc_colorspace;
 
     public RGBtoCMYKColorMapper(ICC_Profile icc_profile){
-        resetColorSpace(icc_profile);
-    }
-
-    public void resetColorSpace(ICC_Profile icc_profile){
         icc_colorspace = new ICC_ColorSpace(icc_profile);
     }
 
