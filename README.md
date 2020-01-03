@@ -51,7 +51,7 @@ This library targets Java 1.6 and should work with Java 1.6. But at the moment i
 
 ```java
 public class PDFGraphics2DSample {
-	public stati3 main(String[] argv) {
+	public static main(String[] argv) {
 		PDDocument document = new PDDocument();
 		PDPage page = new PDPage(PDRectangle.A4);
 		document.addPage(page);
@@ -140,6 +140,7 @@ On the other site rendering a text using vector shapes has the following propert
 - Note: You may want to manually alter the color mapping to e.g. ensure a black text is printed using pure CMYK black. 
 If you do not plan to print the PDF in offset or digital print you can ignore that. This will make no difference for 
 your normal desktop printer.
+- Note: When using Apache Batik to draw SVGs the text will always be drawn as vector shape. Batik always converts texts to vector shapes first and then applies the transforms on it (if there are any). So PdfBoxGraphics2D never even gets a chance to draw the text using a PDF font. In theory, this could be solved by installing an appropriate text painter on the Batik bridge context. But no one has created such a text painter yet.
 
 If you want to get a 1:1 mapping of your ```Graphics2D``` drawing in the PDF you should use the vector mode. If you want to
 have the text searchable and only use LTR languanges (i.e. latin-based) you may try the text mode. For this mode to work 
