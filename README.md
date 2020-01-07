@@ -263,6 +263,7 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 
 Version 0.26 (to be released):
  - Added a [CMYK color mapper](src/main/java/de/rototor/pdfbox/graphics2d/RGBtoCMYKColorMapper.java), which converts the paint colors to CMYK using an ICC Profile. Thanks to @larrylynn-wf for providing this feature [#22](https://github.com/rototor/pdfbox-graphics2d/issues/22).
+ - Upgrade to PDFBox 2.0.18
 
 Version 0.25:
  - Upgrade to PDFBox 2.0.17
