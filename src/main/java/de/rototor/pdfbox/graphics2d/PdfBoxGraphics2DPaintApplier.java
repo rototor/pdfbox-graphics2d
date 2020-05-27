@@ -27,6 +27,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.*;
@@ -149,6 +150,9 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         {
             applyPatternPaint(paint, state);
         }
+        else if(simpleName.equals("TilingPaint")) {
+            applyTilingPaint(paint, state);
+        }
         else if (paint instanceof GradientPaint)
         {
             return shadingCache.makeUnqiue(buildGradientShading((GradientPaint) paint, state));
@@ -246,6 +250,15 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 
         state.contentStream.setNonStrokingColor(patternColor);
         state.contentStream.setStrokingColor(patternColor);
+    }
+
+    /*
+     * Apache PDFBox Tiling Paint
+     */
+    private void applyTilingPaint(Paint paint, PaintApplierState state) throws IOException
+    {
+        TexturePaint texturePaint = getPrivateFieldValue(paint, "paint");
+        applyTexturePaint(texturePaint, state);
     }
 
     private void applyComposite(PaintApplierState state)
@@ -821,6 +834,37 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
                 c = c.getSuperclass();
             }
             throw new NullPointerException("Method " + propertyGetter + " not found!");
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Get the value of a private field from the specified object.
+     *
+     * @param obj The object containing the field.
+     * @param fieldName The name of the field.
+     * @param <T> The field type.
+     * @return The private field value.
+     */
+    @SuppressWarnings({ "unchecked", "WeakerAccess" })
+    protected static <T> T getPrivateFieldValue(Object obj, String fieldName)
+    {
+        try
+        {
+            Class<?> c = obj.getClass();
+            try
+            {
+                Field f = c.getDeclaredField(fieldName);
+                f.setAccessible(true);
+                return (T)f.get(obj);
+            }
+            catch (NoSuchFieldException ignored)
+            {
+            }
+            throw new NullPointerException("Field " + fieldName + " not found!");
         }
         catch (Exception e)
         {
