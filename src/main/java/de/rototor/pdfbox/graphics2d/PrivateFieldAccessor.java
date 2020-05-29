@@ -55,7 +55,6 @@ class PrivateFieldAccessor
                 @Override
                 public void setAccessible(AccessibleObject obj)
                 {
-
                     try
                     {
                         setAccessible.invoke(obj, true);
