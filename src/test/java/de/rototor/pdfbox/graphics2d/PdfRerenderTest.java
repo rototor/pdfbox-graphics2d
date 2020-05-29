@@ -30,6 +30,7 @@ public class PdfRerenderTest {
 		rerenderPDF("heart.pdf");
 		rerenderPDF("barChart.pdf");
 		rerenderPDF("compuserver_msn_Ford_Focus.pdf");
+		rerenderPDF("patternfill.pdf");
 	}
 
 	@Test

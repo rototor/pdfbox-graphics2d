@@ -9,7 +9,7 @@ import java.lang.reflect.*;
 class PrivateFieldAccessor
 {
     /*
-     * Default Implementation for Java <= 8
+     * Default implementation for Java <= 8
      */
     private static IAccessableSetter performSetAccessible = new IAccessableSetter()
     {
@@ -30,8 +30,7 @@ class PrivateFieldAccessor
         try
         {
             /*
-             * Dieses Gedöns braucht man nur für JDK 9+, und auch nur da funktioniert der
-             * Spaß...
+             * We need this for JDK 9+, and only their this works at all...
              */
             final Method setAccessible = AccessibleObject.class
                     .getDeclaredMethod("setAccessible0", boolean.class);
@@ -63,8 +62,7 @@ class PrivateFieldAccessor
                     }
                     catch (Exception e)
                     {
-                        throw new RuntimeException(
-                                e); // you definitely should do this in a different way :D
+                        throw new RuntimeException(e);
                     }
                 }
             };
