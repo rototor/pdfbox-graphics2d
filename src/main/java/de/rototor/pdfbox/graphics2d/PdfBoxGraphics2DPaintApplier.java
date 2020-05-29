@@ -57,6 +57,11 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         private COSDictionary dictExtendedState;
         private IPaintEnv env;
         public AffineTransform tf;
+        /**
+         * This transform is only set, when we apply a nested
+         * paint (e.g. a TilingPattern's paint)
+         */
+        protected AffineTransform nestedTransform;
 
         private void ensureExtendedState()
         {
@@ -69,8 +74,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         }
     }
 
-    private ExtGStateCache extGStateCache = new ExtGStateCache();
-    private PDShadingCache shadingCache = new PDShadingCache();
+    private final ExtGStateCache extGStateCache = new ExtGStateCache();
+    private final PDShadingCache shadingCache = new PDShadingCache();
 
     @Override
     public PDShading applyPaint(Paint paint, PDPageContentStream contentStream, AffineTransform tf,
@@ -86,6 +91,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         state.pdExtendedGraphicsState = null;
         state.env = env;
         state.tf = tf;
+        state.nestedTransform = null;
         PDShading shading = applyPaint(paint, state);
         if (state.pdExtendedGraphicsState != null)
             contentStream.setGraphicsStateParameters(
@@ -260,6 +266,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         try
         {
             Paint tilingPaint = PrivateFieldAccessor.getPrivateField(paint, "paint");
+            Matrix patternMatrix = PrivateFieldAccessor.getPrivateField(paint, "patternMatrix");
+            state.nestedTransform = patternMatrix.createAffineTransform();
             applyPaint(tilingPaint, state);
         }
         catch (Exception e)
@@ -697,6 +705,10 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         float ratioW = (float) ((anchorRect.getWidth()) / texturePaintImage.getWidth());
         float ratioH = (float) ((anchorRect.getHeight()) / texturePaintImage.getHeight());
         float paintHeight = (texturePaintImage.getHeight()) * ratioH;
+        if (state.nestedTransform != null)
+        {
+            imageContentStream.transform(new Matrix(state.nestedTransform));
+        }
         imageContentStream.drawImage(imageXObject, (float) anchorRect.getX(),
                 (float) (paintHeight + anchorRect.getY()), texturePaintImage.getWidth() * ratioW,
                 -paintHeight);
@@ -851,7 +863,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 
     private static abstract class COSResourceCacheBase<TObject extends COSObjectable>
     {
-        private Map<Integer, List<TObject>> states = new HashMap<Integer, List<TObject>>();
+        private final Map<Integer, List<TObject>> states = new HashMap<Integer, List<TObject>>();
 
         private static boolean equalsCOSDictionary(COSDictionary cosDictionary,
                 COSDictionary cosDictionary1)
