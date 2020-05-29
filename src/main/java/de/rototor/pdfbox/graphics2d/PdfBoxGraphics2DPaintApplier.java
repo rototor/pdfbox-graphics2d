@@ -255,10 +255,18 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
     /*
      * Apache PDFBox Tiling Paint
      */
-    private void applyTilingPaint(Paint paint, PaintApplierState state) throws IOException
+    private void applyTilingPaint(Paint paint, PaintApplierState state)
     {
-        TexturePaint texturePaint = getPrivateFieldValue(paint, "paint");
-        applyTexturePaint(texturePaint, state);
+        try
+        {
+            Paint tilingPaint = getPrivateFieldValue(paint, "paint");
+            applyPaint(tilingPaint, state);
+        }
+        catch (Exception e)
+        {
+            System.err.println("PdfBoxGraphics2DPaintApplier error while drawing Tiling Paint");
+            e.printStackTrace();
+        }
     }
 
     private void applyComposite(PaintApplierState state)
@@ -855,14 +863,18 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         try
         {
             Class<?> c = obj.getClass();
-            try
+            while (c != null)
             {
-                Field f = c.getDeclaredField(fieldName);
-                f.setAccessible(true);
-                return (T)f.get(obj);
-            }
-            catch (NoSuchFieldException ignored)
-            {
+                try
+                {
+                    Field f = c.getDeclaredField(fieldName);
+                    f.setAccessible(true);
+                    return (T) f.get(obj);
+                }
+                catch (NoSuchFieldException ignored)
+                {
+                }
+                c = c.getSuperclass();
             }
             throw new NullPointerException("Field " + fieldName + " not found!");
         }
