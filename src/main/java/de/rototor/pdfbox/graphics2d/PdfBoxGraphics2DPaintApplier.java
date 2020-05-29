@@ -27,7 +27,6 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.*;
@@ -150,8 +149,9 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         {
             applyPatternPaint(paint, state);
         }
-        else if(simpleName.equals("TilingPaint")) {
-            applyTilingPaint(paint, state);
+        else if (simpleName.equals("TilingPaint"))
+        {
+            applyPdfBoxTilingPaint(paint, state);
         }
         else if (paint instanceof GradientPaint)
         {
@@ -184,8 +184,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         PDShading shading = paint.getShading();
 
         state.contentStream.transform(matrix);
-        return PDShading.create(
-                (COSDictionary) pdfCloneUtility.cloneForNewDocument(shading.getCOSObject()));
+        return PDShading.create((COSDictionary) pdfCloneUtility
+                .cloneForNewDocument(shading.getCOSObject()));
     }
 
     /*
@@ -255,11 +255,11 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
     /*
      * Apache PDFBox Tiling Paint
      */
-    private void applyTilingPaint(Paint paint, PaintApplierState state)
+    private void applyPdfBoxTilingPaint(Paint paint, PaintApplierState state)
     {
         try
         {
-            Paint tilingPaint = getPrivateFieldValue(paint, "paint");
+            Paint tilingPaint = PrivateFieldAccessor.getPrivateField(paint, "paint");
             applyPaint(tilingPaint, state);
         }
         catch (Exception e)
@@ -372,8 +372,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
                 /*
                  * If the scale is not square, we need to use the object bounding box logic
                  */
-                if (Math.abs(
-                        gradientTransform.getScaleX() - gradientTransform.getScaleY()) > EPSILON)
+                if (Math.abs(gradientTransform.getScaleX() - gradientTransform.getScaleY())
+                        > EPSILON)
                     isObjectBoundingBox = true;
             }
         }
@@ -439,10 +439,10 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         // will display it another.
         float calculatedX = (float) Math.min(startPoint.getX(), endPoint.getX());
         float calculatedY = (float) Math.max(1.0f, Math.max(startPoint.getY(), endPoint.getY()));
-        float calculatedWidth = Math.max(1.0f,
-                Math.abs((float) (endPoint.getX() - startPoint.getX())));
-        float negativeHeight = -1.0f
-                * Math.max(1.0f, Math.abs((float) (endPoint.getY() - startPoint.getY())));
+        float calculatedWidth = Math
+                .max(1.0f, Math.abs((float) (endPoint.getX() - startPoint.getX())));
+        float negativeHeight =
+                -1.0f * Math.max(1.0f, Math.abs((float) (endPoint.getY() - startPoint.getY())));
 
         state.contentStream.addRect(calculatedX, calculatedY, calculatedWidth, negativeHeight);
 
@@ -691,8 +691,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         PDPageContentStream imageContentStream = new PDPageContentStream(state.document, appearance,
                 ((COSStream) pattern.getCOSObject()).createOutputStream());
         BufferedImage texturePaintImage = texturePaint.getImage();
-        PDImageXObject imageXObject = state.imageEncoder.encodeImage(state.document,
-                imageContentStream, texturePaintImage);
+        PDImageXObject imageXObject = state.imageEncoder
+                .encodeImage(state.document, imageContentStream, texturePaintImage);
 
         float ratioW = (float) ((anchorRect.getWidth()) / texturePaintImage.getWidth());
         float ratioH = (float) ((anchorRect.getHeight()) / texturePaintImage.getHeight());
@@ -713,9 +713,9 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
     /**
      * Encode a color gradient as a type3 function
      *
-     * @param colors The colors to encode
+     * @param colors    The colors to encode
      * @param fractions the fractions for encoding
-     * @param state our state, this is needed for color mapping
+     * @param state     our state, this is needed for color mapping
      * @return the type3 function
      */
     private PDFunctionType3 buildType3Function(Color[] colors, float[] fractions,
@@ -779,7 +779,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
      * @param colors the color to encode
      * @param domain the domain which should already been setuped. It will be used for the Type2 function
      * @param encode will get the domain information per color channel, i.e. colors.length x [0, 1]
-     * @param state our internal state, this is needed for color mapping
+     * @param state  our internal state, this is needed for color mapping
      * @return the Type2 function COSArray
      */
     private COSArray buildType2Functions(List<Color> colors, COSArray domain, COSArray encode,
@@ -818,9 +818,9 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
     /**
      * Get a property value from an object using reflection
      *
-     * @param obj The object to get a property from.
+     * @param obj            The object to get a property from.
      * @param propertyGetter method name of the getter, i.e. "getXY".
-     * @param <T> the type of the property you want to get.
+     * @param <T>            the type of the property you want to get.
      * @return the value read from the object
      */
     @SuppressWarnings({ "unchecked", "WeakerAccess" })
@@ -842,41 +842,6 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
                 c = c.getSuperclass();
             }
             throw new NullPointerException("Method " + propertyGetter + " not found!");
-        }
-        catch (Exception e)
-        {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * Get the value of a private field from the specified object.
-     *
-     * @param obj The object containing the field.
-     * @param fieldName The name of the field.
-     * @param <T> The field type.
-     * @return The private field value.
-     */
-    @SuppressWarnings({ "unchecked", "WeakerAccess" })
-    protected static <T> T getPrivateFieldValue(Object obj, String fieldName)
-    {
-        try
-        {
-            Class<?> c = obj.getClass();
-            while (c != null)
-            {
-                try
-                {
-                    Field f = c.getDeclaredField(fieldName);
-                    f.setAccessible(true);
-                    return (T) f.get(obj);
-                }
-                catch (NoSuchFieldException ignored)
-                {
-                }
-                c = c.getSuperclass();
-            }
-            throw new NullPointerException("Field " + fieldName + " not found!");
         }
         catch (Exception e)
         {
