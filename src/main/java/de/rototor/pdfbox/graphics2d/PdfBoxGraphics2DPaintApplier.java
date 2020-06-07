@@ -71,6 +71,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
                 this.dictExtendedState.setItem(COSName.TYPE, COSName.EXT_G_STATE);
                 pdExtendedGraphicsState = new PDExtendedGraphicsState(this.dictExtendedState);
             }
+            assert pdExtendedGraphicsState != null;
         }
     }
 
@@ -312,6 +313,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         state.ensureExtendedState();
         if (alpha < 1)
         {
+            assert state.pdExtendedGraphicsState != null;
             state.pdExtendedGraphicsState.setStrokingAlphaConstant(alpha);
             state.pdExtendedGraphicsState.setNonStrokingAlphaConstant(alpha);
         }
