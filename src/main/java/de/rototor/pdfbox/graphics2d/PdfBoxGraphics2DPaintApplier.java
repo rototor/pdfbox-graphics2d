@@ -176,7 +176,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         }
         else
         {
-            System.err.println("Don't know paint " + paint.getClass().getName());
+            System.err.printf("Don't know paint %s" , paint.getClass().getName());
         }
 
         return null;
@@ -239,8 +239,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         catch (Exception e)
         {
             System.err
-                    .println("PdfBoxGraphics2DPaintApplier error while drawing Batik PatternPaint");
-            e.printStackTrace();
+                    .printf("PdfBoxGraphics2DPaintApplier error while drawing Batik PatternPaint %s",
+                            e.getMessage());
             return;
         }
         pdfBoxGraphics2D.dispose();
@@ -273,8 +273,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         }
         catch (Exception e)
         {
-            System.err.println("PdfBoxGraphics2DPaintApplier error while drawing Tiling Paint");
-            e.printStackTrace();
+            System.err.printf("PdfBoxGraphics2DPaintApplier error while drawing Tiling Paint %s", e.getMessage());
         }
     }
 
@@ -307,7 +306,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         }
         else
         {
-            System.err.println("Unknown composite " + state.composite.getClass().getSimpleName());
+            System.err.printf("Unknown composite %s", state.composite.getClass().getSimpleName());
         }
 
         state.ensureExtendedState();
