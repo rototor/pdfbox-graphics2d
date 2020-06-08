@@ -17,7 +17,6 @@ package de.rototor.pdfbox.graphics2d;
 
 import org.apache.fontbox.ttf.TrueTypeCollection;
 import org.apache.fontbox.ttf.TrueTypeFont;
-import org.apache.fontbox.util.BoundingBox;
 import org.apache.pdfbox.io.IOUtils;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDFont;
@@ -26,13 +25,15 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.util.Matrix;
 
 import java.awt.*;
+import java.awt.font.FontRenderContext;
 import java.awt.font.LineMetrics;
 import java.awt.font.TextAttribute;
 import java.awt.geom.Rectangle2D;
 import java.io.*;
 import java.text.AttributedCharacterIterator;
-import java.util.*;
+import java.text.CharacterIterator;
 import java.util.List;
+import java.util.*;
 
 /**
  * Default implementation to draw fonts. You can reuse instances of this class
@@ -345,6 +346,181 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
             }
         }
         contentStream.endText();
+    }
+
+    @Override
+    public FontMetrics getFontMetrics(final Font f, IFontTextDrawerEnv env)
+            throws IOException, FontFormatException
+    {
+        final FontMetrics defaultMetrics = env.getCalculationGraphics().getFontMetrics(f);
+        final PDFont pdFont = mapFont(f, env);
+        /*
+         * By default we delegate to the buffered image based calculation. This is wrong
+         * as soon as we use the native PDF Box font, as those have sometimes different widths.
+         *
+         * But it is correct and fine as long as we use vector shapes.
+         */
+        if (pdFont == null)
+            return defaultMetrics;
+        return new FontMetrics(f)
+        {
+            public int getDescent()
+            {
+                return defaultMetrics.getDescent();
+            }
+
+            public int getHeight()
+            {
+                return defaultMetrics.getHeight();
+            }
+
+            public int getMaxAscent()
+            {
+                return defaultMetrics.getMaxAscent();
+            }
+
+            public int getMaxDescent()
+            {
+                return defaultMetrics.getMaxDescent();
+            }
+
+            public boolean hasUniformLineMetrics()
+            {
+                return defaultMetrics.hasUniformLineMetrics();
+            }
+
+            public LineMetrics getLineMetrics(String str, Graphics context)
+            {
+                return defaultMetrics.getLineMetrics(str, context);
+            }
+
+            public LineMetrics getLineMetrics(String str, int beginIndex, int limit,
+                    Graphics context)
+            {
+                return defaultMetrics.getLineMetrics(str, beginIndex, limit, context);
+            }
+
+            public LineMetrics getLineMetrics(char[] chars, int beginIndex, int limit,
+                    Graphics context)
+            {
+                return defaultMetrics.getLineMetrics(chars, beginIndex, limit, context);
+            }
+
+            public LineMetrics getLineMetrics(CharacterIterator ci, int beginIndex, int limit,
+                    Graphics context)
+            {
+                return defaultMetrics.getLineMetrics(ci, beginIndex, limit, context);
+            }
+
+            public Rectangle2D getStringBounds(String str, Graphics context)
+            {
+                return defaultMetrics.getStringBounds(str, context);
+            }
+
+            public Rectangle2D getStringBounds(String str, int beginIndex, int limit,
+                    Graphics context)
+            {
+                return defaultMetrics.getStringBounds(str, beginIndex, limit, context);
+            }
+
+            public Rectangle2D getStringBounds(char[] chars, int beginIndex, int limit,
+                    Graphics context)
+            {
+                return defaultMetrics.getStringBounds(chars, beginIndex, limit, context);
+            }
+
+            public Rectangle2D getStringBounds(CharacterIterator ci, int beginIndex, int limit,
+                    Graphics context)
+            {
+                return defaultMetrics.getStringBounds(ci, beginIndex, limit, context);
+            }
+
+            public Rectangle2D getMaxCharBounds(Graphics context)
+            {
+                return defaultMetrics.getMaxCharBounds(context);
+            }
+
+            @Override
+            public int getAscent()
+            {
+                return defaultMetrics.getAscent();
+            }
+
+            @Override
+            public int getMaxAdvance()
+            {
+                return defaultMetrics.getMaxAdvance();
+            }
+
+            @Override
+            public int getLeading()
+            {
+                return defaultMetrics.getLeading();
+            }
+
+            @Override
+            public FontRenderContext getFontRenderContext()
+            {
+                return defaultMetrics.getFontRenderContext();
+            }
+
+            @Override
+            public int charWidth(char ch)
+            {
+                char[] chars = { ch };
+                return charsWidth(chars, 0, chars.length);
+            }
+
+            @Override
+            public int charWidth(int codePoint)
+            {
+                char[] data = Character.toChars(codePoint);
+                return charsWidth(data, 0, data.length);
+            }
+
+            @Override
+            public int charsWidth(char[] data, int off, int len)
+            {
+                return stringWidth(new String(data, off, len));
+            }
+
+            @Override
+            public int stringWidth(String str)
+            {
+                try
+                {
+                    return (int) (pdFont.getStringWidth(str) / 1000 * f.getSize());
+                }
+                catch (IOException e)
+                {
+                    throw new RuntimeException(e);
+                }
+                catch (IllegalArgumentException e)
+                {
+                    /*
+                     * We let unknown chars be handled with
+                     */
+                    return defaultMetrics.stringWidth(str);
+                }
+            }
+
+            @Override
+            public int[] getWidths()
+            {
+                try
+                {
+                    int[] first256Widths = new int[256];
+                    for (int i = 0; i < first256Widths.length; i++)
+                        first256Widths[i] = (int) (pdFont.getWidth(i) / 1000 * f.getSize());
+                    return first256Widths;
+                }
+                catch (IOException e)
+                {
+                    throw new RuntimeException(e);
+                }
+            }
+
+        };
     }
 
     private PDFont fallbackFontUnknownEncodings;
