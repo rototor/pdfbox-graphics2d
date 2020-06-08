@@ -41,7 +41,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.25</version>
+	<version>0.26</version>
 </dependency>
 ```
 
@@ -261,7 +261,7 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 
 ## Changes
 
-Version 0.26 (to be released):
+Version 0.26:
  - Added a [CMYK color mapper](src/main/java/de/rototor/pdfbox/graphics2d/RGBtoCMYKColorMapper.java), which converts the paint colors to CMYK using an ICC Profile. Thanks to @larrylynn-wf for providing this feature [#22](https://github.com/rototor/pdfbox-graphics2d/issues/22).
  - Upgrade to PDFBox 2.0.20
  - Initial support for [Apache PDFBox TilingPaint](https://github.com/rototor/pdfbox-graphics2d/pull/25). Thanks to @p1xel. Currently this is not clean and also not correct in many cases.
