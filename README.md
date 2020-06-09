@@ -262,7 +262,7 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 ## Changes
 
 Version 0.27 (not released yet):
- - Implement getFontMetrics().stringWidth() correctly in the case a PDFont is used to 
+ - Internal API breakage to implement getFontMetrics().stringWidth() correctly in the case a PDFont is used to 
    draw the text [#16](https://github.com/rototor/pdfbox-graphics2d/issues/16). 
    Thanks to @megri for reporting this problem.
  
