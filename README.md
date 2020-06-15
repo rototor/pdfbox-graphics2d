@@ -265,6 +265,7 @@ Version 0.27 (not released yet):
  - Internal API breakage to implement getFontMetrics().stringWidth() correctly in the case a PDFont is used to 
    draw the text [#16](https://github.com/rototor/pdfbox-graphics2d/issues/16). 
    Thanks to @megri for reporting this problem.
+ - Reverted back to PDFBox 2.0.19 because of rendering issues [PDFBOX-4886](https://issues.apache.org/jira/browse/PDFBOX-4886).
  
 Version 0.26:
  - Added a [CMYK color mapper](src/main/java/de/rototor/pdfbox/graphics2d/RGBtoCMYKColorMapper.java), which converts the paint colors to CMYK using an ICC Profile. Thanks to @larrylynn-wf for providing this feature [#22](https://github.com/rototor/pdfbox-graphics2d/issues/22).
