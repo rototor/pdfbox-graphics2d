@@ -261,6 +261,9 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 
 ## Changes
 
+Version 0.28 (to be released):
+ - Upgrade to PDFBox 2.0.21
+
 Version 0.27:
  - Internal API breakage to implement getFontMetrics().stringWidth() correctly in the case a PDFont is used to 
    draw the text [#16](https://github.com/rototor/pdfbox-graphics2d/issues/16). 
