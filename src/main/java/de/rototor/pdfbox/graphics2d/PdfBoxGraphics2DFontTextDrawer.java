@@ -541,32 +541,43 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
         if (windir == null)
             windir = javaFontDir;
         File[] paths = new File[] { new File(new File(windir), "fonts"),
-                new File(System.getProperty("user.dir", ".")), new File("/Library/Fonts"),
+                new File(System.getProperty("user.dir", ".")),
+                // Mac Fonts
+                new File("/Library/Fonts"), new File("/System/Library/Fonts/Supplemental/"),
+                // Unix Fonts
                 new File("/usr/share/fonts/truetype"), new File("/usr/share/fonts/truetype/dejavu"),
                 new File("/usr/share/fonts/truetype/liberation"),
                 new File("/usr/share/fonts/truetype/noto"), new File(javaFontDir) };
-        File foundFontFile = null;
         for (String fontFileName : new String[] { "LucidaSansRegular.ttf", "arial.ttf", "Arial.ttf",
-                "DejaVuSans.ttf", "LiberationMono-Regular.ttf", "NotoSerif-Regular.ttf" })
+                "DejaVuSans.ttf", "LiberationMono-Regular.ttf", "NotoSerif-Regular.ttf",
+                "Arial Unicode.ttf", "Tahoma.ttf" })
         {
             for (File path : paths)
             {
                 File arialFile = new File(path, fontFileName);
                 if (arialFile.exists())
                 {
-                    foundFontFile = arialFile;
-                    break;
+                    // We try to use the first font we can find and use.
+                    PDType0Font pdType0Font = tryToLoadFont(env, arialFile);
+                    if (pdType0Font != null)
+                        return pdType0Font;
                 }
             }
-            if (foundFontFile != null)
-                break;
         }
-        /*
-         * If we did not find any font, we can't do anything :(
-         */
-        if (foundFontFile == null)
+        return null;
+    }
+
+    private PDType0Font tryToLoadFont(IFontTextDrawerEnv env, File foundFontFile) throws IOException
+    {
+        try
+        {
+            return PDType0Font.load(env.getDocument(), foundFontFile);
+        }
+        catch (IOException e)
+        {
+            // The font may be have a embed restriction.
             return null;
-        return PDType0Font.load(env.getDocument(), foundFontFile);
+        }
     }
 
     private void showTextOnStream(IFontTextDrawerEnv env, PDPageContentStream contentStream,
