@@ -592,6 +592,15 @@ public class PdfBoxGraphics2D extends Graphics2D
             Object keyInterpolation = renderingHints.get(RenderingHints.KEY_INTERPOLATION);
             if (RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR.equals(keyInterpolation))
                 pdImage.setInterpolate(false);
+
+            if (composite != null)
+            {
+                // We got an AlphaComposite, we must set the extended graphics dictionary correctly.
+                // The PaintApplyer will do this for us. So we just apply the current paint
+                // so that the graphics dictionary is set correctly.
+                applyPaint(null);
+            }
+
             contentStream.drawImage(pdImage, 0, 0, img.getWidth(obs), imgHeight);
             contentStreamRestoreState();
         }
