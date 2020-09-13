@@ -263,6 +263,9 @@ HTML (which you can generate with any template engine you like, e.g. Apache Free
 
 Version 0.28 (to be released):
  - Upgrade to PDFBox 2.0.21
+ - Respect that default fonts may not allow to be embedded. (PDFBox 2.0.21 now respects the flags
+   within a TTF font, so we also must do this)
+ - When painting an image with an AlphaComposite the alpha is now respected correctly.
 
 Version 0.27:
  - Internal API breakage to implement getFontMetrics().stringWidth() correctly in the case a PDFont is used to 
