@@ -35,6 +35,12 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase
     }
 
     @Test
+    public void renderFailureCases() throws IOException
+    {
+        renderSVG("openhtml_538_gradient.svg", 1);
+    }
+
+    @Test
     public void testGradientSVGEmulateObjectBoundingBox() throws IOException
     {
         renderSVG("long-gradient.svg", 0.55);
@@ -96,7 +102,8 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase
         GVTBuilder builder = new GVTBuilder();
         final GraphicsNode gvtRoot = builder.build(bctx, document);
 
-        try {
+        try
+        {
             PDDocument pdfDocument = new PDDocument();
 
             File parentDir = new File("target/test/svg");
@@ -110,10 +117,10 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase
 
             PdfBoxGraphics2D pdfBoxGraphics2D = new PdfBoxGraphics2D(pdfDocument, 400, 400);
 
-            ICC_Profile icc_profile = ICC_Profile.getInstance(
-                    PDDocument.class.getResourceAsStream("/org/apache/pdfbox/resources/icc/ISOcoated_v2_300_bas.icc")
-            );
-            PdfBoxGraphics2DColorMapper colorMapper = new RGBtoCMYKColorMapper(icc_profile, pdfDocument);
+            ICC_Profile icc_profile = ICC_Profile.getInstance(PDDocument.class.getResourceAsStream(
+                    "/org/apache/pdfbox/resources/icc/ISOcoated_v2_300_bas.icc"));
+            PdfBoxGraphics2DColorMapper colorMapper = new RGBtoCMYKColorMapper(icc_profile,
+                    pdfDocument);
             pdfBoxGraphics2D.setColorMapper(colorMapper);
 
             PdfBoxGraphics2DFontTextDrawer fontTextDrawer = null;
@@ -126,7 +133,8 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase
             contentStream.endText();
             fontTextDrawer = new PdfBoxGraphics2DFontTextDrawer();
 
-            if (fontTextDrawer != null) {
+            if (fontTextDrawer != null)
+            {
                 pdfBoxGraphics2D.setFontTextDrawer(fontTextDrawer);
             }
 
@@ -145,7 +153,9 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase
             String baseName = name.substring(0, name.lastIndexOf('.'));
             pdfDocument.save(new File(parentDir, baseName + ".pdf"));
             pdfDocument.close();
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             throw new RuntimeException(e);
         }
     }
