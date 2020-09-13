@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="main-svg" width="1163" height="545" style="" viewBox="0 0 1163 545">
+	<defs id="defs-52f0ea">
+		<g class="clips">
+			<clipPath class="axesclip" id="clip52f0eax">
+				<rect x="80" y="0" width="1003" height="545"></rect>
+			</clipPath>
+		</g>
+	</defs>
+	<g class="shapelayer">
+		<path data-index="0" fill-rule="evenodd" d="M50.91,250H109.85V100H200.91Z" clip-path="url('#clip52f0eax')" style="opacity: 0.4; stroke: rgb(0, 0, 0); stroke-opacity: 0; fill: rgb(255, 182, 193); fill-opacity: 1; stroke-width: 0px;"></path>
+	</g>
+</svg>

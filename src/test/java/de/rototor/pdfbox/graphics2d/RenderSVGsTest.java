@@ -37,6 +37,7 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase
     @Test
     public void renderFailureCases() throws IOException
     {
+        // renderSVG("openhtml_536.svg", 1);
         renderSVG("openhtml_538_gradient.svg", .5);
     }
 

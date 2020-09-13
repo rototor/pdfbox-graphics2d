@@ -195,7 +195,13 @@ public class PdfBoxGraphics2D extends Graphics2D
     {
         PdfBoxGraphics2D sourceGfx;
         PdfBoxGraphics2D copy;
+        String creatingContextInfo;
 
+        @Override
+        public String toString()
+        {
+            return "CopyInfo{creatingContextInfo='" + creatingContextInfo + '\'' + '}';
+        }
     }
 
     /**
@@ -262,6 +268,7 @@ public class PdfBoxGraphics2D extends Graphics2D
     private PdfBoxGraphics2D(PdfBoxGraphics2D gfx) throws IOException
     {
         CopyInfo info = new CopyInfo();
+        info.creatingContextInfo = gatherContext();
         info.copy = this;
         info.sourceGfx = gfx;
         gfx.copyList.add(info);
@@ -291,6 +298,39 @@ public class PdfBoxGraphics2D extends Graphics2D
         this.saveCounter = 0;
 
         contentStreamSaveState();
+    }
+
+    /**
+     * Global Flag: If set to true the Callstack when creating a
+     * context is recorded.
+     * <p>
+     * Note: Setting this to true will slow down the library. Use this only for
+     * debugging.
+     */
+    public static boolean ENABLE_CHILD_CREATING_DEBUG = false;
+
+    private String gatherContext()
+    {
+        if (!ENABLE_CHILD_CREATING_DEBUG)
+            return null;
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        StringBuilder sb = new StringBuilder();
+        for (StackTraceElement stackTraceElement : stackTrace)
+        {
+            if (stackTraceElement.getClassName().startsWith("de.rototor.pdfbox"))
+                continue;
+            if (stackTraceElement.getClassName().startsWith("org.junit"))
+                continue;
+            if (stackTraceElement.getClassName().startsWith("com.intellij.rt"))
+                continue;
+            if (stackTraceElement.getClassName().startsWith("java.lang"))
+                continue;
+            sb.append(" at ").append(stackTraceElement.getClassName()).append(".")
+                    .append(stackTraceElement.getMethodName()).append("(")
+                    .append(stackTraceElement.getFileName()).append(":")
+                    .append(stackTraceElement.getLineNumber()).append(")").append("\n");
+        }
+        return sb.toString();
     }
 
     /**
@@ -1183,7 +1223,36 @@ public class PdfBoxGraphics2D extends Graphics2D
          */
         if (copyList.size() > 0)
             throw new IllegalStateException(
-                    "Don't use the main context as long as a copy is active!");
+                    "Don't use the main context as long as a copy is active! Child context is missing a .dispose() call. \n"
+                            + gatherDebugCopyInfo(this));
+    }
+
+    private static String gatherDebugCopyInfo(PdfBoxGraphics2D gfx)
+    {
+        StringBuilder sb = new StringBuilder();
+        if (!gfx.copyList.isEmpty())
+        {
+            for (CopyInfo copyInfo : gfx.copyList)
+            {
+                sb.append("# Dangling Child").append(copyInfo.toString()).append("\n");
+            }
+        }
+
+        while (gfx != null)
+        {
+            if (gfx.copyList.isEmpty())
+            {
+                sb.append("* Last Child\n");
+            }
+            else
+            {
+                sb.append("- Parent with ").append(gfx.copyList.size()).append(" childs.\n");
+            }
+            if (gfx.copyInfo == null)
+                break;
+            gfx = gfx.copyInfo.sourceGfx;
+        }
+        return sb.toString();
     }
 
     private void throwException(Exception e)
