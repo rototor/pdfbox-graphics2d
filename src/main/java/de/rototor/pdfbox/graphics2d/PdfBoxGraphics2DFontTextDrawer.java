@@ -677,7 +677,7 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
     {
         sb.setLength(0);
         int charCount = iterator.getRunLimit() - iterator.getRunStart();
-        while (charCount-- >= 0)
+        while (charCount-- > 0)
         {
             char c = iterator.current();
             iterator.next();
@@ -690,7 +690,7 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
                 sb.append(c);
             }
         }
-        return true;
+        return (iterator.getIndex() < iterator.getRunLimit());
     }
 
 }
