@@ -56,6 +56,15 @@ public class FontTest extends PdfBoxGraphics2DTestBase
                         44);
 
                 gfx.drawString(str.getIterator(), 10, 50);
+
+                Font font = new Font("SansSerif", Font.PLAIN, 12);
+                Font font2 = Font.createFont(Font.TRUETYPE_FONT,
+                        PdfBoxGraphics2dTest.class.getResourceAsStream("DejaVuSerifCondensed.ttf"))
+                        .deriveFont(13f);
+                str.addAttribute(TextAttribute.FONT, font);
+                gfx.drawString(str.getIterator(), 10, 100);
+                str.addAttribute(TextAttribute.FONT, font2);
+                gfx.drawString(str.getIterator(), 10, 150);
             }
         });
     }

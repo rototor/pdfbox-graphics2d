@@ -210,7 +210,7 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
                     .equals(iterator.getAttribute(TextAttribute.UNDERLINE));
             boolean isLigatures = TextAttribute.LIGATURES_ON
                     .equals(iterator.getAttribute(TextAttribute.LIGATURES));
-            if (((isStrikeThrough || isUnderline) && !ENABLE_EXPERIMENTAL_TEXT_DECORATION)
+            if (((isStrikeThrough || isUnderline) && true || !ENABLE_EXPERIMENTAL_TEXT_DECORATION)
                     || isLigatures)
                 return false;
 
@@ -615,6 +615,8 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
         }
     }
 
+    private static final boolean DEBUG_BOX = false;
+
     private void showTextOnStream(final IFontTextDrawerEnv env,
             final PDPageContentStream contentStream, final Font attributeFont, final PDFont font,
             final boolean isStrikeThrough, final boolean isUnderline, boolean isLigatures,
@@ -649,8 +651,7 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
                             font.getBoundingBox().getHeight() / 1000 * attributeFont.getSize2D();
                     float scale = pdFontHeight / height;
                     float decent = lineMetrics.getDescent();
-                    final boolean DEBUG = true;
-                    if (DEBUG)
+                    if (DEBUG_BOX)
                     {
                         env.applyStroke(new BasicStroke(1));
                         env.applyPaint(new Color(0x5F2F13F2),
@@ -667,8 +668,9 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
                             .getBaselineIndex()];
                     if (isStrikeThrough)
                     {
-                        env.applyStroke(
-                                new BasicStroke(scale * lineMetrics.getStrikethroughThickness()));
+                        env.applyStroke(new BasicStroke(
+                                getSensibleThickness(lineMetrics.getStrikethroughThickness(),
+                                        attributeFont)));
                         float strikethroughOffset =
                                 scale * (baseline + lineMetrics.getStrikethroughOffset());
                         contentStream.moveTo(ourX, -strikethroughOffset);
@@ -678,7 +680,8 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
                     if (isUnderline)
                     {
                         env.applyStroke(new BasicStroke(
-                                scale * Math.max(0.1f, lineMetrics.getUnderlineThickness())));
+                                getSensibleThickness(lineMetrics.getUnderlineThickness(),
+                                        attributeFont)));
                         float underlineOffset =
                                 scale * (baseline + lineMetrics.getUnderlineOffset());
                         contentStream.moveTo(ourX, -underlineOffset);
@@ -690,6 +693,13 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
         }
 
         drawState.x += stringWidth;
+    }
+
+    private float getSensibleThickness(float thickness, Font font)
+    {
+        if (thickness < 0.00001f)
+            return .04f * font.getSize2D();
+        return thickness;
     }
 
     private PDFont applyFont(Font font, IFontTextDrawerEnv env)
