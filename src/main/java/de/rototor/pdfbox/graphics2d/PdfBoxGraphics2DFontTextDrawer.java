@@ -374,8 +374,7 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
         if (!drawState.drawers.isEmpty())
         {
             contentStream.saveGraphicsState();
-            //contentStream.transform(textMatrix);
-            //contentStream.transform(new Matrix(env.getCurrentEffectiveTransform()));
+            contentStream.transform(textMatrix);
             for (ITextDecorationDrawer drawer : drawState.drawers)
             {
                 drawer.draw(contentStream);
@@ -617,10 +616,9 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
     }
 
     private void showTextOnStream(final IFontTextDrawerEnv env,
-            final PDPageContentStream contentStream, Font attributeFont, PDFont font,
+            final PDPageContentStream contentStream, final Font attributeFont, final PDFont font,
             final boolean isStrikeThrough, final boolean isUnderline, boolean isLigatures,
-            final DrawTextDecorationState drawState, final Paint paint, String text)
-            throws IOException
+            DrawTextDecorationState drawState, final Paint paint, String text) throws IOException
     {
         // noinspection StatementWithEmptyBody
         if (isLigatures)
@@ -638,29 +636,53 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
             final LineMetrics lineMetrics = attributeFont
                     .getLineMetrics(text, env.getFontRenderContext());
 
+            final float ourX = drawState.x;
+
             drawState.drawers.add(new ITextDecorationDrawer()
             {
                 @Override
                 public void draw(PDPageContentStream stream) throws IOException
                 {
-                    env.applyPaint(paint, new Rectangle.Float(drawState.x, 0, stringWidth,
-                            lineMetrics.getHeight()));
+
+                    float height = lineMetrics.getHeight();
+                    float pdFontHeight =
+                            font.getBoundingBox().getHeight() / 1000 * attributeFont.getSize2D();
+                    float scale = pdFontHeight / height;
+                    float decent = lineMetrics.getDescent();
+                    final boolean DEBUG = true;
+                    if (DEBUG)
+                    {
+                        env.applyStroke(new BasicStroke(1));
+                        env.applyPaint(new Color(0x5F2F13F2),
+                                new Rectangle.Float(ourX, -decent * scale, stringWidth,
+                                        height * scale));
+
+                        contentStream.addRect(ourX, -decent * scale, stringWidth, height / scale);
+                        contentStream.stroke();
+                    }
+
+                    env.applyPaint(paint, new Rectangle.Float(ourX, -decent * scale, stringWidth,
+                            height * scale));
+                    float baseline = lineMetrics.getBaselineOffsets()[lineMetrics
+                            .getBaselineIndex()];
                     if (isStrikeThrough)
                     {
-                        env.applyStroke(new BasicStroke(lineMetrics.getStrikethroughThickness()));
+                        env.applyStroke(
+                                new BasicStroke(scale * lineMetrics.getStrikethroughThickness()));
                         float strikethroughOffset =
-                                lineMetrics.getStrikethroughOffset() - lineMetrics.getHeight();
-                        contentStream.moveTo(drawState.x, strikethroughOffset);
-                        contentStream.lineTo(drawState.x + stringWidth, strikethroughOffset);
+                                scale * (baseline + lineMetrics.getStrikethroughOffset());
+                        contentStream.moveTo(ourX, -strikethroughOffset);
+                        contentStream.lineTo(ourX + stringWidth, -strikethroughOffset);
                         contentStream.stroke();
                     }
                     if (isUnderline)
                     {
-                        env.applyStroke(new BasicStroke(lineMetrics.getUnderlineThickness()));
+                        env.applyStroke(new BasicStroke(
+                                scale * Math.max(0.1f, lineMetrics.getUnderlineThickness())));
                         float underlineOffset =
-                                lineMetrics.getUnderlineOffset() - lineMetrics.getHeight();
-                        contentStream.moveTo(drawState.x, underlineOffset);
-                        contentStream.lineTo(drawState.x + stringWidth, underlineOffset);
+                                scale * (baseline + lineMetrics.getUnderlineOffset());
+                        contentStream.moveTo(ourX, -underlineOffset);
+                        contentStream.lineTo(ourX + stringWidth, -underlineOffset);
                         contentStream.stroke();
                     }
                 }
