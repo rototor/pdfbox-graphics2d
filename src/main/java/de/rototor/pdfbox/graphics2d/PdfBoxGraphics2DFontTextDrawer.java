@@ -172,6 +172,11 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
         return getClass() != PdfBoxGraphics2DFontTextDrawer.class;
     }
 
+    /**
+     * Internal Testflag ot test the not yet working text decoration code.
+     */
+    private final static boolean ENABLE_EXPERIMENTAL_TEXT_DECORATION = false;
+
     @Override
     public boolean canDrawText(AttributedCharacterIterator iterator, IFontTextDrawerEnv env)
             throws IOException, FontFormatException
@@ -205,7 +210,8 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
                     .equals(iterator.getAttribute(TextAttribute.UNDERLINE));
             boolean isLigatures = TextAttribute.LIGATURES_ON
                     .equals(iterator.getAttribute(TextAttribute.LIGATURES));
-            if (isStrikeThrough || isUnderline || isLigatures)
+            if (((isStrikeThrough || isUnderline) && !ENABLE_EXPERIMENTAL_TEXT_DECORATION)
+                    || isLigatures)
                 return false;
 
             run = iterateRun(iterator, sb);
@@ -257,11 +263,26 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
         return true;
     }
 
+    private interface ITextDecorationDrawer
+    {
+        void draw(PDPageContentStream stream) throws IOException;
+    }
+
+    private static class DrawTextDecorationState
+    {
+        public float x;
+        final List<ITextDecorationDrawer> drawers = new ArrayList<ITextDecorationDrawer>();
+    }
+
     @Override
     public void drawText(AttributedCharacterIterator iterator, IFontTextDrawerEnv env)
             throws IOException, FontFormatException
     {
         PDPageContentStream contentStream = env.getContentStream();
+        DrawTextDecorationState drawState = new DrawTextDecorationState();
+
+        if (ENABLE_EXPERIMENTAL_TEXT_DECORATION)
+            contentStream.saveGraphicsState();
 
         contentStream.beginText();
 
@@ -310,7 +331,7 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
             try
             {
                 showTextOnStream(env, contentStream, attributeFont, font, isStrikeThrough,
-                        isUnderline, isLigatures, text);
+                        isUnderline, isLigatures, drawState, paint, text);
             }
             catch (IllegalArgumentException e)
             {
@@ -330,7 +351,7 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
                                     attributeFont.getSize2D());
                             showTextOnStream(env, contentStream, attributeFont,
                                     fallbackFontUnknownEncodings, isStrikeThrough, isUnderline,
-                                    isLigatures, text);
+                                    isLigatures, drawState, paint, text);
                             e = null;
                         }
                     }
@@ -346,6 +367,21 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
             }
         }
         contentStream.endText();
+
+        if (ENABLE_EXPERIMENTAL_TEXT_DECORATION)
+            contentStream.restoreGraphicsState();
+
+        if (!drawState.drawers.isEmpty())
+        {
+            contentStream.saveGraphicsState();
+            //contentStream.transform(textMatrix);
+            //contentStream.transform(new Matrix(env.getCurrentEffectiveTransform()));
+            for (ITextDecorationDrawer drawer : drawState.drawers)
+            {
+                drawer.draw(contentStream);
+            }
+            contentStream.restoreGraphicsState();
+        }
     }
 
     @Override
@@ -489,7 +525,7 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
             {
                 try
                 {
-                    return (int) (pdFont.getStringWidth(str) / 1000 * f.getSize());
+                    return (int) (pdFont.getStringWidth(str) / 1000 * f.getSize2D());
                 }
                 catch (IOException e)
                 {
@@ -580,22 +616,12 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
         }
     }
 
-    private void showTextOnStream(IFontTextDrawerEnv env, PDPageContentStream contentStream,
-            Font attributeFont, PDFont font, boolean isStrikeThrough, boolean isUnderline,
-            boolean isLigatures, String text) throws IOException
+    private void showTextOnStream(final IFontTextDrawerEnv env,
+            final PDPageContentStream contentStream, Font attributeFont, PDFont font,
+            final boolean isStrikeThrough, final boolean isUnderline, boolean isLigatures,
+            final DrawTextDecorationState drawState, final Paint paint, String text)
+            throws IOException
     {
-        if (isStrikeThrough || isUnderline)
-        {
-            // noinspection unused
-            float stringWidth = font.getStringWidth(text);
-            // noinspection unused
-            LineMetrics lineMetrics = attributeFont
-                    .getLineMetrics(text, env.getFontRenderContext());
-            /*
-             * TODO: We can not draw that yet, we must do that later. While in textmode its
-             * not possible to draw lines...
-             */
-        }
         // noinspection StatementWithEmptyBody
         if (isLigatures)
         {
@@ -603,7 +629,45 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
              * No idea how to map this ...
              */
         }
+
         contentStream.showText(text);
+
+        final float stringWidth = (font.getStringWidth(text) / 1000f) * attributeFont.getSize2D();
+        if ((isStrikeThrough || isUnderline) && ENABLE_EXPERIMENTAL_TEXT_DECORATION)
+        {
+            final LineMetrics lineMetrics = attributeFont
+                    .getLineMetrics(text, env.getFontRenderContext());
+
+            drawState.drawers.add(new ITextDecorationDrawer()
+            {
+                @Override
+                public void draw(PDPageContentStream stream) throws IOException
+                {
+                    env.applyPaint(paint, new Rectangle.Float(drawState.x, 0, stringWidth,
+                            lineMetrics.getHeight()));
+                    if (isStrikeThrough)
+                    {
+                        env.applyStroke(new BasicStroke(lineMetrics.getStrikethroughThickness()));
+                        float strikethroughOffset =
+                                lineMetrics.getStrikethroughOffset() - lineMetrics.getHeight();
+                        contentStream.moveTo(drawState.x, strikethroughOffset);
+                        contentStream.lineTo(drawState.x + stringWidth, strikethroughOffset);
+                        contentStream.stroke();
+                    }
+                    if (isUnderline)
+                    {
+                        env.applyStroke(new BasicStroke(lineMetrics.getUnderlineThickness()));
+                        float underlineOffset =
+                                lineMetrics.getUnderlineOffset() - lineMetrics.getHeight();
+                        contentStream.moveTo(drawState.x, underlineOffset);
+                        contentStream.lineTo(drawState.x + stringWidth, underlineOffset);
+                        contentStream.stroke();
+                    }
+                }
+            });
+        }
+
+        drawState.x += stringWidth;
     }
 
     private PDFont applyFont(Font font, IFontTextDrawerEnv env)

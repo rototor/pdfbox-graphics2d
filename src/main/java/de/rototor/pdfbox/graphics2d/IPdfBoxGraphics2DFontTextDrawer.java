@@ -22,6 +22,7 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
+import java.awt.geom.AffineTransform;
 import java.io.IOException;
 import java.text.AttributedCharacterIterator;
 
@@ -90,6 +91,18 @@ public interface IPdfBoxGraphics2DFontTextDrawer
          * @return the default calcuation BufferedImage based graphics.
          */
         Graphics2D getCalculationGraphics();
+
+        /**
+         * Apply this stroke on the current content stream
+         *
+         * @param stroke the stroke to apply
+         */
+        void applyStroke(Stroke stroke) throws IOException;
+
+        /**
+         * @return the current transform active to draw on this stream
+         */
+        AffineTransform getCurrentEffectiveTransform();
     }
 
     /**
@@ -113,10 +126,10 @@ public interface IPdfBoxGraphics2DFontTextDrawer
             throws IOException, FontFormatException;
 
     /**
-     * @param f
-     * @param env
-     * @return
+     * @param font the Font
+     * @param env  the Environment
+     * @return the resulting font metrics
      */
-    FontMetrics getFontMetrics(Font f, IFontTextDrawerEnv env)
+    FontMetrics getFontMetrics(Font font, IFontTextDrawerEnv env)
             throws IOException, FontFormatException;
 }

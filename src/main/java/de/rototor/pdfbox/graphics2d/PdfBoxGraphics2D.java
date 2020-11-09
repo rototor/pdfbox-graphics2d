@@ -444,37 +444,7 @@ public class PdfBoxGraphics2D extends Graphics2D
                 if (pdShading != null)
                     applyShadingAsColor(pdShading);
 
-                if (stroke instanceof BasicStroke)
-                {
-                    BasicStroke basicStroke = (BasicStroke) this.stroke;
-
-                    // Cap Style maps 1:1 between Java and PDF Spec
-                    contentStream.setLineCapStyle(basicStroke.getEndCap());
-                    // Line Join Style maps 1:1 between Java and PDF Spec
-                    contentStream.setLineJoinStyle(basicStroke.getLineJoin());
-                    if (basicStroke.getMiterLimit() > 0)
-                    {
-                        // Also Miter maps 1:1 between Java and PDF Spec
-                        // (NB: set the miter-limit only if value is > 0)
-                        contentStream.setMiterLimit(basicStroke.getMiterLimit());
-                    }
-
-                    AffineTransform tf = new AffineTransform();
-                    tf.concatenate(baseTransform);
-                    tf.concatenate(transform);
-
-                    double scaleX = tf.getScaleX();
-                    contentStream
-                            .setLineWidth((float) Math.abs(basicStroke.getLineWidth() * scaleX));
-                    float[] dashArray = basicStroke.getDashArray();
-                    if (dashArray != null)
-                    {
-                        for (int i = 0; i < dashArray.length; i++)
-                            dashArray[i] = (float) Math.abs(dashArray[i] * scaleX);
-                        contentStream.setLineDashPattern(dashArray,
-                                (float) Math.abs(basicStroke.getDashPhase() * scaleX));
-                    }
-                }
+                applyStroke(stroke);
 
                 contentStream.stroke();
                 hasPathOnStream = false;
@@ -488,6 +458,52 @@ public class PdfBoxGraphics2D extends Graphics2D
         {
             throwException(e);
         }
+    }
+
+    /**
+     * Internal usage only!
+     *
+     * @param strokeToApply
+     * @throws IOException
+     */
+    private void applyStroke(Stroke strokeToApply) throws IOException
+    {
+        if (strokeToApply instanceof BasicStroke)
+        {
+            BasicStroke basicStroke = (BasicStroke) strokeToApply;
+
+            // Cap Style maps 1:1 between Java and PDF Spec
+            contentStream.setLineCapStyle(basicStroke.getEndCap());
+            // Line Join Style maps 1:1 between Java and PDF Spec
+            contentStream.setLineJoinStyle(basicStroke.getLineJoin());
+            if (basicStroke.getMiterLimit() > 0)
+            {
+                // Also Miter maps 1:1 between Java and PDF Spec
+                // (NB: set the miter-limit only if value is > 0)
+                contentStream.setMiterLimit(basicStroke.getMiterLimit());
+            }
+
+            AffineTransform tf = getCurrentEffectiveTransform();
+
+            double scaleX = tf.getScaleX();
+            contentStream.setLineWidth((float) Math.abs(basicStroke.getLineWidth() * scaleX));
+            float[] dashArray = basicStroke.getDashArray();
+            if (dashArray != null)
+            {
+                for (int i = 0; i < dashArray.length; i++)
+                    dashArray[i] = (float) Math.abs(dashArray[i] * scaleX);
+                contentStream.setLineDashPattern(dashArray,
+                        (float) Math.abs(basicStroke.getDashPhase() * scaleX));
+            }
+        }
+    }
+
+    private AffineTransform getCurrentEffectiveTransform()
+    {
+        AffineTransform tf = new AffineTransform();
+        tf.concatenate(baseTransform);
+        tf.concatenate(transform);
+        return tf;
     }
 
     public void drawImage(BufferedImage img, BufferedImageOp op, int x, int y)
@@ -572,9 +588,7 @@ public class PdfBoxGraphics2D extends Graphics2D
     public boolean drawImage(Image img, AffineTransform xform, ImageObserver obs)
     {
         checkNoCopyActive();
-        AffineTransform tf = new AffineTransform();
-        tf.concatenate(baseTransform);
-        tf.concatenate(transform);
+        AffineTransform tf = getCurrentEffectiveTransform();
 
         // Sometimes the xform can be null
         if (xform != null)
@@ -792,6 +806,18 @@ public class PdfBoxGraphics2D extends Graphics2D
         public Graphics2D getCalculationGraphics()
         {
             return calcGfx;
+        }
+
+        @Override
+        public void applyStroke(Stroke stroke) throws IOException
+        {
+            PdfBoxGraphics2D.this.applyStroke(stroke);
+        }
+
+        @Override
+        public AffineTransform getCurrentEffectiveTransform()
+        {
+            return PdfBoxGraphics2D.this.getCurrentEffectiveTransform();
         }
     };
 

@@ -45,9 +45,15 @@ public class FontTest extends PdfBoxGraphics2DTestBase
                 str.addAttribute(TextAttribute.SIZE, 20f, 0, 4);
 
                 str.addAttribute(TextAttribute.FOREGROUND, Color.RED, 0, 4);
+
                 str.addAttribute(TextAttribute.FOREGROUND, Color.green, 13, 23);
                 str.addAttribute(TextAttribute.SIZE, 18f, 13, 23);
                 str.addAttribute(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON, 13, 23);
+
+                str.addAttribute(TextAttribute.FOREGROUND, Color.MAGENTA, 34, 44);
+                str.addAttribute(TextAttribute.SIZE, 22f, 34, 44);
+                str.addAttribute(TextAttribute.STRIKETHROUGH, TextAttribute.STRIKETHROUGH_ON, 34,
+                        44);
 
                 gfx.drawString(str.getIterator(), 10, 50);
             }
