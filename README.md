@@ -300,6 +300,11 @@ FreeMarker) and place custom graphs
 
 ## Changes
 
+Version 0.29 (not yet released):
+- Fix a bug where the AlphaComposite alpha value would be mixed with a color alpha value when drawing
+  images. When setting a transparent color this had resulted in a invisible image. Thanks to @kiwiwings 
+  for reporting this.
+
 Version 0.28:
 
 - Fix handling of AttributedString (off-by-one error). Thanks for @kiwiwings for pointing out the
