@@ -142,8 +142,7 @@ Rendering a text using a font is the normal and preferred way to display a text:
   different OS and OS versions.
 - Note: Not all PDF viewer can handle all fonts correctly. E.g. PDFBox 1.8 was not able to handle
   fonts right. But nowadays all PDF viewers should be able to handle fonts fine.
-- Note: ```TextAttribute.UNDERLINE```, ```TextAttribute.STRIKETHROUGH```
-  and ```TextAttribute.LIGATURES``` are currently not supported.
+- Note: ```TextAttribute.LIGATURES``` is currently not supported.
 - Note: ```TextAttribute.BACKGROUND``` is currently not supported.
 - Note: There is no Bidi support at the moment. See
   the [problems](https://issues.apache.org/jira/browse/PDFBOX-3550)
@@ -304,6 +303,8 @@ Version 0.29 (not yet released):
 - Fix a bug where the AlphaComposite alpha value would be mixed with a color alpha value when drawing
   images. When setting a transparent color this had resulted in a invisible image. Thanks to @kiwiwings 
   for reporting this.
+- Initial support for ```TextAttribute.UNDERLINE``` and ```Textattribute.STRIKETHROUGH``` when using
+  a font to render a text.
 
 Version 0.28:
 

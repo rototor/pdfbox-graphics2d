@@ -175,7 +175,7 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
     /**
      * Internal Testflag ot test the not yet working text decoration code.
      */
-    private final static boolean ENABLE_EXPERIMENTAL_TEXT_DECORATION = false;
+    private final static boolean ENABLE_EXPERIMENTAL_TEXT_DECORATION = true;
 
     @Override
     public boolean canDrawText(AttributedCharacterIterator iterator, IFontTextDrawerEnv env)
