@@ -210,7 +210,7 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
                     .equals(iterator.getAttribute(TextAttribute.UNDERLINE));
             boolean isLigatures = TextAttribute.LIGATURES_ON
                     .equals(iterator.getAttribute(TextAttribute.LIGATURES));
-            if (((isStrikeThrough || isUnderline) && true || !ENABLE_EXPERIMENTAL_TEXT_DECORATION)
+            if (((isStrikeThrough || isUnderline) && !ENABLE_EXPERIMENTAL_TEXT_DECORATION)
                     || isLigatures)
                 return false;
 
