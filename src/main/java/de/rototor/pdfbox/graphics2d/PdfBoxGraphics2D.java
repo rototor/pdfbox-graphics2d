@@ -610,9 +610,9 @@ public class PdfBoxGraphics2D extends Graphics2D
             if (composite != null)
             {
                 // We got an AlphaComposite, we must set the extended graphics dictionary correctly.
-                // The PaintApplyer will do this for us. So we just apply the current paint
+                // The PaintApplyer will do this for us. So we just apply a paint (without alpha)
                 // so that the graphics dictionary is set correctly.
-                applyPaint(null);
+                applyPaint(Color.WHITE, null);
             }
 
             contentStream.drawImage(pdImage, 0, 0, img.getWidth(obs), imgHeight);

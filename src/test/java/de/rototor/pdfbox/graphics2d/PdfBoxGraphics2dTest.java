@@ -213,6 +213,26 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase
     }
 
     @Test
+    public void testImageAlpha()
+    {
+        exportGraphic("imageenc", "imgalpha", new GraphicsExporter()
+        {
+            @Override
+            public void draw(Graphics2D gfx) throws IOException
+            {
+                BufferedImage img3 = ImageIO
+                        .read(PdfBoxGraphics2dTest.class.getResourceAsStream("Rose-ProPhoto.jpg"));
+                gfx.setColor(new Color(128, 128, 255, 58));
+                gfx.drawImage(img3, 30, 10, 75, 50, null);
+                gfx.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
+                gfx.drawImage(img3, 30, 90, 75, 50, null);
+                gfx.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
+                gfx.drawImage(img3, 30, 160, 75, 50, null);
+            }
+        });
+    }
+
+    @Test
     public void testEvenOddRules()
     {
 
