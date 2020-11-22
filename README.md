@@ -48,7 +48,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.28</version>
+	<version>0.29</version>
 </dependency>
 ```
 
@@ -299,7 +299,7 @@ FreeMarker) and place custom graphs
 
 ## Changes
 
-Version 0.29 (not yet released):
+Version 0.29:
 - Fix a bug where the AlphaComposite alpha value would be mixed with a color alpha value when drawing
   images. When setting a transparent color this had resulted in a invisible image. Thanks to @kiwiwings 
   for reporting this.
