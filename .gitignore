@@ -1,3 +1,5 @@
 target
 .idea
 graphics2d.iml
+/parent.iml
+/extended-tests/extended-tests.iml
