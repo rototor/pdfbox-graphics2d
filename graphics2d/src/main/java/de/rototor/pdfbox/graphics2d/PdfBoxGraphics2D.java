@@ -40,8 +40,21 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
-import java.awt.geom.*;
-import java.awt.image.*;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Arc2D;
+import java.awt.geom.Area;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Line2D;
+import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Path2D;
+import java.awt.geom.PathIterator;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
+import java.awt.image.BufferedImageOp;
+import java.awt.image.ImageObserver;
+import java.awt.image.RenderedImage;
+import java.awt.image.WritableRaster;
 import java.awt.image.renderable.RenderableImage;
 import java.io.IOException;
 import java.text.AttributedCharacterIterator;
@@ -463,8 +476,7 @@ public class PdfBoxGraphics2D extends Graphics2D
     /**
      * Internal usage only!
      *
-     * @param strokeToApply
-     * @throws IOException
+     * @param strokeToApply the stroke we should apply on the stream
      */
     private void applyStroke(Stroke strokeToApply) throws IOException
     {
@@ -476,11 +488,15 @@ public class PdfBoxGraphics2D extends Graphics2D
             contentStream.setLineCapStyle(basicStroke.getEndCap());
             // Line Join Style maps 1:1 between Java and PDF Spec
             contentStream.setLineJoinStyle(basicStroke.getLineJoin());
-            if (basicStroke.getMiterLimit() > 0)
+            float miterLimit = basicStroke.getMiterLimit();
+            if (miterLimit > 0)
             {
-                // Also Miter maps 1:1 between Java and PDF Spec
-                // (NB: set the miter-limit only if value is > 0)
-                contentStream.setMiterLimit(basicStroke.getMiterLimit());
+                /*
+                 * Also Miter maps 1:1 between Java and PDF Spec
+                 * The miter-limit must have a minimum value of 1f. This is spec'd in
+                 * BasicStroke constructor, and Acrobat Reader also requires this.
+                 */
+                contentStream.setMiterLimit(Math.max(1f, miterLimit));
             }
 
             AffineTransform tf = getCurrentEffectiveTransform();
