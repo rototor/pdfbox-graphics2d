@@ -299,6 +299,13 @@ FreeMarker) and place custom graphs
 
 ## Changes
 
+Version 0.30 (to be released):
+- Clip invalid miter limit values [#29](https://github.com/rototor/pdfbox-graphics2d/issues/29). 
+  Thanks to @kiwiwings for reporting this.
+- Added a new module for extended-tests. This module will contains tests with 3rdparty library which
+  by themself depend on pdfbox-graphics2d. It also now contains a new class DebugCodeGeneratingGraphics2d
+  (by @kiwiwings) which helps creating isolated testcases. 
+
 Version 0.29:
 - Fix a bug where the AlphaComposite alpha value would be mixed with a color alpha value when drawing
   images. When setting a transparent color this had resulted in a invisible image. Thanks to @kiwiwings 
