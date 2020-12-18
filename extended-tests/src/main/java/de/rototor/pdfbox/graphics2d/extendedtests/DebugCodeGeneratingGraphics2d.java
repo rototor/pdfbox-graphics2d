@@ -18,22 +18,7 @@
 
 package de.rototor.pdfbox.graphics2d.extendedtests;
 
-import java.awt.AlphaComposite;
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Composite;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GraphicsConfiguration;
-import java.awt.Image;
-import java.awt.Paint;
-import java.awt.Polygon;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.Shape;
-import java.awt.Stroke;
+import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.font.TextAttribute;
@@ -53,8 +38,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
-
-import org.apache.poi.util.Internal;
 
 public class DebugCodeGeneratingGraphics2d extends Graphics2D {
     private BufferedImage bufimg;
@@ -684,9 +667,18 @@ public class DebugCodeGeneratingGraphics2d extends Graphics2D {
         StringBuilder sb = new StringBuilder();
         for (char ch = iterator.current(); ch != AttributedCharacterIterator.DONE; ch = iterator.next()) {
             sb.append(ch);
-            iterator.getAttributes().forEach((k,v) ->
-                 attMap.computeIfAbsent(k, (k2) -> new LinkedHashMap<>()).put(iterator.getIndex(), v)
-            );
+            for( Map.Entry<Attribute,Object> e:iterator.getAttributes().entrySet())
+            {
+                Attribute k = e.getKey();
+                Object v = e.getValue();
+                Map<Integer, Object> positionMap = attMap.get(k);
+                if(positionMap==null)
+                {
+                    positionMap = new LinkedHashMap<Integer, Object>();
+                    attMap.put(k,positionMap);
+                }
+                positionMap.put(iterator.getIndex(), v);
+            }
         }
 
         String l = "AttributedString as = new AttributedString(\""+sb+"\");\n";

@@ -1,6 +1,7 @@
 package de.rototor.pdfbox.graphics2d.extendedtests.pptx;
 
 import de.rototor.pdfbox.graphics2d.PdfBoxGraphics2D;
+import de.rototor.pdfbox.graphics2d.extendedtests.DebugCodeGeneratingGraphics2d;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -36,6 +37,7 @@ public class TestPPTXRendering {
 
 			PdfBoxGraphics2D pdfBoxGraphics2D = new PdfBoxGraphics2D(document, 1000, 1000);
 			slide.draw(pdfBoxGraphics2D);
+			slide.draw(new DebugCodeGeneratingGraphics2d());
 			pdfBoxGraphics2D.dispose();
 
 			contentStream.transform(Matrix.getScaleInstance(0.2f, 0.2f));
