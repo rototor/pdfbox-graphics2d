@@ -48,7 +48,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.29</version>
+	<version>0.30</version>
 </dependency>
 ```
 
@@ -299,12 +299,14 @@ FreeMarker) and place custom graphs
 
 ## Changes
 
-Version 0.30 (to be released):
+Version 0.30:
 - Clip invalid miter limit values [#29](https://github.com/rototor/pdfbox-graphics2d/issues/29). 
   Thanks to @kiwiwings for reporting this.
 - Added a new module for extended-tests. This module will contains tests with 3rdparty library which
   by themself depend on pdfbox-graphics2d. It also now contains a new class DebugCodeGeneratingGraphics2d
-  (by @kiwiwings) which helps creating isolated testcases. 
+  (by @kiwiwings) which helps creating isolated testcases.
+- Upgrade to PDFBox 2.0.22
+
 
 Version 0.29:
 - Fix a bug where the AlphaComposite alpha value would be mixed with a color alpha value when drawing
