@@ -114,8 +114,8 @@ public class PDFGraphics2DSample
 }
 ```
 
-See also [manual drawing](graphics2dsrc/test/java/de/rototor/pdfbox/graphics2d/PdfBoxGraphics2dTest.java)
-and [drawing SVGs](graphics2dsrc/test/java/de/rototor/pdfbox/graphics2d/RenderSVGsTest.java). The testdrivers
+See also [manual drawing](graphics2d/src/test/java/de/rototor/pdfbox/graphics2d/PdfBoxGraphics2dTest.java)
+and [drawing SVGs](graphics2d/src/test/java/de/rototor/pdfbox/graphics2d/RenderSVGsTest.java). The testdrivers
 are only smoke tests, i.e. they don't explicit test the result, they just run and test if the their
 are crashes. You have to manually compare the PDF result of the testdriver with the also generated
 PNG compare image.
