@@ -10,7 +10,7 @@ Using this library you can use any Graphics2D API based SVG / graph / chart libr
 graphics as vector drawing in a PDF. In combination with PDFBox PDFRenderer/PageDrawer you can
 also "rerender" PDF pages and change certain aspects
 (
-e.g. [change the color mapping and perform an overfill](src/test/java/de/rototor/pdfbox/graphics2d/PdfRerenderTest.java))
+e.g. [change the color mapping and perform an overfill](graphics2d/src/test/java/de/rototor/pdfbox/graphics2d/PdfRerenderTest.java))
 .
 
 The following features are supported:
@@ -114,8 +114,8 @@ public class PDFGraphics2DSample
 }
 ```
 
-See also [manual drawing](src/test/java/de/rototor/pdfbox/graphics2d/PdfBoxGraphics2dTest.java)
-and [drawing SVGs](src/test/java/de/rototor/pdfbox/graphics2d/RenderSVGsTest.java). The testdrivers
+See also [manual drawing](graphics2dsrc/test/java/de/rototor/pdfbox/graphics2d/PdfBoxGraphics2dTest.java)
+and [drawing SVGs](graphics2dsrc/test/java/de/rototor/pdfbox/graphics2d/RenderSVGsTest.java). The testdrivers
 are only smoke tests, i.e. they don't explicit test the result, they just run and test if the their
 are crashes. You have to manually compare the PDF result of the testdriver with the also generated
 PNG compare image.
@@ -334,7 +334,7 @@ Version 0.27:
 
 Version 0.26:
 
-- Added a [CMYK color mapper](src/main/java/de/rototor/pdfbox/graphics2d/RGBtoCMYKColorMapper.java),
+- Added a [CMYK color mapper](graphics2d/src/main/java/de/rototor/pdfbox/graphics2d/RGBtoCMYKColorMapper.java),
   which converts the paint colors to CMYK using an ICC Profile. Thanks to @larrylynn-wf for
   providing this feature [#22](https://github.com/rototor/pdfbox-graphics2d/issues/22).
 - Upgrade to PDFBox 2.0.20
