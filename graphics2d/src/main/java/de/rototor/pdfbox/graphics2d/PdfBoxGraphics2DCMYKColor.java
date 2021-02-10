@@ -11,9 +11,10 @@ import java.io.IOException;
  * This color class represents a CMYK Color. You can use this class if you want
  * to paint with DeviceCMYK Colors
  */
-public class PdfBoxGraphics2DCMYKColor extends Color {
+public class PdfBoxGraphics2DCMYKColor extends Color implements IPdfBoxGraphics2DColor {
 	private final float c, m, y, k;
 	private final PDColorSpace colorSpace;
+	private final boolean overprint;
 
 	public PdfBoxGraphics2DCMYKColor(int c, int m, int y, int k, int alpha) {
 		this(c / 255f, m / 255f, y / 255f, k / 255f, alpha);
@@ -45,12 +46,18 @@ public class PdfBoxGraphics2DCMYKColor extends Color {
 	}
 
 	public PdfBoxGraphics2DCMYKColor(float c, float m, float y, float k, int alpha, PDColorSpace colorSpace) {
+		this(c, m, y, k, alpha, colorSpace, false);
+	}
+
+	public PdfBoxGraphics2DCMYKColor(float c, float m, float y, float k, int alpha, PDColorSpace colorSpace,
+			boolean overprint) {
 		super(toRGBValue(c, m, y, k, alpha, colorSpace), true);
 		this.c = c;
 		this.m = m;
 		this.y = y;
 		this.k = k;
 		this.colorSpace = colorSpace;
+		this.overprint = overprint;
 	}
 
 	public float getC() {
@@ -67,6 +74,10 @@ public class PdfBoxGraphics2DCMYKColor extends Color {
 
 	public float getK() {
 		return k;
+	}
+
+	public boolean isOverprint() {
+		return overprint;
 	}
 
 	/**

@@ -36,11 +36,10 @@ public class PdfBoxGraphics2DColorMapper implements IPdfBoxGraphics2DColorMapper
 			float k = PdfBoxGraphics2DPaintApplier.getPropertyValue(color, "getBlack");
 			return new PDColor(new float[] { c, m, y, k }, PDDeviceCMYK.INSTANCE);
 		}
-
-		// Our own CMYK Color class
-		if (color instanceof PdfBoxGraphics2DCMYKColor) {
-			return ((PdfBoxGraphics2DCMYKColor) color).toPDColor();
-		}
+		
+		// Our universial color carrier.
+		if (color instanceof IPdfBoxGraphics2DColor)
+			return ((IPdfBoxGraphics2DColor) color).toPDColor();
 
 		float[] components = new float[] { color.getRed() / 255f, color.getGreen() / 255f, color.getBlue() / 255f };
 		return new PDColor(components, PDDeviceRGB.INSTANCE);

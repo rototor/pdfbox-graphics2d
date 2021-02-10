@@ -127,6 +127,17 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
             state.pdExtendedGraphicsState
                     .setNonStrokingAlphaConstant(nonStrokingAlphaConstant * (alpha / 255f));
         }
+
+		if (color instanceof IPdfBoxGraphics2DColor)
+		{
+			if (((IPdfBoxGraphics2DColor) color).isOverprint())
+			{
+				state.ensureExtendedState();
+				state.pdExtendedGraphicsState.setOverprintMode(1.0f);
+				state.pdExtendedGraphicsState.setNonStrokingOverprintControl(true);
+				state.pdExtendedGraphicsState.setStrokingOverprintControl(true);
+            }
+        }
     }
 
     private PDShading applyPaint(Paint paint, PaintApplierState state) throws IOException
