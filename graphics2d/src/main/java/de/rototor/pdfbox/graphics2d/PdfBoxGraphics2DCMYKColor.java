@@ -80,9 +80,6 @@ public class PdfBoxGraphics2DCMYKColor extends Color implements IPdfBoxGraphics2
 		return overprint;
 	}
 
-	/**
-	 * @return the PDColor represented by this color object
-	 */
 	public PDColor toPDColor() {
 		return new PDColor(new float[] { getC(), getM(), getY(), getK() }, colorSpace);
 	}

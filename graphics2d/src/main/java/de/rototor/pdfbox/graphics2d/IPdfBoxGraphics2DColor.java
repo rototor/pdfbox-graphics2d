@@ -7,7 +7,7 @@ import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
  */
 public interface IPdfBoxGraphics2DColor {
 	/**
-	 * The color to use in the PDF.
+	 * @return the PDColor represented by this color object
 	 */
 	PDColor toPDColor();
 

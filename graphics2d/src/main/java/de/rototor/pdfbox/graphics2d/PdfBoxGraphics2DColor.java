@@ -34,7 +34,6 @@ public class PdfBoxGraphics2DColor extends Color implements IPdfBoxGraphics2DCol
 	 * @param color the PDColor
 	 * @param alpha the alpha to use
 	 * @param overprint determine if overprint should be used
-	 * @throws IOException
 	 */
 	public PdfBoxGraphics2DColor(PDColor color, int alpha, boolean overprint)  {
 		super(toRGBValue(color, alpha));
