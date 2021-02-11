@@ -44,7 +44,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.30</version>
+	<version>0.31</version>
 </dependency>
 ```
 
@@ -276,9 +276,9 @@ which you can generate with any template engine you like, e.g. Apache FreeMarker
 
 ## Changes
 
-Version 0.31 (not released yet):
+Version 0.31:
 
-- Support for colors with overprint
+- Support for colors with overprint.
 - New PdfBoxGraphics2DColor class to allow using any kind of color. E.g. PDSeperation based colors.
 
 Version 0.30:
