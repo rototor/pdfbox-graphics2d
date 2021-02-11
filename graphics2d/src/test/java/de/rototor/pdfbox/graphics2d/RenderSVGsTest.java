@@ -60,7 +60,7 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase
 
     private void renderSVG(String name, final double scale) throws IOException
     {
-        String uri = RenderSVGsTest.class.getResource(name).toString();
+        String uri = String.valueOf(RenderSVGsTest.class.getResource(name));
 
         // create the document
         String parser = XMLResourceDescriptor.getXMLParserClassName();
@@ -88,7 +88,7 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase
 
     private void renderSVGCMYK(String name, final double scale) throws IOException
     {
-        String uri = RenderSVGsTest.class.getResource(name).toString();
+        String uri = String.valueOf(RenderSVGsTest.class.getResource(name));
 
         // create the document
         String parser = XMLResourceDescriptor.getXMLParserClassName();
@@ -134,10 +134,7 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase
             contentStream.endText();
             fontTextDrawer = new PdfBoxGraphics2DFontTextDrawer();
 
-            if (fontTextDrawer != null)
-            {
-                pdfBoxGraphics2D.setFontTextDrawer(fontTextDrawer);
-            }
+            pdfBoxGraphics2D.setFontTextDrawer(fontTextDrawer);
 
             pdfBoxGraphics2D.scale(scale, scale);
             gvtRoot.paint(pdfBoxGraphics2D);

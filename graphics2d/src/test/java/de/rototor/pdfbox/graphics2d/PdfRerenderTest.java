@@ -4,10 +4,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
-import org.apache.pdfbox.pdmodel.graphics.color.PDColorSpace;
-import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceRGB;
-import org.apache.pdfbox.pdmodel.graphics.color.PDPattern;
+import org.apache.pdfbox.pdmodel.graphics.color.*;
 import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import org.apache.pdfbox.pdmodel.graphics.image.JPEGFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
@@ -180,7 +177,9 @@ public class PdfRerenderTest
                                 {
                                     graphics.setStroke(new BasicStroke(additinalStrokeWidth));
                                 }
-                                graphics.setPaint(new Color(0, 255, 0, 128));
+
+                                graphics.setPaint(new PdfBoxGraphics2DColor(
+                                        new PDColor(new float[] { 0.5f }, new PDCalGray())));
                                 graphics.draw(shape);
 
                                 graphics.setPaint(paint);
