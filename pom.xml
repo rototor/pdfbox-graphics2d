@@ -72,7 +72,7 @@
 		<dependency>
 			<groupId>org.apache.xmlgraphics</groupId>
 			<artifactId>batik-swing</artifactId>
-			<version>1.13</version>
+			<version>1.14</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -84,7 +84,7 @@
 		<dependency>
 			<groupId>com.twelvemonkeys.imageio</groupId>
 			<artifactId>imageio-jpeg</artifactId>
-			<version>3.4.1</version>
+			<version>3.6.4</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
