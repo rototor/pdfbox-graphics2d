@@ -48,8 +48,7 @@ This library is available through Maven:
 </dependency>
 ```
 
-This library targets Java 1.6 and should work with Java 1.6. But at the moment it is only tested with Java 8 and Java
-11.
+This library targets JDK 1.8 and is also tested with JDK 11.
 
 ## Example Usage
 
