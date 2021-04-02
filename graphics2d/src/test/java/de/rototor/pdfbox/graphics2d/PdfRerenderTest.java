@@ -1,10 +1,15 @@
 package de.rototor.pdfbox.graphics2d;
 
+import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.graphics.color.*;
+import org.apache.pdfbox.pdmodel.graphics.color.PDCalGray;
+import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
+import org.apache.pdfbox.pdmodel.graphics.color.PDColorSpace;
+import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceRGB;
+import org.apache.pdfbox.pdmodel.graphics.color.PDPattern;
 import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import org.apache.pdfbox.pdmodel.graphics.image.JPEGFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
@@ -19,6 +24,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 
 public class PdfRerenderTest
 {
@@ -52,15 +58,15 @@ public class PdfRerenderTest
         parentDir.mkdirs();
 
         PDDocument document = new PDDocument();
-        PDDocument sourceDoc = PDDocument.load(PdfRerenderTest.class.getResourceAsStream(name));
+        PDDocument sourceDoc = Loader
+                .loadPDF(Objects.requireNonNull(PdfRerenderTest.class.getResourceAsStream(name)));
 
         for (PDPage sourcePage : sourceDoc.getPages())
         {
             PDRectangle mediaBox = sourcePage.getMediaBox();
             PDPage rerenderedPage = new PDPage(mediaBox);
             document.addPage(rerenderedPage);
-            PDPageContentStream cb = new PDPageContentStream(document, rerenderedPage);
-            try
+            try (PDPageContentStream cb = new PDPageContentStream(document, rerenderedPage))
             {
 
                 PDFRenderer pdfRenderer = new PDFRenderer(sourceDoc);
@@ -76,10 +82,6 @@ public class PdfRerenderTest
 
                 cb.drawImage(image, 0, 0, mediaBox.getWidth(), mediaBox.getHeight());
             }
-            finally
-            {
-                cb.close();
-            }
         }
         document.save(new File(parentDir, "simple_bitmap_" + (lossless ? "" : "_jpeg_") + name));
         document.close();
@@ -93,14 +95,14 @@ public class PdfRerenderTest
         parentDir.mkdirs();
 
         PDDocument document = new PDDocument();
-        PDDocument sourceDoc = PDDocument.load(PdfRerenderTest.class.getResourceAsStream(name));
+        PDDocument sourceDoc = Loader
+                .loadPDF(Objects.requireNonNull(PdfRerenderTest.class.getResourceAsStream(name)));
 
         for (PDPage sourcePage : sourceDoc.getPages())
         {
             PDPage rerenderedPage = new PDPage(sourcePage.getMediaBox());
             document.addPage(rerenderedPage);
-            PDPageContentStream cb = new PDPageContentStream(document, rerenderedPage);
-            try
+            try (PDPageContentStream cb = new PDPageContentStream(document, rerenderedPage))
             {
                 PdfBoxGraphics2D gfx = new PdfBoxGraphics2D(document, sourcePage.getMediaBox());
                 PDFRenderer pdfRenderer = new PDFRenderer(sourceDoc);
@@ -109,10 +111,6 @@ public class PdfRerenderTest
 
                 PDFormXObject xFormObject = gfx.getXFormObject();
                 cb.drawForm(xFormObject);
-            }
-            finally
-            {
-                cb.close();
             }
         }
         document.save(new File(parentDir, "simple_rerender" + name));
@@ -127,14 +125,14 @@ public class PdfRerenderTest
         parentDir.mkdirs();
 
         PDDocument document = new PDDocument();
-        PDDocument sourceDoc = PDDocument.load(PdfRerenderTest.class.getResourceAsStream(name));
+        PDDocument sourceDoc = Loader
+                .loadPDF(Objects.requireNonNull(PdfRerenderTest.class.getResourceAsStream(name)));
 
         for (PDPage sourcePage : sourceDoc.getPages())
         {
             PDPage rerenderedPage = new PDPage(sourcePage.getMediaBox());
             document.addPage(rerenderedPage);
-            PDPageContentStream cb = new PDPageContentStream(document, rerenderedPage);
-            try
+            try (PDPageContentStream cb = new PDPageContentStream(document, rerenderedPage))
             {
                 PdfBoxGraphics2D gfx = new PdfBoxGraphics2D(document, sourcePage.getMediaBox());
 
@@ -215,7 +213,10 @@ public class PdfRerenderTest
                                     for (float f : components)
                                     {
                                         if (f > 0.0)
+                                        {
                                             allBlack = false;
+                                            break;
+                                        }
                                     }
                                     if (allBlack)
                                         return new PdfBoxGraphics2DCMYKColor(1f, 0.0f, 0.2f, 0.1f,
@@ -239,10 +240,6 @@ public class PdfRerenderTest
 
                 PDFormXObject xFormObject = gfx.getXFormObject();
                 cb.drawForm(xFormObject);
-            }
-            finally
-            {
-                cb.close();
             }
         }
 

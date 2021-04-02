@@ -1,7 +1,13 @@
 package de.rototor.pdfbox.graphics2d;
 
-import org.apache.pdfbox.cos.*;
-import org.apache.pdfbox.multipdf.PDFCloneUtility;
+import org.apache.pdfbox.cos.COSArray;
+import org.apache.pdfbox.cos.COSBase;
+import org.apache.pdfbox.cos.COSBoolean;
+import org.apache.pdfbox.cos.COSDictionary;
+import org.apache.pdfbox.cos.COSFloat;
+import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.cos.COSStream;
+import org.apache.pdfbox.multipdf.PDFCloneUtilityAccessor;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.PDResources;
@@ -28,8 +34,11 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 /**
  * Default paint mapper.
@@ -128,14 +137,14 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
                     .setNonStrokingAlphaConstant(nonStrokingAlphaConstant * (alpha / 255f));
         }
 
-		if (color instanceof IPdfBoxGraphics2DColor)
-		{
-			if (((IPdfBoxGraphics2DColor) color).isOverprint())
-			{
-				state.ensureExtendedState();
-				state.pdExtendedGraphicsState.setOverprintMode(1.0f);
-				state.pdExtendedGraphicsState.setNonStrokingOverprintControl(true);
-				state.pdExtendedGraphicsState.setStrokingOverprintControl(true);
+        if (color instanceof IPdfBoxGraphics2DColor)
+        {
+            if (((IPdfBoxGraphics2DColor) color).isOverprint())
+            {
+                state.ensureExtendedState();
+                state.pdExtendedGraphicsState.setOverprintMode(1.0f);
+                state.pdExtendedGraphicsState.setNonStrokingOverprintControl(true);
+                state.pdExtendedGraphicsState.setStrokingOverprintControl(true);
             }
         }
     }
@@ -187,7 +196,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         }
         else
         {
-            System.err.printf("Don't know paint %s" , paint.getClass().getName());
+            System.err.printf("Don't know paint %s", paint.getClass().getName());
         }
 
         return null;
@@ -196,14 +205,16 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
     private PDShading importPDFBoxShadingPaint(ShadingPaint<?> paint, PaintApplierState state)
             throws IOException
     {
-        PDFCloneUtility pdfCloneUtility = new PDFCloneUtility(state.document);
-
+        PDFCloneUtilityAccessor pdfCloneUtilityAccessor = new PDFCloneUtilityAccessor(
+                state.document);
         Matrix matrix = paint.getMatrix();
         PDShading shading = paint.getShading();
 
         state.contentStream.transform(matrix);
-        return PDShading.create((COSDictionary) pdfCloneUtility
-                .cloneForNewDocument(shading.getCOSObject()));
+
+        COSDictionary clonedDict = (COSDictionary) pdfCloneUtilityAccessor
+                .cloneForNewDocument(shading.getCOSObject());
+        return PDShading.create(clonedDict);
     }
 
     /*
@@ -284,7 +295,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         }
         catch (Exception e)
         {
-            System.err.printf("PdfBoxGraphics2DPaintApplier error while drawing Tiling Paint %s", e.getMessage());
+            System.err.printf("PdfBoxGraphics2DPaintApplier error while drawing Tiling Paint %s",
+                    e.getMessage());
         }
     }
 

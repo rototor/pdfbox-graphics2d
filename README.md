@@ -2,7 +2,7 @@
 
 # pdfbox-graphics2d
 
-Graphics2D Bridge for Apache PDFBox
+Graphics2D Bridge for Apache PDFBox. This is the PDFBox 3.0 branch.
 
 ## Intro
 
@@ -44,7 +44,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.31</version>
+	<version>3.0.0-RC1</version>
 </dependency>
 ```
 
