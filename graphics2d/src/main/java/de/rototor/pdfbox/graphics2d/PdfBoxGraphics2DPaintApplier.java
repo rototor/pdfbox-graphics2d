@@ -7,7 +7,7 @@ import org.apache.pdfbox.cos.COSDictionary;
 import org.apache.pdfbox.cos.COSFloat;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.cos.COSStream;
-import org.apache.pdfbox.multipdf.PDFCloneUtilityAccessor;
+import org.apache.pdfbox.multipdf.InternalDeprecatedCOSCloner;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.PDResources;
@@ -205,14 +205,15 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
     private PDShading importPDFBoxShadingPaint(ShadingPaint<?> paint, PaintApplierState state)
             throws IOException
     {
-        PDFCloneUtilityAccessor pdfCloneUtilityAccessor = new PDFCloneUtilityAccessor(
+        @SuppressWarnings("deprecation")
+        InternalDeprecatedCOSCloner internalDeprecatedCOSCloner = new InternalDeprecatedCOSCloner(
                 state.document);
         Matrix matrix = paint.getMatrix();
         PDShading shading = paint.getShading();
 
         state.contentStream.transform(matrix);
 
-        COSDictionary clonedDict = (COSDictionary) pdfCloneUtilityAccessor
+        COSDictionary clonedDict = (COSDictionary) internalDeprecatedCOSCloner
                 .cloneForNewDocument(shading.getCOSObject());
         return PDShading.create(clonedDict);
     }

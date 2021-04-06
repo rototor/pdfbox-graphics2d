@@ -7,15 +7,18 @@ import java.io.IOException;
 
 /**
  * Temporary Workaround to allow access to the lowlevel functionality
+ *
+ * DO NOT USE!!!
  */
-public class PDFCloneUtilityAccessor extends PDFCloneUtility
+@Deprecated
+public class InternalDeprecatedCOSCloner extends PDFCloneUtility
 {
     /**
      * Creates a new instance for the given target document.
      *
      * @param dest the destination PDF document that will receive the clones
      */
-    public PDFCloneUtilityAccessor(PDDocument dest)
+    public InternalDeprecatedCOSCloner(PDDocument dest)
     {
         super(dest);
     }
