@@ -276,6 +276,9 @@ which you can generate with any template engine you like, e.g. Apache FreeMarker
 
 ## Changes
 
+Version 0.32 (not released yet)
+- Upgrade to PDFBOx 2.0.24	
+
 Version 0.31:
 
 - Support for colors with overprint.
