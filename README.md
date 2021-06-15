@@ -46,7 +46,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.31</version>
+	<version>0.32</version>
 </dependency>
 ```
 
@@ -279,7 +279,7 @@ which you can generate with any template engine you like, e.g. Apache FreeMarker
 
 ## Changes
 
-Version 0.32 (not yet released):
+Version 0.32:
 
 - It is now possible to draw within a marked content sequence. PdfBoxGraphics2D got a new  
   drawInMarkedContentSequence() method for this. This is usefull if you want to mark some parts of a drawing so that you
