@@ -9,5 +9,5 @@ public interface IPdfBoxGraphics2DMarkedContentDrawer {
 	 * after returning from this call
 	 * @param gfx  the graphics to draw on. Do NOT dispose this.
 	 */
-	void draw(PdfBoxGraphics2D gfx);
+	void draw(PdfBoxGraphics2D gfx) throws IOException;
 }
