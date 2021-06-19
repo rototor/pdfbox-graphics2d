@@ -1,5 +1,7 @@
 package de.rototor.pdfbox.graphics2d;
 
+import java.io.IOException;
+
 /**
  * Functional Interface to allow draw within a marked content sequence
  */
