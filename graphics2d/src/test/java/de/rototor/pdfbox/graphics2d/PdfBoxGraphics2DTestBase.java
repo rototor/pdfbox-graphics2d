@@ -21,6 +21,7 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import org.apache.pdfbox.util.Matrix;
 
@@ -44,7 +45,7 @@ class PdfBoxGraphics2DTestBase
         {
             PDDocument document = new PDDocument();
 
-            PDFont pdArial = PDType1Font.HELVETICA;
+            PDFont pdArial = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
 
             File parentDir = new File("target/test/" + dir);
             // noinspection ResultOfMethodCallIgnored
@@ -70,7 +71,7 @@ class PdfBoxGraphics2DTestBase
                 contentStream.beginText();
                 contentStream.setStrokingColor(0f, 0f, 0f);
                 contentStream.setNonStrokingColor(0f, 0f, 0f);
-                contentStream.setFont(PDType1Font.HELVETICA_BOLD, 15);
+                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 15);
                 contentStream.setTextMatrix(Matrix.getTranslateInstance(10, 800));
                 contentStream.showText("Mode " + m);
                 contentStream.endText();

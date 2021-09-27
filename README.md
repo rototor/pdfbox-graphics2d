@@ -9,7 +9,8 @@ Graphics2D Bridge for Apache PDFBox. This is the PDFBox 3.0 branch.
 Using this library you can use any Graphics2D API based SVG / graph / chart library to embed those graphics as vector
 drawing in a PDF. In combination with PDFBox PDFRenderer/PageDrawer you can also "rerender" PDF pages and change certain
 aspects
-(e.g. [change the color mapping and perform an overfill](graphics2d/src/test/java/de/rototor/pdfbox/graphics2d/PdfRerenderTest.java))
+(
+e.g. [change the color mapping and perform an overfill](graphics2d/src/test/java/de/rototor/pdfbox/graphics2d/PdfRerenderTest.java))
 .
 
 The following features are supported:
@@ -41,6 +42,7 @@ The following features are not supported (yet):
 This library is available through Maven:
 
 ```xml
+
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
@@ -274,6 +276,15 @@ which you can generate with any template engine you like, e.g. Apache FreeMarker
 (which are draw using Graphics2D using this library) with &lt;object&gt; HTML tags.
 
 ## Changes
+
+Version 0.32:
+
+- It is now possible to draw within a marked content sequence. PdfBoxGraphics2D got a new  
+  drawInMarkedContentSequence() method for this. This is usefull if you want to mark some parts of a drawing so that you
+  can later do some special processing on it. Or if you simply want to provide  
+  accesibility information for the content you draw. See also e.g. https://www.w3.org/TR/WCAG20-TECHS/PDF21.html or the 
+  section 14.8.4.3.3 in the PDF specification.
+- Upgrade to PDFBox 2.0.24
 
 Version 0.31:
 

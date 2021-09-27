@@ -9,6 +9,7 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import org.apache.pdfbox.util.Matrix;
 import org.junit.Test;
@@ -128,7 +129,7 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase
             contentStream.beginText();
             contentStream.setStrokingColor(0.0f, 0.0f, 0.0f, 1.0f);
             contentStream.setNonStrokingColor(0.0f, 0.0f, 0.0f, 1.0f);
-            contentStream.setFont(PDType1Font.HELVETICA_BOLD, 15);
+            contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 15);
             contentStream.setTextMatrix(Matrix.getTranslateInstance(10, 800));
             contentStream.showText("Mode: CMYK colorspace");
             contentStream.endText();

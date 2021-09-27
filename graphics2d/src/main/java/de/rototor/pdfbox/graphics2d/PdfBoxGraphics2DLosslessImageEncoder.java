@@ -15,6 +15,13 @@
  */
 package de.rototor.pdfbox.graphics2d;
 
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.graphics.color.PDColorSpace;
+import org.apache.pdfbox.pdmodel.graphics.color.PDICCBased;
+import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
+
 import java.awt.*;
 import java.awt.color.ColorSpace;
 import java.awt.color.ICC_ColorSpace;
@@ -24,13 +31,6 @@ import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.graphics.color.PDColorSpace;
-import org.apache.pdfbox.pdmodel.graphics.color.PDICCBased;
-import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
-import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
 /**
  * Encodes all images using lossless compression. Tries to reuse images as much
@@ -108,7 +108,7 @@ public class PdfBoxGraphics2DLosslessImageEncoder implements IPdfBoxGraphics2DIm
 		}
 	}
 
-	private class ImageSoftReference extends SoftReference<Image> {
+	private static class ImageSoftReference extends SoftReference<Image> {
 		ImageSoftReference(Image referent) {
 			super(referent);
 		}
@@ -130,7 +130,7 @@ public class PdfBoxGraphics2DLosslessImageEncoder implements IPdfBoxGraphics2DIm
 		}
 	}
 
-	private class ProfileSoftReference extends SoftReference<ICC_Profile> {
+	private static class ProfileSoftReference extends SoftReference<ICC_Profile> {
 		ProfileSoftReference(ICC_Profile referent) {
 			super(referent);
 		}

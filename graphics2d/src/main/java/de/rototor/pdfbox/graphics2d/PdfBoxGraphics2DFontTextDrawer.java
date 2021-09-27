@@ -712,7 +712,7 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
              * If we have no font but are forced to apply a font, we just use the default
              * builtin PDF font...
              */
-            fontToUse = PdfBoxGraphics2DFontTextDrawerDefaultFonts.chooseMatchingHelvetica(font);
+            fontToUse = new PDType1Font(PdfBoxGraphics2DFontTextDrawerDefaultFonts.chooseMatchingHelvetica(font));
         }
         env.getContentStream().setFont(fontToUse, font.getSize2D());
         return fontToUse;
