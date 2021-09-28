@@ -46,7 +46,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.32</version>
+	<version>0.33</version>
 </dependency>
 ```
 
@@ -278,6 +278,10 @@ which you can generate with any template engine you like, e.g. Apache FreeMarker
 (which are draw using Graphics2D using this library) with &lt;object&gt; HTML tags.
 
 ## Changes
+
+Version 0.33:
+- Don't crash when drawString() is called with an empty string [#31](https://github.com/rototor/pdfbox-graphics2d/issues/31). 
+  Thanks @Kischloren for the report.
 
 Version 0.32:
 
