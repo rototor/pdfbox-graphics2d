@@ -10,14 +10,14 @@
 	<parent>
 		<groupId>de.rototor.pdfbox</groupId>
 		<artifactId>pdfboxgraphics2d-parent</artifactId>
-		<version>0.33</version>
+		<version>0.34-SNAPSHOT</version>
 	</parent>
 
 	<dependencies>
 		<dependency>
 			<groupId>de.rototor.pdfbox</groupId>
 			<artifactId>graphics2d</artifactId>
-			<version>0.33</version>
+			<version>0.34-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>
