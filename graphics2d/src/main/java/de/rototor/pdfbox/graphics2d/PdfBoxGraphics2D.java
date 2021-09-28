@@ -534,6 +534,11 @@ public class PdfBoxGraphics2D extends Graphics2D
 
     public void drawString(String str, float x, float y)
     {
+        /*
+         * Ignore empty strings, they can't be attributed. And are invisible anyway.
+         */
+	if (str.isEmpty())
+	    return;
         AttributedString attributedString = new AttributedString(str);
         attributedString.addAttribute(TextAttribute.FONT, font);
         drawString(attributedString.getIterator(), x, y);
