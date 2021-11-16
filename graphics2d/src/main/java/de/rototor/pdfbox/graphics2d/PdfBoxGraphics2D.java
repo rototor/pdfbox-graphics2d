@@ -440,13 +440,13 @@ public class PdfBoxGraphics2D extends Graphics2D
 
             if (shapeToDraw != null)
             {
-                walkShape(shapeToDraw);
                 PDShading pdShading = applyPaint(shapeToDraw);
                 if (pdShading != null)
                     applyShadingAsColor(pdShading);
 
                 applyStroke(stroke);
 
+                walkShape(shapeToDraw);
                 contentStream.stroke();
                 hasPathOnStream = false;
             }
@@ -857,7 +857,6 @@ public class PdfBoxGraphics2D extends Graphics2D
 
             if (shapeToFill != null)
             {
-                boolean useEvenOdd = walkShape(shapeToFill);
                 PDShading shading = applyPaint(shapeToFill);
                 if (shading != null)
                 {
@@ -873,17 +872,18 @@ public class PdfBoxGraphics2D extends Graphics2D
                          * creates another nested XForm for that ...
                          */
                         applyShadingAsColor(shading);
-                        fill(useEvenOdd);
-                    }
+						walkAndFillShape(shapeToFill);
+					}
                     else
                     {
+                        boolean useEvenOdd = walkShape(shapeToFill);
                         internalClip(useEvenOdd);
                         contentStream.shadingFill(shading);
                     }
                 }
                 else
                 {
-                    fill(useEvenOdd);
+                    walkAndFillShape(shapeToFill);
                 }
                 hasPathOnStream = false;
             }
@@ -896,6 +896,12 @@ public class PdfBoxGraphics2D extends Graphics2D
         {
             throwException(e);
         }
+    }
+
+    private void walkAndFillShape(Shape shapeToFill) throws IOException
+	{
+        boolean useEvenOdd = walkShape(shapeToFill);
+        fill(useEvenOdd);
     }
 
     private void fill(boolean useEvenOdd) throws IOException
@@ -1040,7 +1046,7 @@ public class PdfBoxGraphics2D extends Graphics2D
 	/**
 	 * Draw on the Graphics2D and enclose the drawing command with a BMC/EMC content
 	 * marking pair. See the PDF Spec about "Marked Content" for details.
-	 * 
+	 *
 	 * @param tagName
 	 *            A COSName for to tag the marked content
 	 * @param drawer
