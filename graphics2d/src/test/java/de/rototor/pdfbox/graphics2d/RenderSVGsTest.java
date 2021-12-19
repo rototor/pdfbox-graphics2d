@@ -53,6 +53,11 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase
         renderSVG("near-square-gradient.svg", 0.30);
         renderSVG("square-gradient.svg", 0.55);
         renderSVG("tall-gradient-downward-slope.svg", 0.33);
+    }
+
+    @Test
+    public void testHorizontalGradient() throws IOException
+    {
         renderSVG("horizontal-gradient.svg", 0.55);
     }
 

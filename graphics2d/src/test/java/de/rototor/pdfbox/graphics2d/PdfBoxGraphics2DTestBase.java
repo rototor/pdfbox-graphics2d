@@ -50,7 +50,7 @@ class PdfBoxGraphics2DTestBase
             // noinspection ResultOfMethodCallIgnored
             parentDir.mkdirs();
 
-            int scale = 2;
+            int scale = 4;
             exportAsPNG(name, exporter, parentDir, scale);
 
             for (Mode m : Mode.values())

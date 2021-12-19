@@ -457,13 +457,15 @@ public class PdfBoxGraphics2D extends Graphics2D
 
             if (shapeToDraw != null)
             {
-                PDShading pdShading = applyPaint(shapeToDraw);
-                if (pdShading != null)
-                    applyShadingAsColor(pdShading);
-
+                PaintApplyResult result = applyPaint(shapeToDraw);
                 applyStroke(stroke);
 
-                walkShape(shapeToDraw);
+                if (result.shading != null)
+                    applyShadingAsColor(result.shading);
+
+                if (!result.hasShapeBeenWalked)
+                    walkShape(shapeToDraw);
+
                 contentStream.stroke();
                 hasPathOnStream = false;
             }
@@ -805,9 +807,9 @@ public class PdfBoxGraphics2D extends Graphics2D
         @Override
         public void applyPaint(Paint paint, Shape shapeToDraw) throws IOException
         {
-            PDShading pdShading = PdfBoxGraphics2D.this.applyPaint(paint, shapeToDraw);
-            if (pdShading != null)
-                applyShadingAsColor(pdShading);
+            PaintApplyResult result = PdfBoxGraphics2D.this.applyPaint(paint, shapeToDraw);
+            if (result.shading != null)
+                applyShadingAsColor(result.shading);
         }
 
         @Override
@@ -875,8 +877,8 @@ public class PdfBoxGraphics2D extends Graphics2D
 
             if (shapeToFill != null)
             {
-                PDShading shading = applyPaint(shapeToFill);
-                if (shading != null)
+                PaintApplyResult result = applyPaint(shapeToFill);
+                if (result.shading != null)
                 {
                     /*
                      * NB: the shading fill doesn't work with shapes with zero or negative
@@ -889,19 +891,19 @@ public class PdfBoxGraphics2D extends Graphics2D
                          * But we apply the shading as color, we usually want to avoid that because it
                          * creates another nested XForm for that ...
                          */
-                        applyShadingAsColor(shading);
-                        walkAndFillShape(shapeToFill);
+                        applyShadingAsColor(result.shading);
+                        walkAndFillFromApplyPaintResult(shapeToFill, result);
                     }
                     else
                     {
-                        boolean useEvenOdd = walkShape(shapeToFill);
+                        boolean useEvenOdd = result.hasShapeBeenWalked ? result.useEvenOdd : walkShape(shapeToFill);
                         internalClip(useEvenOdd);
-                        contentStream.shadingFill(shading);
+                        contentStream.shadingFill(result.shading);
                     }
                 }
                 else
                 {
-                    walkAndFillShape(shapeToFill);
+                    walkAndFillFromApplyPaintResult(shapeToFill, result);
                 }
                 hasPathOnStream = false;
             }
@@ -914,6 +916,14 @@ public class PdfBoxGraphics2D extends Graphics2D
         {
             throwException(e);
         }
+    }
+
+    private void walkAndFillFromApplyPaintResult(Shape shapeToFill, PaintApplyResult result) throws IOException
+    {
+        if (result.hasShapeBeenWalked)
+            fill(result.useEvenOdd);
+        else
+            walkAndFillShape(shapeToFill);
     }
 
     private void walkAndFillShape(Shape shapeToFill) throws IOException
@@ -963,19 +973,31 @@ public class PdfBoxGraphics2D extends Graphics2D
         contentStream.setStrokingColor(patternColor);
     }
 
-    private PDShading applyPaint(Shape shapeToDraw) throws IOException
+    private PaintApplyResult applyPaint(Shape shapeToDraw) throws IOException
     {
         return applyPaint(paint, shapeToDraw);
     }
 
     private final PaintEnvImpl paintEnv = new PaintEnvImpl();
 
-    private PDShading applyPaint(Paint paintToApply, Shape shapeToDraw) throws IOException
+    private static class PaintApplyResult {
+        PDShading shading;
+        boolean hasShapeBeenWalked;
+        boolean useEvenOdd;
+    }
+
+    private final PaintApplyResult paintApplyResult = new PaintApplyResult();
+
+    private PaintApplyResult applyPaint(Paint paintToApply, Shape shapeToDraw) throws IOException
     {
         AffineTransform tf = new AffineTransform(baseTransform);
         tf.concatenate(transform);
         paintEnv.shapeToDraw = shapeToDraw;
-        return paintApplier.applyPaint(paintToApply, contentStream, tf, paintEnv);
+        paintEnv.hasShapeBeenWalked = false;
+        paintApplyResult.shading = paintApplier.applyPaint(paintToApply, contentStream, tf, paintEnv);
+        paintApplyResult.hasShapeBeenWalked = paintEnv.hasShapeBeenWalked;
+        paintApplyResult.useEvenOdd = paintEnv.useEvenOdd;
+        return paintApplyResult;
     }
 
     public boolean hit(Rectangle rect, Shape s, boolean onStroke)
@@ -1235,6 +1257,11 @@ public class PdfBoxGraphics2D extends Graphics2D
     }
 
     /**
+     * Internal Debug flag.
+     */
+    private final static boolean ENABLE_DEBUG_INTERNAL_CLIP = false;
+
+    /**
      * Perform a clip, but only if we really have an active clipping path
      *
      * @param useEvenOdd true when we should use the evenOdd rule.
@@ -1248,6 +1275,13 @@ public class PdfBoxGraphics2D extends Graphics2D
             else
                 contentStream.clip();
             hasPathOnStream = false;
+        }
+        else
+        {
+            if(ENABLE_DEBUG_INTERNAL_CLIP)
+            {
+                System.out.println("No Clip to fill: " + useEvenOdd);
+            }
         }
     }
 
@@ -1550,12 +1584,23 @@ public class PdfBoxGraphics2D extends Graphics2D
 
     private class PaintEnvImpl implements IPaintEnv
     {
-        public Shape shapeToDraw;
+        private Shape shapeToDraw;
+        private boolean hasShapeBeenWalked;
+        private boolean useEvenOdd;
 
         @Override
         public Shape getShapeToDraw()
         {
             return shapeToDraw;
+        }
+
+        @Override
+        public void ensureShapeIsWalked() throws IOException
+        {
+            if (hasShapeBeenWalked)
+                return;
+            hasShapeBeenWalked = true;
+            useEvenOdd = walkShape(shapeToDraw);
         }
 
         @Override

@@ -464,6 +464,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         float negativeHeight =
                 -1.0f * Math.max(1.0f, Math.abs((float) (endPoint.getY() - startPoint.getY())));
 
+        state.env.ensureShapeIsWalked();
         state.contentStream.addRect(calculatedX, calculatedY, calculatedWidth, negativeHeight);
 
         state.env.getGraphics2D().markPathIsOnStream();
