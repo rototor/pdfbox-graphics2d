@@ -34,8 +34,8 @@ The following features are not supported (yet):
 - ```(Alpha-)Composite``` with a rule different then ```AlphaComposite.SRC_OVER```.
 - ```copyArea()```. This is not possible to implement.
 - ```hit()```. Why would you want to use that?
-- ```setXORMode()```. Their is no blend mode in PDF which would allow to emulate this, so this is not possible to be
-  implemeted.
+- ```setXORMode()```. Their is no blend mode in PDF which would allow to emulate this, so this is 
+not possible to be implemeted.
 
 ## Download
 
@@ -46,13 +46,12 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.33</version>
+	<version>0.34</version>
 </dependency>
 ```
 
-This library targets Java 1.6 and should work with Java 1.6. But at the moment it is only tested with Java 8 and Java
-
-11.
+This library targets Java 1.6 and should work with Java 1.6. But at the moment it is only tested 
+with Java 8 and Java 11.
 
 ## Example Usage
 
