@@ -196,6 +196,11 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
     private PDShading importPDFBoxShadingPaint(ShadingPaint<?> paint, PaintApplierState state)
             throws IOException
     {
+        /*
+         * Before cloing the shading paint we must ensure that we have already walked the shape
+         */
+        state.env.ensureShapeIsWalked();
+
         PDFCloneUtility pdfCloneUtility = new PDFCloneUtility(state.document);
 
         Matrix matrix = paint.getMatrix();

@@ -481,6 +481,11 @@ public class PdfBoxGraphics2D extends Graphics2D
     }
 
     /**
+     * Interal debugflag to see if a unkown stroke is mapped
+     */
+    private final static boolean ENABLE_DEBUG_UNKOWN_STROKE = false;
+
+    /**
      * Internal usage only!
      *
      * @param strokeToApply the stroke we should apply on the stream
@@ -518,6 +523,11 @@ public class PdfBoxGraphics2D extends Graphics2D
                 contentStream.setLineDashPattern(dashArray,
                         (float) Math.abs(basicStroke.getDashPhase() * scaleX));
             }
+        }
+        else if (strokeToApply != null)
+        {
+            if (ENABLE_DEBUG_UNKOWN_STROKE)
+                System.out.println("PDFBoxGraphics2D: Can't handle Stroke " + strokeToApply);
         }
     }
 
