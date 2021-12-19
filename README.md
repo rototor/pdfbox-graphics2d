@@ -279,6 +279,13 @@ which you can generate with any template engine you like, e.g. Apache FreeMarker
 
 ## Changes
 
+Version 0.34:
+- Per default specify the rendering hint ```RenderingHints.KEY_FRACTIONALMETRICS=RenderingHints.VALUE_FRACTIONALMETRICS_ON```.
+  We always render into a vector space, so we don't have to round to ints while drawing text. Thanks to @paatero for bringing this up ([#32](https://github.com/rototor/pdfbox-graphics2d/issues/32)). 
+- Upgrade to PDFBox 2.0.25
+- It is not allowed to make state changes after defining a path and before clipping / drawing, at least acording to the PDF specification
+[PDFBOX-5322](https://issues.apache.org/jira/browse/PDFBOX-5322). Fixed the ordering here.
+
 Version 0.33:
 - Don't crash when drawString() is called with an empty string [#31](https://github.com/rototor/pdfbox-graphics2d/issues/31). 
   Thanks @Kischloren for the report.
