@@ -51,13 +51,7 @@ class PdfBoxGraphics2DTestBase
             parentDir.mkdirs();
 
             int scale = 2;
-            BufferedImage image = new BufferedImage(400 * scale, 400 * scale,
-                    BufferedImage.TYPE_4BYTE_ABGR);
-            Graphics2D imageGraphics = image.createGraphics();
-            imageGraphics.scale(scale, scale);
-            exporter.draw(imageGraphics);
-            imageGraphics.dispose();
-            ImageIO.write(image, "PNG", new File(parentDir, name + ".png"));
+            exportAsPNG(name, exporter, parentDir, scale);
 
             for (Mode m : Mode.values())
             {
@@ -124,6 +118,18 @@ class PdfBoxGraphics2DTestBase
         {
             throw new RuntimeException(e);
         }
+    }
+
+    protected void exportAsPNG(String name, GraphicsExporter exporter, File parentDir, int scale)
+            throws IOException, FontFormatException
+    {
+        BufferedImage image = new BufferedImage(400 * scale, 400 * scale,
+                BufferedImage.TYPE_4BYTE_ABGR);
+        Graphics2D imageGraphics = image.createGraphics();
+        imageGraphics.scale(scale, scale);
+        exporter.draw(imageGraphics);
+        imageGraphics.dispose();
+        ImageIO.write(image, "PNG", new File(parentDir, name + ".png"));
     }
 
     private void registerFots(PdfBoxGraphics2DFontTextDrawer fontTextDrawer)

@@ -41,8 +41,21 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
-import java.awt.geom.*;
-import java.awt.image.*;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Arc2D;
+import java.awt.geom.Area;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Line2D;
+import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Path2D;
+import java.awt.geom.PathIterator;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
+import java.awt.image.BufferedImageOp;
+import java.awt.image.ImageObserver;
+import java.awt.image.RenderedImage;
+import java.awt.image.WritableRaster;
 import java.awt.image.renderable.RenderableImage;
 import java.io.IOException;
 import java.text.AttributedCharacterIterator;
@@ -224,6 +237,10 @@ public class PdfBoxGraphics2D extends Graphics2D
     {
         this.document = document;
         this.bbox = bbox;
+
+        renderingHints = new HashMap<RenderingHints.Key, Object>();
+        renderingHints.put(RenderingHints.KEY_FRACTIONALMETRICS,
+                RenderingHints.VALUE_FRACTIONALMETRICS_ON);
 
         PDAppearanceStream appearance = new PDAppearanceStream(document);
         xFormObject = appearance;
@@ -532,17 +549,17 @@ public class PdfBoxGraphics2D extends Graphics2D
         drawString(str, (float) x, (float) y);
     }
 
-	public void drawString(String str, float x, float y)
+    public void drawString(String str, float x, float y)
     {
-		/*
-		 * Ignore empty strings, they can't be attributed. And are invisible anyway.
-		 */
-		if (str.isEmpty())
-			return;
-		AttributedString attributedString = new AttributedString(str);
-		attributedString.addAttribute(TextAttribute.FONT, font);
-		drawString(attributedString.getIterator(), x, y);
-	}
+        /*
+         * Ignore empty strings, they can't be attributed. And are invisible anyway.
+         */
+        if (str.isEmpty())
+            return;
+        AttributedString attributedString = new AttributedString(str);
+        attributedString.addAttribute(TextAttribute.FONT, font);
+        drawString(attributedString.getIterator(), x, y);
+    }
 
     public void drawString(AttributedCharacterIterator iterator, int x, int y)
     {
@@ -705,8 +722,8 @@ public class PdfBoxGraphics2D extends Graphics2D
             /*
              * If we can draw the text using fonts, we do this
              */
-            if (fontTextDrawer
-                    .canDrawText((AttributedCharacterIterator) iterator.clone(), fontDrawerEnv))
+            if (fontTextDrawer.canDrawText((AttributedCharacterIterator) iterator.clone(),
+                    fontDrawerEnv))
             {
                 drawStringUsingText(iterator, x, y);
             }
@@ -814,6 +831,7 @@ public class PdfBoxGraphics2D extends Graphics2D
         @Override
         public Graphics2D getCalculationGraphics()
         {
+            calcGfx.addRenderingHints(renderingHints);
             return calcGfx;
         }
 
@@ -872,8 +890,8 @@ public class PdfBoxGraphics2D extends Graphics2D
                          * creates another nested XForm for that ...
                          */
                         applyShadingAsColor(shading);
-						walkAndFillShape(shapeToFill);
-					}
+                        walkAndFillShape(shapeToFill);
+                    }
                     else
                     {
                         boolean useEvenOdd = walkShape(shapeToFill);
@@ -899,7 +917,7 @@ public class PdfBoxGraphics2D extends Graphics2D
     }
 
     private void walkAndFillShape(Shape shapeToFill) throws IOException
-	{
+    {
         boolean useEvenOdd = walkShape(shapeToFill);
         fill(useEvenOdd);
     }
@@ -985,7 +1003,7 @@ public class PdfBoxGraphics2D extends Graphics2D
         this.stroke = stroke;
     }
 
-    private Map<RenderingHints.Key, Object> renderingHints = new HashMap<RenderingHints.Key, Object>();
+    private final Map<RenderingHints.Key, Object> renderingHints;
 
     public void setRenderingHint(RenderingHints.Key hintKey, Object hintValue)
     {
@@ -1043,47 +1061,44 @@ public class PdfBoxGraphics2D extends Graphics2D
         }
     }
 
-	/**
-	 * Draw on the Graphics2D and enclose the drawing command with a BMC/EMC content
-	 * marking pair. See the PDF Spec about "Marked Content" for details.
-	 *
-	 * @param tagName
-	 *            A COSName for to tag the marked content
-	 * @param drawer
-	 *            is called with a (child) graphics to draw on. Please do *not*
-	 *            dispose() this graphics. Just draw on it. Any state changes on the given graphics will be reset after the
-     *            drawing is finished
-	 */
-    public void drawInMarkedContentSequence(COSName tagName, IPdfBoxGraphics2DMarkedContentDrawer drawer)
+    /**
+     * Draw on the Graphics2D and enclose the drawing command with a BMC/EMC content
+     * marking pair. See the PDF Spec about "Marked Content" for details.
+     *
+     * @param tagName A COSName for to tag the marked content
+     * @param drawer  is called with a (child) graphics to draw on. Please do *not*
+     *                dispose() this graphics. Just draw on it. Any state changes on the given graphics will be reset after the
+     *                drawing is finished
+     */
+    public void drawInMarkedContentSequence(COSName tagName,
+            IPdfBoxGraphics2DMarkedContentDrawer drawer)
     {
-		try
+        try
         {
-			contentStream.beginMarkedContent(tagName);
+            contentStream.beginMarkedContent(tagName);
             PdfBoxGraphics2D child = create();
             drawer.draw(child);
             child.dispose();
             contentStream.endMarkedContent();
-		}
-		catch (IOException e)
+        }
+        catch (IOException e)
         {
-			throw new RuntimeException(e);
-		}
+            throw new RuntimeException(e);
+        }
     }
 
-	/**
-	 * Draw on the Graphics2D and enclose the drawing command with a BDC/EMC content
-	 * marking pair. See the PDF Spec about "Marked Content" for details.
-	 *
-	 * @param tagName
-	 *            A COSName for to tag the marked content
-	 * @param properties
-	 *            The properties to put by the marked sequence
-	 * @param drawer
-	 *            is called with a (child) graphics to draw on. Please do *not*
-	 *            dispose() this graphics. Just draw on it. Any state changes on the
-	 *            given graphics will be reset after the drawing is finished
-	 */
-    public void drawInMarkedContentSequence(COSName tagName, PDPropertyList properties, IPdfBoxGraphics2DMarkedContentDrawer drawer)
+    /**
+     * Draw on the Graphics2D and enclose the drawing command with a BDC/EMC content
+     * marking pair. See the PDF Spec about "Marked Content" for details.
+     *
+     * @param tagName    A COSName for to tag the marked content
+     * @param properties The properties to put by the marked sequence
+     * @param drawer     is called with a (child) graphics to draw on. Please do *not*
+     *                   dispose() this graphics. Just draw on it. Any state changes on the
+     *                   given graphics will be reset after the drawing is finished
+     */
+    public void drawInMarkedContentSequence(COSName tagName, PDPropertyList properties,
+            IPdfBoxGraphics2DMarkedContentDrawer drawer)
     {
         try
         {
@@ -1098,7 +1113,6 @@ public class PdfBoxGraphics2D extends Graphics2D
             throw new RuntimeException(e);
         }
     }
-
 
     public PdfBoxGraphics2D create(int x, int y, int width, int height)
     {

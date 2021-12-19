@@ -1,7 +1,11 @@
 package de.rototor.pdfbox.graphics2d;
 
 import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
-import org.apache.batik.bridge.*;
+import org.apache.batik.bridge.BridgeContext;
+import org.apache.batik.bridge.DocumentLoader;
+import org.apache.batik.bridge.GVTBuilder;
+import org.apache.batik.bridge.UserAgent;
+import org.apache.batik.bridge.UserAgentAdapter;
 import org.apache.batik.gvt.GraphicsNode;
 import org.apache.batik.util.XMLResourceDescriptor;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -53,9 +57,9 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase
     }
 
     @Test
-    public void testSVGinCMYKColorspace() throws IOException
+    public void testSVGinCMYKColorspace() throws IOException, FontFormatException
     {
-        renderSVGCMYK("atmospheric-composiition.svg", 0.7);
+        renderSVGCMYK("atmospheric-composition.svg", 0.7);
     }
 
     private void renderSVG(String name, final double scale) throws IOException
@@ -86,7 +90,8 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase
         });
     }
 
-    private void renderSVGCMYK(String name, final double scale) throws IOException
+    private void renderSVGCMYK(String name, final double scale)
+            throws IOException, FontFormatException
     {
         String uri = String.valueOf(RenderSVGsTest.class.getResource(name));
 
@@ -96,18 +101,26 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase
         Document document = f.createDocument(uri, RenderSVGsTest.class.getResourceAsStream(name));
 
         // create the GVT
+        File parentDir = new File("target/test/svg");
         UserAgent userAgent = new UserAgentAdapter();
         DocumentLoader loader = new DocumentLoader(userAgent);
         BridgeContext bctx = new BridgeContext(userAgent, loader);
         bctx.setDynamicState(BridgeContext.STATIC);
         GVTBuilder builder = new GVTBuilder();
         final GraphicsNode gvtRoot = builder.build(bctx, document);
+        exportAsPNG(name, new GraphicsExporter() {
+            @Override
+            public void draw(Graphics2D gfx)
+            {
+                gfx.scale(scale, scale);
+                gvtRoot.paint(gfx);
+            }
+        }, parentDir, (int) Math.round(scale + 0.5)*2);
 
         try
         {
             PDDocument pdfDocument = new PDDocument();
 
-            File parentDir = new File("target/test/svg");
             // noinspection ResultOfMethodCallIgnored
             parentDir.mkdirs();
 
