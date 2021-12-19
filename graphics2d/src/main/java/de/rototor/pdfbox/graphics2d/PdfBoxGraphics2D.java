@@ -906,7 +906,8 @@ public class PdfBoxGraphics2D extends Graphics2D
                     }
                     else
                     {
-                        boolean useEvenOdd = result.hasShapeBeenWalked ? result.useEvenOdd : walkShape(shapeToFill);
+                        boolean useEvenOdd = result.hasShapeBeenWalked ? result.useEvenOdd : walkShape(
+                                shapeToFill);
                         internalClip(useEvenOdd);
                         contentStream.shadingFill(result.shading);
                     }
@@ -928,7 +929,8 @@ public class PdfBoxGraphics2D extends Graphics2D
         }
     }
 
-    private void walkAndFillFromApplyPaintResult(Shape shapeToFill, PaintApplyResult result) throws IOException
+    private void walkAndFillFromApplyPaintResult(Shape shapeToFill, PaintApplyResult result)
+            throws IOException
     {
         if (result.hasShapeBeenWalked)
             fill(result.useEvenOdd);
@@ -990,7 +992,8 @@ public class PdfBoxGraphics2D extends Graphics2D
 
     private final PaintEnvImpl paintEnv = new PaintEnvImpl();
 
-    private static class PaintApplyResult {
+    private static class PaintApplyResult
+    {
         PDShading shading;
         boolean hasShapeBeenWalked;
         boolean useEvenOdd;
@@ -1004,7 +1007,8 @@ public class PdfBoxGraphics2D extends Graphics2D
         tf.concatenate(transform);
         paintEnv.shapeToDraw = shapeToDraw;
         paintEnv.hasShapeBeenWalked = false;
-        paintApplyResult.shading = paintApplier.applyPaint(paintToApply, contentStream, tf, paintEnv);
+        paintApplyResult.shading = paintApplier.applyPaint(paintToApply, contentStream, tf,
+                paintEnv);
         paintApplyResult.hasShapeBeenWalked = paintEnv.hasShapeBeenWalked;
         paintApplyResult.useEvenOdd = paintEnv.useEvenOdd;
         return paintApplyResult;
@@ -1289,7 +1293,7 @@ public class PdfBoxGraphics2D extends Graphics2D
         }
         else
         {
-            if(ENABLE_DEBUG_INTERNAL_CLIP)
+            if (ENABLE_DEBUG_INTERNAL_CLIP)
             {
                 System.out.println("No Clip to fill: " + useEvenOdd);
             }
@@ -1423,6 +1427,7 @@ public class PdfBoxGraphics2D extends Graphics2D
 
     /**
      * Internal helper function
+     *
      * @param e exception to rethrow
      */
     static <T> T throwException(Exception e)
@@ -1612,6 +1617,8 @@ public class PdfBoxGraphics2D extends Graphics2D
         @Override
         public void ensureShapeIsWalked() throws IOException
         {
+            if (shapeToDraw == null)
+                return;
             if (hasShapeBeenWalked)
                 return;
             hasShapeBeenWalked = true;

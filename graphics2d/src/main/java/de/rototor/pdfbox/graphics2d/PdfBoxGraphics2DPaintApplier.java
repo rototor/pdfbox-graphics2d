@@ -197,7 +197,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
             throws IOException
     {
         /*
-         * Before cloing the shading paint we must ensure that we have already walked the shape
+         * Before cloning the shading paint we must ensure that we have already walked the shape
          */
         state.env.ensureShapeIsWalked();
 
@@ -637,6 +637,11 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         PDColor firstColorMapped = state.colorMapper.mapColor(state.contentStream, firstColor);
         applyAsStrokingColor(firstColor, state);
 
+        /*
+         * When doing a shading paint, we need to always walk the shape first.
+         */
+        state.env.ensureShapeIsWalked();
+
         PDShadingType3 shading = new PDShadingType3(new COSDictionary());
         shading.setAntiAlias(true);
         shading.setShadingType(PDShading.SHADING_TYPE3);
@@ -676,6 +681,11 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         Color firstColor = colors[0];
         PDColor firstColorMapped = state.colorMapper.mapColor(state.contentStream, firstColor);
         applyAsStrokingColor(firstColor, state);
+
+        /*
+         * When doing a shading paint, we need to always walk the shape first.
+         */
+        state.env.ensureShapeIsWalked();
 
         PDShadingType3 shading = new PDShadingType3(new COSDictionary());
         shading.setShadingType(PDShading.SHADING_TYPE2);
