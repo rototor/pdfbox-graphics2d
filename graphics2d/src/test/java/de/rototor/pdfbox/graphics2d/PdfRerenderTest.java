@@ -4,7 +4,11 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.graphics.color.*;
+import org.apache.pdfbox.pdmodel.graphics.color.PDCalGray;
+import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
+import org.apache.pdfbox.pdmodel.graphics.color.PDColorSpace;
+import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceRGB;
+import org.apache.pdfbox.pdmodel.graphics.color.PDPattern;
 import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import org.apache.pdfbox.pdmodel.graphics.image.JPEGFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
@@ -28,8 +32,13 @@ public class PdfRerenderTest
     {
         rerenderPDF("heart.pdf");
         rerenderPDF("barChart.pdf");
-        rerenderPDF("compuserver_msn_Ford_Focus.pdf");
         rerenderPDF("patternfill.pdf");
+    }
+
+    @Test
+    public void testPDFRerenderFordFocus() throws IOException
+    {
+        rerenderPDF("compuserver_msn_Ford_Focus.pdf");
     }
 
     @Test
@@ -65,8 +74,8 @@ public class PdfRerenderTest
 
                 PDFRenderer pdfRenderer = new PDFRenderer(sourceDoc);
                 float targetDPI = 300;
-                BufferedImage bufferedImage = pdfRenderer
-                        .renderImage(sourceDoc.getPages().indexOf(sourcePage), targetDPI / 72.0f);
+                BufferedImage bufferedImage = pdfRenderer.renderImage(
+                        sourceDoc.getPages().indexOf(sourcePage), targetDPI / 72.0f);
 
                 PDImageXObject image;
                 if (lossless)
