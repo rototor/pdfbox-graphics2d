@@ -1079,7 +1079,8 @@ public class PdfBoxGraphics2D extends Graphics2D
         }
         catch (IOException e)
         {
-            throw new RuntimeException(e);
+            throwException(e);
+            return null;
         }
     }
 
@@ -1105,7 +1106,7 @@ public class PdfBoxGraphics2D extends Graphics2D
         }
         catch (IOException e)
         {
-            throw new RuntimeException(e);
+            throwException(e);
         }
     }
 
@@ -1132,7 +1133,7 @@ public class PdfBoxGraphics2D extends Graphics2D
         }
         catch (IOException e)
         {
-            throw new RuntimeException(e);
+            throwException(e);
         }
     }
 
@@ -1192,11 +1193,11 @@ public class PdfBoxGraphics2D extends Graphics2D
         }
         catch (IOException e)
         {
-            throw new RuntimeException(e);
+            return throwException(e);
         }
         catch (FontFormatException e)
         {
-            throw new RuntimeException(e);
+            return throwException(e);
         }
     }
 
@@ -1410,7 +1411,11 @@ public class PdfBoxGraphics2D extends Graphics2D
         return sb.toString();
     }
 
-    private void throwException(Exception e)
+    /**
+     * Internal helper function
+     * @param e exception to rethrow
+     */
+    static <T> T throwException(Exception e)
     {
         throw new RuntimeException(e);
     }

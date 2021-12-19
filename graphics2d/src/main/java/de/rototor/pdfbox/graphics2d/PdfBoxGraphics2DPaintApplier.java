@@ -870,7 +870,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         }
         catch (Exception e)
         {
-            throw new RuntimeException(e);
+            return PdfBoxGraphics2D.throwException(e);
         }
     }
 
