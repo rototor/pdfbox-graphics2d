@@ -762,17 +762,6 @@ public class DebugCodeGeneratingGraphics2d extends Graphics2D
         g2D.fillRoundRect(x, y, width, height, arcWidth, arcHeight);
     }
 
-    // FIXME: should be protected
-    // FindBugs, category MALICIOUS_CODE, FI_PUBLIC_SHOULD_BE_PROTECTED
-    // A class's finalize() method should have protected access, not public
-    @Override
-    public final void finalize()
-    {
-        log.println("finalize():");
-        g2D.dispose();
-        dispose();
-    }
-
     public Shape getClip()
     {
         log.println("getClip():");
