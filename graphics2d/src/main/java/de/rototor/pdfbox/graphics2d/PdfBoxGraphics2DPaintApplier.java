@@ -134,6 +134,11 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 			{
 				state.ensureExtendedState();
 				state.pdExtendedGraphicsState.setOverprintMode(1.0f);
+                /*
+                 * Till a fixed version of PDFBOX for PDFBOX-5361 is available,
+                 * we make do this workaround
+                 */
+                state.dictExtendedState.setItem(COSName.OPM, COSInteger.get(1));
 				state.pdExtendedGraphicsState.setNonStrokingOverprintControl(true);
 				state.pdExtendedGraphicsState.setStrokingOverprintControl(true);
             }
