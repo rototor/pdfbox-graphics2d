@@ -52,7 +52,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.35</version>
+	<version>0.36</version>
 </dependency>
 ```
 
@@ -313,7 +313,7 @@ graphs
 
 ## Changes
 
-Version 0.36 (not yet released):
+Version 0.36:
 
 - API breakage: Changed the `IPdfBoxGraphics2DColorMapper::mapColor()` signatur to get a IColorMapperEnv instead of a
   PDPageContentStream. The env provides access to the `PDPageContentStream` and the `PDResources`
