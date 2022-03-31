@@ -317,7 +317,7 @@ Version 0.36:
 
 - API breakage: Changed the `IPdfBoxGraphics2DColorMapper::mapColor()` signatur to get a IColorMapperEnv instead of a
   PDPageContentStream. The env provides access to the `PDPageContentStream` and the `PDResources`
-- It is now possible to get the accossiated PDResources by using `PdfBoxGraphics2D::getResources()`. 
+- It is now possible to get the associated PDResources by using `PdfBoxGraphics2D::getResources()`. 
 
 Version 0.35:
 
@@ -369,7 +369,7 @@ Version 0.30:
 - Added a new module for extended-tests. This module will contain tests with 3rdparty library which
   by themself depend
   on pdfbox-graphics2d. It also now contains a new class DebugCodeGeneratingGraphics2d
-  (by @kiwiwings) which helps creating isolated testcases.
+  (by @kiwiwings) which helps to create isolated testcases.
 - Upgrade to PDFBox 2.0.22
 
 Version 0.29:
@@ -549,7 +549,7 @@ Version 0.4:
 - Initial support for basic ```AlphaComposite```. Thanks
   @FabioVassallo [#1](https://github.com/rototor/pdfbox-graphics2d/pull/1)
 - When drawing a shape with a zero or negative size don't use ```PDShadings```, as they won't
-  work.Thanks
+  work. Thanks
   @FabioVassallo [#1](https://github.com/rototor/pdfbox-graphics2d/pull/1)
 
 Version 0.3:
