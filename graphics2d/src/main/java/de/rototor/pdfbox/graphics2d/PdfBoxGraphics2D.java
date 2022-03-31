@@ -15,6 +15,7 @@
  */
 package de.rototor.pdfbox.graphics2d;
 
+import de.rototor.pdfbox.graphics2d.IPdfBoxGraphics2DColorMapper.IColorMapperEnv;
 import de.rototor.pdfbox.graphics2d.IPdfBoxGraphics2DDrawControl.IDrawControlEnv;
 import de.rototor.pdfbox.graphics2d.IPdfBoxGraphics2DFontTextDrawer.IFontTextDrawerEnv;
 import de.rototor.pdfbox.graphics2d.IPdfBoxGraphics2DPaintApplier.IPaintEnv;
@@ -106,7 +107,7 @@ public class PdfBoxGraphics2D extends Graphics2D
     /**
      * Set a new image encoder
      *
-     * @param imageEncoder the image encoder, which encodes a image as PDImageXForm.
+     * @param imageEncoder the image encoder, which encodes an image as PDImageXForm.
      */
     @SuppressWarnings({ "unused" })
     public void setImageEncoder(IPdfBoxGraphics2DImageEncoder imageEncoder)
@@ -119,7 +120,7 @@ public class PdfBoxGraphics2D extends Graphics2D
      * from the {@link IPdfBoxGraphics2DPaintApplier} and just extend the paint
      * mapping for custom paint.
      * <p>
-     * If the paint you map is a paint from a standard library and you can implement
+     * If the paint you map is a paint from a standard library, and you can implement
      * the mapping using reflection please feel free to send a pull request to
      * extend the default paint mapper.
      *
@@ -269,9 +270,26 @@ public class PdfBoxGraphics2D extends Graphics2D
 
     }
 
-    /**
-     * @return the PDAppearanceStream which resulted in this graphics
-     */
+	/**
+	 * Sometimes you need to access the PDResources and add special resources to it
+	 * for some stuff (e.g. patterns of embedded PDFs or simmilar). For that you
+	 * need the PDResources associated with the XForm.
+	 *
+	 * It's identlical with getXFormObject().getResources(), with the difference
+	 * beeing that you can access it while the Graphics2D is not yet disposed.
+	 *
+	 * @return the PDResources of the resulting XForm
+	 */
+    public PDResources getResources()
+	{
+        return xFormObject.getResources();
+    }
+
+	/**
+	 * *AFTER* you have disposed() this Graphics2D you can access the XForm
+	 * 
+	 * @return the PDFormXObject which resulted in this graphics
+	 */
     @SuppressWarnings("WeakerAccess")
     public PDFormXObject getXFormObject()
     {
@@ -481,7 +499,7 @@ public class PdfBoxGraphics2D extends Graphics2D
     }
 
     /**
-     * Interal debugflag to see if a unkown stroke is mapped
+     * Interal debugflag to see if an unkown stroke is mapped
      */
     private final static boolean ENABLE_DEBUG_UNKOWN_STROKE = false;
 
@@ -604,7 +622,7 @@ public class PdfBoxGraphics2D extends Graphics2D
         {
             if (bgcolor != null)
             {
-                contentStream.setNonStrokingColor(colorMapper.mapColor(contentStream, bgcolor));
+                contentStream.setNonStrokingColor(colorMapper.mapColor(bgcolor, colorMapperEnv));
                 walkShape(new Rectangle(x, y, width, height));
                 contentStream.fill();
             }
@@ -683,7 +701,7 @@ public class PdfBoxGraphics2D extends Graphics2D
              */
             if (bgcolor != null)
             {
-                contentStream.setNonStrokingColor(colorMapper.mapColor(contentStream, bgcolor));
+                contentStream.setNonStrokingColor(colorMapper.mapColor( bgcolor, colorMapperEnv));
                 walkShape(new Rectangle(dx1, dy1, width, height));
                 contentStream.fill();
             }
@@ -991,6 +1009,17 @@ public class PdfBoxGraphics2D extends Graphics2D
     }
 
     private final PaintEnvImpl paintEnv = new PaintEnvImpl();
+    final IColorMapperEnv colorMapperEnv = new IColorMapperEnv() {
+        @Override
+        public PDPageContentStream getContentStream() {
+            return contentStream;
+        }
+
+        @Override
+        public PDResources getResources() {
+            return PdfBoxGraphics2D.this.getResources();
+        }
+    };
 
     private static class PaintApplyResult
     {
@@ -1326,7 +1355,7 @@ public class PdfBoxGraphics2D extends Graphics2D
      * closed?
      * <p>
      * We need this flag to avoid to clip twice if both the plaint applyer needs to
-     * clip and we have some clipping. If at the end we try to clip with an empty
+     * clip, and we have some clipping. If at the end we try to clip with an empty
      * path, then Acrobat Reader does not like that and draws nothing.
      */
     private boolean hasPathOnStream = false;

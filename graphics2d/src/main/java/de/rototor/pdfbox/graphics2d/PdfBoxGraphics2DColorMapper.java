@@ -15,16 +15,15 @@
  */
 package de.rototor.pdfbox.graphics2d;
 
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import java.awt.*;
+
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceCMYK;
 import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceRGB;
 
-import java.awt.*;
-
 public class PdfBoxGraphics2DColorMapper implements IPdfBoxGraphics2DColorMapper {
 	@Override
-	public PDColor mapColor(PDPageContentStream contentStream, Color color) {
+	public PDColor mapColor(Color color, IColorMapperEnv env) {
 		if (color == null)
 			return new PDColor(new float[] { 1f, 1f, 1f }, PDDeviceRGB.INSTANCE);
 
@@ -36,7 +35,7 @@ public class PdfBoxGraphics2DColorMapper implements IPdfBoxGraphics2DColorMapper
 			float k = PdfBoxGraphics2DPaintApplier.getPropertyValue(color, "getBlack");
 			return new PDColor(new float[] { c, m, y, k }, PDDeviceCMYK.INSTANCE);
 		}
-		
+
 		// Our universial color carrier.
 		if (color instanceof IPdfBoxGraphics2DColor)
 			return ((IPdfBoxGraphics2DColor) color).toPDColor();

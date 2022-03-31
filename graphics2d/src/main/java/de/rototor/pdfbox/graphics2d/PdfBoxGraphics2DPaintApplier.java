@@ -56,6 +56,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         protected Composite composite;
         private COSDictionary dictExtendedState;
         private IPaintEnv env;
+        private IPdfBoxGraphics2DColorMapper.IColorMapperEnv colorMapperEnv;
         public AffineTransform tf;
         /**
          * This transform is only set, when we apply a nested
@@ -91,6 +92,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         state.composite = env.getComposite();
         state.pdExtendedGraphicsState = null;
         state.env = env;
+        state.colorMapperEnv = env.getGraphics2D().colorMapperEnv;;
         state.tf = tf;
         state.nestedTransform = null;
         PDShading shading = applyPaint(paint, state);
@@ -105,8 +107,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
     {
         PDPageContentStream contentStream = state.contentStream;
         IPdfBoxGraphics2DColorMapper colorMapper = state.colorMapper;
-        contentStream.setStrokingColor(colorMapper.mapColor(contentStream, color));
-        contentStream.setNonStrokingColor(colorMapper.mapColor(contentStream, color));
+		contentStream.setStrokingColor(colorMapper.mapColor(color, state.colorMapperEnv));
+		contentStream.setNonStrokingColor(colorMapper.mapColor(color, state.colorMapperEnv));
 
         int alpha = color.getAlpha();
         if (alpha < 255)
@@ -533,7 +535,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         PDShadingType3 shading = new PDShadingType3(new COSDictionary());
         Color[] colors = getPropertyValue(paint, "getColors");
         Color firstColor = colors[0];
-        PDColor firstColorMapped = state.colorMapper.mapColor(state.contentStream, firstColor);
+		PDColor firstColorMapped = state.colorMapper.mapColor(firstColor, state.colorMapperEnv);
         applyAsStrokingColor(firstColor, state);
         float[] fractions = getPropertyValue(paint, "getFractions");
         PDFunctionType3 type3 = buildType3Function(colors, fractions, state);
@@ -639,7 +641,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
          */
         Color[] colors = getPropertyValue(paint, "getColors");
         Color firstColor = colors[0];
-        PDColor firstColorMapped = state.colorMapper.mapColor(state.contentStream, firstColor);
+		PDColor firstColorMapped = state.colorMapper.mapColor(firstColor, state.colorMapperEnv);
         applyAsStrokingColor(firstColor, state);
 
         /*
@@ -684,7 +686,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
     {
         Color[] colors = new Color[] { gradientPaint.getColor1(), gradientPaint.getColor2() };
         Color firstColor = colors[0];
-        PDColor firstColorMapped = state.colorMapper.mapColor(state.contentStream, firstColor);
+		PDColor firstColorMapped = state.colorMapper.mapColor(firstColor, state.colorMapperEnv);
         applyAsStrokingColor(firstColor, state);
 
         /*
@@ -840,8 +842,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         for (int i = 1; i < colors.size(); i++)
         {
             Color color = colors.get(i);
-            PDColor prevPdColor = state.colorMapper.mapColor(state.contentStream, prevColor);
-            PDColor pdColor = state.colorMapper.mapColor(state.contentStream, color);
+			PDColor prevPdColor = state.colorMapper.mapColor(prevColor, state.colorMapperEnv);
+			PDColor pdColor = state.colorMapper.mapColor(color, state.colorMapperEnv);
             COSArray c0 = new COSArray();
             COSArray c1 = new COSArray();
             for (float component : prevPdColor.getComponents())
