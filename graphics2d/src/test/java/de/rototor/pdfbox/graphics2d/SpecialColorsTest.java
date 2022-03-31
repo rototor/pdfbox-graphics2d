@@ -1,5 +1,8 @@
 package de.rototor.pdfbox.graphics2d;
 
+import java.io.File;
+import java.io.IOException;
+
 import org.apache.pdfbox.cos.*;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -12,9 +15,6 @@ import org.apache.pdfbox.pdmodel.graphics.color.PDSeparation;
 import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import org.apache.pdfbox.util.Matrix;
 import org.junit.Test;
-
-import java.io.File;
-import java.io.IOException;
 
 /**
  * Generates some PDFs with a special color scodix. In one PDF the painted
@@ -75,13 +75,22 @@ public class SpecialColorsTest {
 
 		final PDSeparation scodix = getScodixSeperationColor();
 		pdfBoxGraphics2D.setColor(new PdfBoxGraphics2DColor(new PDColor(new float[] { 1 }, scodix), 255, true));
-		pdfBoxGraphics2D.fillRoundRect(10, 10, 100, 100, 20, 20);
+		pdfBoxGraphics2D.fillRoundRect(10, 10, 300, 300, 20, 20);
 
 		pdfBoxGraphics2D.dispose();
 
 		PDFormXObject appearanceStream = pdfBoxGraphics2D.getXFormObject();
 		Matrix matrix = new Matrix();
-		matrix.translate(0, 20);
+		matrix.translate(0, 210);
+		contentStream.transform(matrix);
+		contentStream.drawForm(appearanceStream);
+		matrix = new Matrix();
+		matrix.translate(150, 210);
+		contentStream.transform(matrix);
+		contentStream.drawForm(appearanceStream);
+		matrix = new Matrix();
+		matrix.translate(180, -220);
+		matrix.scale(0.5f, 0.5f);
 		contentStream.transform(matrix);
 		contentStream.drawForm(appearanceStream);
 		contentStream.close();
