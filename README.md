@@ -52,7 +52,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.36</version>
+	<version>0.37</version>
 </dependency>
 ```
 
@@ -62,57 +62,59 @@ with Java 8, Java 11 and Java 17.
 ## Example Usage
 
 ```java
-public class PDFGraphics2DSample {
-	public static main(String[] argv) {
-		PDDocument document = new PDDocument();
-		PDPage page = new PDPage(PDRectangle.A4);
-		document.addPage(page);
+public class PDFGraphics2DSample
+{
+    public static main(String[] argv)
+    {
+        PDDocument document = new PDDocument();
+        PDPage page = new PDPage(PDRectangle.A4);
+        document.addPage(page);
 
-		/*
-		 * Creates the Graphics and sets a size in pixel. This size is used for the BBox of the XForm.
-		 * So everything drawn outside (0x0)-(width,height) will be clipped.
-		 */
-		PdfBoxGraphics2D pdfBoxGraphics2D = new PdfBoxGraphics2D(document, 400, 400);
+        /*
+         * Creates the Graphics and sets a size in pixel. This size is used for the BBox of the XForm.
+         * So everything drawn outside (0x0)-(width,height) will be clipped.
+         */
+        PdfBoxGraphics2D pdfBoxGraphics2D = new PdfBoxGraphics2D(document, 400, 400);
 
-		/*
-		 * Now do your drawing. By default all texts are rendered as vector shapes
-		 */
+        /*
+         * Now do your drawing. By default all texts are rendered as vector shapes
+         */
 
-		/* ... */
+        /* ... */
 
-		/*
-		 * Dispose when finished
-		 */
-		pdfBoxGraphics2D.dispose();
+        /*
+         * Dispose when finished
+         */
+        pdfBoxGraphics2D.dispose();
 
-		/*
-		 * After dispose() of the graphics object we can get the XForm.
-		 */
-		PDFormXObject xform = pdfBoxGraphics2D.getXFormObject();
+        /*
+         * After dispose() of the graphics object we can get the XForm.
+         */
+        PDFormXObject xform = pdfBoxGraphics2D.getXFormObject();
 
-		/*
-		 * Build a matrix to place the form
-		 */
-		Matrix matrix = new Matrix();
-		/*
-		 *  Note: As PDF coordinates start at the bottom left corner, we move up from there.
-		 */
-		matrix.translate(0, 20);
-		PDPageContentStream contentStream = new PDPageContentStream(document, page);
-		contentStream.transform(matrix);
+        /*
+         * Build a matrix to place the form
+         */
+        Matrix matrix = new Matrix();
+        /*
+         *  Note: As PDF coordinates start at the bottom left corner, we move up from there.
+         */
+        matrix.translate(0, 20);
+        PDPageContentStream contentStream = new PDPageContentStream(document, page);
+        contentStream.transform(matrix);
 
-		/*
-		 * Now finally draw the form. As we not do any scaling, the form drawn has a size of 5,5 x 5,5 inches,
-		 * because PDF uses 72 DPI for its lengths by default. If you want to scale, skew or rotate the form you can
-		 * of course do this. And you can also draw the form more then once. Think of the XForm as a stamper.
-		 */
-		contentStream.drawForm(xform);
+        /*
+         * Now finally draw the form. As we not do any scaling, the form drawn has a size of 5,5 x 5,5 inches,
+         * because PDF uses 72 DPI for its lengths by default. If you want to scale, skew or rotate the form you can
+         * of course do this. And you can also draw the form more then once. Think of the XForm as a stamper.
+         */
+        contentStream.drawForm(xform);
 
-		contentStream.close();
+        contentStream.close();
 
-		document.save(new File("mysample.pdf"));
-		document.close();
-	}
+        document.save(new File("mysample.pdf"));
+        document.close();
+    }
 }
 ```
 
@@ -204,70 +206,75 @@ you can also
 register additional fonts.
 
 ```java
-public class PDFGraphics2DSample {
-	public static main(String[] argv) {
-		/*
-		 * Document creation and init as in the example above
-		 */
+public class PDFGraphics2DSample
+{
+    public static main(String[] argv)
+    {
+        /*
+         * Document creation and init as in the example above
+         */
 
-		// ...
+        // ...
 
-		/*
-		 * Register your fonts
-		 */
-		PdfBoxGraphics2DFontTextDrawer fontTextDrawer = new PdfBoxGraphics2DFontTextDrawer();
-		try {
-			/*
-			 * Register the font using a file
-			 */
-			fontTextDrawer.registerFont(new File("..path..to../DejaVuSerifCondensed.ttf"));
+        /*
+         * Register your fonts
+         */
+        PdfBoxGraphics2DFontTextDrawer fontTextDrawer = new PdfBoxGraphics2DFontTextDrawer();
+        try
+        {
+            /*
+             * Register the font using a file
+             */
+            fontTextDrawer.registerFont(new File("..path..to../DejaVuSerifCondensed.ttf"));
 
-			/*
-			 * Or register the font using a stream
-			 */
-			fontTextDrawer.registerFont(
-					PDFGraphics2DSample.class.getResourceAsStream("DejaVuSerifCondensed.ttf"));
+            /*
+             * Or register the font using a stream
+             */
+            fontTextDrawer.registerFont(
+                    PDFGraphics2DSample.class.getResourceAsStream("DejaVuSerifCondensed.ttf"));
 
-			/*
-			 * You already have a PDFont in the document? Then make it known to the library.
-			 */
-			fontTextDrawer.registerFont("My Custom Font", pdMyCustomFont);
+            /*
+             * You already have a PDFont in the document? Then make it known to the library.
+             */
+            fontTextDrawer.registerFont("My Custom Font", pdMyCustomFont);
 
 
-			/*
-			 * Create the graphics
-			 */
-			PdfBoxGraphics2D pdfBoxGraphics2D = new PdfBoxGraphics2D(document, 400, 400);
+            /*
+             * Create the graphics
+             */
+            PdfBoxGraphics2D pdfBoxGraphics2D = new PdfBoxGraphics2D(document, 400, 400);
 
-			/*
-			 * Set the fontTextDrawer on the Graphics2D. Note:
-			 * You can and should reuse the PdfBoxGraphics2DFontTextDrawer
-			 * within the same PDDocument if you use multiple PdfBoxGraphics2D.
-			 */
-			pdfBoxGraphics2D.setFontTextDrawer(fontTextDrawer);
+            /*
+             * Set the fontTextDrawer on the Graphics2D. Note:
+             * You can and should reuse the PdfBoxGraphics2DFontTextDrawer
+             * within the same PDDocument if you use multiple PdfBoxGraphics2D.
+             */
+            pdfBoxGraphics2D.setFontTextDrawer(fontTextDrawer);
 
-			/* Do you're drawing */
+            /* Do you're drawing */
 
-			/*
-			 * Dispose when finished
-			 */
-			pdfBoxGraphics2D.dispose();
+            /*
+             * Dispose when finished
+             */
+            pdfBoxGraphics2D.dispose();
 
-			/*
-			 * Use the result as above
-			 */
-			// ...
-		} finally {
-			/*
-			 * If you register a font using a stream then a tempfile
-			 * will be created in the background.
-			 * Close the PdfBoxGraphics2DFontTextDrawer to free any
-			 * tempfiles created for the fonts.
-			 */
-			fontTextDrawer.close();
-		}
+            /*
+             * Use the result as above
+             */
+            // ...
+        }
+        finally
+        {
+            /*
+             * If you register a font using a stream then a tempfile
+             * will be created in the background.
+             * Close the PdfBoxGraphics2DFontTextDrawer to free any
+             * tempfiles created for the fonts.
+             */
+            fontTextDrawer.close();
+        }
 
-	}
+    }
 }
 ```
 
@@ -275,16 +282,18 @@ You can also complete customize the font mapping if you derive
 from ```PdfBoxGraphics2DFontTextDrawer```:
 
 ```java
-class MyPdfBoxGraphics2DFontTextDrawer extends PdfBoxGraphics2DFontTextDrawer {
-	@Override
-	protected PDFont mapFont(Font font, IFontTextDrawerEnv env)
-			throws IOException, FontFormatException {
-		// Using the font, especially the font.getFontName() or font.getFamily() to determine which
-		// font to use... return null if the font can not be mapped. You can also call registerFont() here.
+class MyPdfBoxGraphics2DFontTextDrawer extends PdfBoxGraphics2DFontTextDrawer
+{
+    @Override
+    protected PDFont mapFont(Font font, IFontTextDrawerEnv env)
+            throws IOException, FontFormatException
+    {
+        // Using the font, especially the font.getFontName() or font.getFamily() to determine which
+        // font to use... return null if the font can not be mapped. You can also call registerFont() here.
 
-		// Default lookup in the registered fonts
-		return super.mapFont(font, env);
-	}
+        // Default lookup in the registered fonts
+        return super.mapFont(font, env);
+    }
 }
 ```
 
@@ -297,7 +306,7 @@ the maximum
 compression out of PDFBox you should set a system property before generating your PDF:
 
 ```java
-    System.setProperty(Filter.SYSPROP_DEFLATELEVEL, "9");
+    System.setProperty(Filter.SYSPROP_DEFLATELEVEL,"9");
 ```
 
 ## Creating PDF reports
@@ -313,11 +322,17 @@ graphs
 
 ## Changes
 
+Version 0.37:
+
+- Make PdfBoxGraphics2DFontTextDrawer.getFontMetrics::stringWidth() behave like the
+  JDK. Thanks @Lorgod ([#35](https://github.com/rototor/pdfbox-graphics2d/issues/35))
+
 Version 0.36:
 
-- API breakage: Changed the `IPdfBoxGraphics2DColorMapper::mapColor()` signatur to get a IColorMapperEnv instead of a
+- API breakage: Changed the `IPdfBoxGraphics2DColorMapper::mapColor()` signatur to get a
+  IColorMapperEnv instead of a
   PDPageContentStream. The env provides access to the `PDPageContentStream` and the `PDResources`
-- It is now possible to get the associated PDResources by using `PdfBoxGraphics2D::getResources()`. 
+- It is now possible to get the associated PDResources by using `PdfBoxGraphics2D::getResources()`.
 
 Version 0.35:
 
