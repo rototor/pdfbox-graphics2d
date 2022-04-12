@@ -19,6 +19,7 @@ import org.junit.Test;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.font.TextAttribute;
 import java.awt.geom.*;
@@ -140,7 +141,7 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase
             {
                 Font sansSerif = new Font(Font.SANS_SERIF, Font.PLAIN, 15);
                 Font embeddedFont = Font.createFont(Font.TRUETYPE_FONT,
-                        PdfBoxGraphics2dTest.class.getResourceAsStream("DejaVuSerifCondensed.ttf"))
+                                PdfBoxGraphics2dTest.class.getResourceAsStream("DejaVuSerifCondensed.ttf"))
                         .deriveFont(15f);
                 Font monoFont = Font.decode(Font.MONOSPACED).deriveFont(15f);
                 Font serifFont = Font.decode(Font.SERIF).deriveFont(15f);
@@ -191,16 +192,16 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase
             @Override
             public void draw(Graphics2D gfx) throws IOException
             {
-                BufferedImage img2 = ImageIO
-                        .read(PdfBoxGraphics2dTest.class.getResourceAsStream("pixeltest.png"));
-                BufferedImage img3 = ImageIO
-                        .read(PdfBoxGraphics2dTest.class.getResourceAsStream("Rose-ProPhoto.jpg"));
-                BufferedImage img4 = ImageIO
-                        .read(PdfBoxGraphics2dTest.class.getResourceAsStream("Italy-P3.jpg"));
-                BufferedImage img5 = ImageIO
-                        .read(PdfBoxGraphics2dTest.class.getResourceAsStream("16bit-image1.png"));
-                BufferedImage img6 = ImageIO
-                        .read(PdfBoxGraphics2dTest.class.getResourceAsStream("16bit-image2.png"));
+                BufferedImage img2 = ImageIO.read(
+                        PdfBoxGraphics2dTest.class.getResourceAsStream("pixeltest.png"));
+                BufferedImage img3 = ImageIO.read(
+                        PdfBoxGraphics2dTest.class.getResourceAsStream("Rose-ProPhoto.jpg"));
+                BufferedImage img4 = ImageIO.read(
+                        PdfBoxGraphics2dTest.class.getResourceAsStream("Italy-P3.jpg"));
+                BufferedImage img5 = ImageIO.read(
+                        PdfBoxGraphics2dTest.class.getResourceAsStream("16bit-image1.png"));
+                BufferedImage img6 = ImageIO.read(
+                        PdfBoxGraphics2dTest.class.getResourceAsStream("16bit-image2.png"));
 
                 gfx.drawImage(img2, 70, 50, 100, 50, null);
                 gfx.drawImage(img3, 30, 200, 75, 50, null);
@@ -220,8 +221,8 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase
             @Override
             public void draw(Graphics2D gfx) throws IOException
             {
-                BufferedImage img3 = ImageIO
-                        .read(PdfBoxGraphics2dTest.class.getResourceAsStream("Rose-ProPhoto.jpg"));
+                BufferedImage img3 = ImageIO.read(
+                        PdfBoxGraphics2dTest.class.getResourceAsStream("Rose-ProPhoto.jpg"));
                 gfx.setColor(new Color(128, 128, 255, 58));
                 gfx.drawImage(img3, 30, 10, 75, 50, null);
                 gfx.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
@@ -275,14 +276,14 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase
             @Override
             public void draw(Graphics2D gfx) throws IOException, FontFormatException
             {
-                BufferedImage imgColorTest = ImageIO
-                        .read(PdfBoxGraphics2dTest.class.getResourceAsStream("colortest.png"));
-                BufferedImage img2 = ImageIO
-                        .read(PdfBoxGraphics2dTest.class.getResourceAsStream("pixeltest.png"));
-                BufferedImage img3 = ImageIO
-                        .read(PdfBoxGraphics2dTest.class.getResourceAsStream("Rose-ProPhoto.jpg"));
-                BufferedImage img4 = ImageIO
-                        .read(PdfBoxGraphics2dTest.class.getResourceAsStream("Italy-P3.jpg"));
+                BufferedImage imgColorTest = ImageIO.read(
+                        PdfBoxGraphics2dTest.class.getResourceAsStream("colortest.png"));
+                BufferedImage img2 = ImageIO.read(
+                        PdfBoxGraphics2dTest.class.getResourceAsStream("pixeltest.png"));
+                BufferedImage img3 = ImageIO.read(
+                        PdfBoxGraphics2dTest.class.getResourceAsStream("Rose-ProPhoto.jpg"));
+                BufferedImage img4 = ImageIO.read(
+                        PdfBoxGraphics2dTest.class.getResourceAsStream("Italy-P3.jpg"));
 
                 gfx.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
                         RenderingHints.VALUE_INTERPOLATION_BICUBIC);
@@ -305,7 +306,7 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase
 
                 Font font = new Font("SansSerif", Font.PLAIN, 30);
                 Font font2 = Font.createFont(Font.TRUETYPE_FONT,
-                        PdfBoxGraphics2dTest.class.getResourceAsStream("DejaVuSerifCondensed.ttf"))
+                                PdfBoxGraphics2dTest.class.getResourceAsStream("DejaVuSerifCondensed.ttf"))
                         .deriveFont(20f);
                 final String words = "Valour fate kinship darkness";
 
@@ -344,6 +345,49 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase
                 gfx.setClip(null);
                 gfx.fillRect(360, 360, 10, 10);
 
+            }
+        });
+    }
+
+    private static final Color[] debugColors = new Color[] { new Color(0xE0C995), //
+            new Color(0xC1E4EA), //
+            new Color(0x8BC0FF), //
+            new Color(0xC5F5B7), //
+            new Color(0xF5B7D8), //
+            new Color(0xa5B7B7), //
+            new Color(0xF5EDB7), //
+            new Color(0xF5D6B7), //
+    };
+
+    @Test
+    public void testStringWidth()
+    {
+        exportGraphic("simple", "stringWidth", new GraphicsExporter()
+        {
+            @Override
+            public void draw(Graphics2D gfx) throws IOException, FontFormatException
+            {
+                Font font2 = Font.createFont(Font.TRUETYPE_FONT,
+                                PdfBoxGraphics2dTest.class.getResourceAsStream("DejaVuSerifCondensed.ttf"))
+                        .deriveFont(20f);
+
+                gfx.setFont(font2);
+                String myTestString = "This is my funny test string...";
+                int x = 20;
+                int y = 40;
+                FontMetrics fontMetrics = gfx.getFontMetrics();
+                gfx.setColor(new Color(0x66AAAAEE));
+                gfx.fillRect(x, y, fontMetrics.stringWidth(myTestString), fontMetrics.getHeight());
+
+                gfx.setColor(Color.GREEN);
+                gfx.drawString(myTestString, 20, 40);
+                for (int i = 0; i < myTestString.length(); i++)
+                {
+                    int w = fontMetrics.charWidth(myTestString.charAt(i));
+                    gfx.setColor(debugColors[i % debugColors.length]);
+                    gfx.drawRect(x, y, w, fontMetrics.getHeight());
+                    x += w;
+                }
             }
         });
     }
