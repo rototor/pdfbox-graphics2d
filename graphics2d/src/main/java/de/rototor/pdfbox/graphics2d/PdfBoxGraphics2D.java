@@ -49,6 +49,7 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Path2D;
+import java.awt.geom.Point2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
@@ -287,7 +288,7 @@ public class PdfBoxGraphics2D extends Graphics2D
 
 	/**
 	 * *AFTER* you have disposed() this Graphics2D you can access the XForm
-	 * 
+	 *
 	 * @return the PDFormXObject which resulted in this graphics
 	 */
     @SuppressWarnings("WeakerAccess")
@@ -532,8 +533,18 @@ public class PdfBoxGraphics2D extends Graphics2D
             AffineTransform tf = getCurrentEffectiveTransform();
 
             double scaleX = tf.getScaleX();
-            contentStream.setLineWidth((float) Math.abs(basicStroke.getLineWidth() * scaleX));
+
+            // Represent stroke width as a vector.
+            Point2D.Float penSize = new Point2D.Float(0f, basicStroke.getLineWidth());
+            // Apply the current transform to the vector.
+            tf.deltaTransform(penSize, penSize);
+            // Calculate the magnitude of the vector.
+            float lineWidth = (float)(Math.sqrt(penSize.x * penSize.x + penSize.y * penSize.y));
+            contentStream.setLineWidth(lineWidth);
+
+
             float[] dashArray = basicStroke.getDashArray();
+
             if (dashArray != null)
             {
                 for (int i = 0; i < dashArray.length; i++)
