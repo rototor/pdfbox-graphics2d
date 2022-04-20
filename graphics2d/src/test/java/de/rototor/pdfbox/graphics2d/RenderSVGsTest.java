@@ -39,6 +39,13 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase
     }
 
     @Test
+    public void testRotatedStrokes() throws IOException
+    {
+        renderSVG("strokeRotation.svg", 0.55);
+        renderSVG("dashedStrokeRotation.svg", 0.55);
+    }
+
+    @Test
     public void renderFailureCases() throws IOException
     {
         // renderSVG("openhtml_536.svg", 1);
