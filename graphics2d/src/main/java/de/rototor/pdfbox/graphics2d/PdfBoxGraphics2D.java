@@ -531,26 +531,18 @@ public class PdfBoxGraphics2D extends Graphics2D
             }
 
             AffineTransform tf = getCurrentEffectiveTransform();
+            float lineWidth = calculateTransformedLength(basicStroke.getLineWidth(), tf);
 
-            double scaleX = tf.getScaleX();
-
-            // Represent stroke width as a vector.
-            Point2D.Float penSize = new Point2D.Float(0f, basicStroke.getLineWidth());
-            // Apply the current transform to the vector.
-            tf.deltaTransform(penSize, penSize);
-            // Calculate the magnitude of the vector.
-            float lineWidth = (float)(Math.sqrt(penSize.x * penSize.x + penSize.y * penSize.y));
             contentStream.setLineWidth(lineWidth);
 
-
             float[] dashArray = basicStroke.getDashArray();
-
             if (dashArray != null)
             {
                 for (int i = 0; i < dashArray.length; i++)
-                    dashArray[i] = (float) Math.abs(dashArray[i] * scaleX);
+                    dashArray[i] = calculateTransformedLength(dashArray[i], tf);
+
                 contentStream.setLineDashPattern(dashArray,
-                        (float) Math.abs(basicStroke.getDashPhase() * scaleX));
+                    calculateTransformedLength(basicStroke.getDashPhase(), tf));
             }
         }
         else if (strokeToApply != null)
@@ -558,6 +550,15 @@ public class PdfBoxGraphics2D extends Graphics2D
             if (ENABLE_DEBUG_UNKOWN_STROKE)
                 System.out.println("PDFBoxGraphics2D: Can't handle Stroke " + strokeToApply);
         }
+    }
+
+    private float calculateTransformedLength(float length, AffineTransform tf) {
+        // Represent stroke width as a horizontal line from origin to basicStroke.LineWidth.
+        Point2D.Float lengthVector = new Point2D.Float(length, 0);
+        // Apply the current transform to the horizontal line.
+        tf.deltaTransform(lengthVector, lengthVector);
+        // Calculate the length of the transformed line. This is the new, adjusted length.
+        return (float)(Math.sqrt(lengthVector.x * lengthVector.x + lengthVector.y * lengthVector.y));
     }
 
     private AffineTransform getCurrentEffectiveTransform()
