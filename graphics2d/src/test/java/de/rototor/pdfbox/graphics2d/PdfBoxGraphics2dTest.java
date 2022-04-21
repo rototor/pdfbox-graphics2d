@@ -15,11 +15,6 @@
  */
 package de.rototor.pdfbox.graphics2d;
 
-import org.junit.Test;
-
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
-import javax.swing.*;
 import java.awt.*;
 import java.awt.font.TextAttribute;
 import java.awt.geom.*;
@@ -27,6 +22,11 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.text.AttributedString;
 import java.util.Iterator;
+
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+
+import org.junit.Test;
 
 public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase
 {
@@ -391,5 +391,25 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase
             }
         });
     }
+
+	@Test
+	public void testLineWithRotation() {
+		exportGraphic("simple", "lineWithRotation", new GraphicsExporter() {
+			@Override
+			public void draw(Graphics2D gfx) {
+				gfx.setStroke(new BasicStroke(5f));
+
+				float centerX = 200;
+				float centerY = 200;
+
+				gfx.translate(centerX, centerY);
+				for (int i = 0; i < 360; i += 10) {
+					gfx.rotate(10 / 360f * Math.PI * 2);
+					gfx.setColor(debugColors[(i / 10) % debugColors.length]);
+					gfx.draw(new Line2D.Double(0, 0, 50, 0));
+				}
+			}
+		});
+	}
 
 }
