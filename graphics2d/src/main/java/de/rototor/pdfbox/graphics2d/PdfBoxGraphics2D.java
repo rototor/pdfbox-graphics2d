@@ -558,7 +558,7 @@ public class PdfBoxGraphics2D extends Graphics2D
         // Apply the current transform to the horizontal line.
         tf.deltaTransform(lengthVector, lengthVector);
         // Calculate the length of the transformed line. This is the new, adjusted length.
-        return (float)(Math.sqrt(lengthVector.x * lengthVector.x + lengthVector.y * lengthVector.y));
+        return (float) Math.sqrt(lengthVector.x * lengthVector.x + lengthVector.y * lengthVector.y);
     }
 
     private AffineTransform getCurrentEffectiveTransform()
