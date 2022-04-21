@@ -49,6 +49,7 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Path2D;
+import java.awt.geom.Point2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
@@ -287,7 +288,7 @@ public class PdfBoxGraphics2D extends Graphics2D
 
 	/**
 	 * *AFTER* you have disposed() this Graphics2D you can access the XForm
-	 * 
+	 *
 	 * @return the PDFormXObject which resulted in this graphics
 	 */
     @SuppressWarnings("WeakerAccess")
@@ -530,16 +531,18 @@ public class PdfBoxGraphics2D extends Graphics2D
             }
 
             AffineTransform tf = getCurrentEffectiveTransform();
+            float lineWidth = calculateTransformedLength(basicStroke.getLineWidth(), tf);
 
-            double scaleX = tf.getScaleX();
-            contentStream.setLineWidth((float) Math.abs(basicStroke.getLineWidth() * scaleX));
+            contentStream.setLineWidth(lineWidth);
+
             float[] dashArray = basicStroke.getDashArray();
             if (dashArray != null)
             {
                 for (int i = 0; i < dashArray.length; i++)
-                    dashArray[i] = (float) Math.abs(dashArray[i] * scaleX);
+                    dashArray[i] = calculateTransformedLength(dashArray[i], tf);
+
                 contentStream.setLineDashPattern(dashArray,
-                        (float) Math.abs(basicStroke.getDashPhase() * scaleX));
+                    calculateTransformedLength(basicStroke.getDashPhase(), tf));
             }
         }
         else if (strokeToApply != null)
@@ -547,6 +550,15 @@ public class PdfBoxGraphics2D extends Graphics2D
             if (ENABLE_DEBUG_UNKOWN_STROKE)
                 System.out.println("PDFBoxGraphics2D: Can't handle Stroke " + strokeToApply);
         }
+    }
+
+    private float calculateTransformedLength(float length, AffineTransform tf) {
+        // Represent stroke width as a horizontal line from origin to basicStroke.LineWidth.
+        Point2D.Float lengthVector = new Point2D.Float(length, 0);
+        // Apply the current transform to the horizontal line.
+        tf.deltaTransform(lengthVector, lengthVector);
+        // Calculate the length of the transformed line. This is the new, adjusted length.
+        return (float) Math.sqrt(lengthVector.x * lengthVector.x + lengthVector.y * lengthVector.y);
     }
 
     private AffineTransform getCurrentEffectiveTransform()
