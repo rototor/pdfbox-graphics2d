@@ -322,6 +322,10 @@ graphs
 
 ## Changes
 
+Version 0.38 (to be released):
+- Fix for line width of stroks in the case there is a rotation transform on the Graphics2D. Thanks @jonmccracken-wf for 
+  reporting and fixing this bug ([#36](https://github.com/rototor/pdfbox-graphics2d/pull/36))
+
 Version 0.37:
 
 - Make PdfBoxGraphics2DFontTextDrawer.getFontMetrics::stringWidth() behave like the
