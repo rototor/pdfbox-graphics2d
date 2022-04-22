@@ -52,7 +52,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.37</version>
+	<version>0.38</version>
 </dependency>
 ```
 
@@ -322,9 +322,10 @@ graphs
 
 ## Changes
 
-Version 0.38 (to be released):
+Version 0.38:
 - Fix for line width of stroks in the case there is a rotation transform on the Graphics2D. Thanks @jonmccracken-wf for 
   reporting and fixing this bug ([#36](https://github.com/rototor/pdfbox-graphics2d/pull/36))
+- Upgrade to PDFBox 2.0.26
 
 Version 0.37:
 
