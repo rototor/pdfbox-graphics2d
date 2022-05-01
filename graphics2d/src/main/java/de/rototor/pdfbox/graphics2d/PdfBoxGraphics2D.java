@@ -92,7 +92,7 @@ public class PdfBoxGraphics2D extends Graphics2D
     private Shape clipShape;
     private Color backgroundColor;
     private final CopyInfo copyInfo;
-    private final PDRectangle bbox;
+    final PDRectangle bbox;
 
     /**
      * Set a new color mapper.
