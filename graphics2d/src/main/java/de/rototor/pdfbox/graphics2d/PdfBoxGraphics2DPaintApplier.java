@@ -787,80 +787,6 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         return state.shadingMaskModifier.applyMasking(state, shading);
     }
 
-    private void createAndApplyGradientTransparencyMask(Paint alphaPaint, PaintApplierState state)
-            throws IOException
-    {
-        PDRectangle bbox = state.env.getGraphics2D().bbox;
-        double width = bbox.getWidth();
-        double height = bbox.getHeight();
-
-        /*
-         * Paint the mask into a XForm
-         */
-        PdfBoxGraphics2D alphaMaskGfx = new PdfBoxGraphics2D(state.document, (float) width,
-                (float) height);
-        alphaMaskGfx.transform(state.tf);
-        alphaMaskGfx.setPaint(alphaPaint);
-        alphaMaskGfx.fillRect(0, 0, (int) (width + 1), (int) (height + 1));
-        alphaMaskGfx.dispose();
-
-        COSName firstShadingName = alphaMaskGfx.getXFormObject().getResources().getShadingNames()
-                .iterator().next();
-        PDShading translatedShading = alphaMaskGfx.getXFormObject().getResources()
-                .getShading(firstShadingName);
-        COSArray domain = new COSArray();
-        domain.add(COSInteger.ZERO);
-        domain.add(COSInteger.ONE);
-        translatedShading.getCOSObject().setItem(COSName.DOMAIN, domain);
-
-        PDAppearanceStream appearance = new PDAppearanceStream(state.document);
-        PDFormXObject xFormObject;
-        xFormObject = appearance;
-        xFormObject.setResources(new PDResources());
-        xFormObject.setBBox(bbox);
-        xFormObject.setFormType(1);
-
-        PDShadingPattern pattern = new PDShadingPattern();
-        pattern.setShading(translatedShading);
-        COSName tilingPatternName = xFormObject.getResources().add(pattern);
-        PDColor patternColor = new PDColor(tilingPatternName, PDDeviceGray.INSTANCE);
-
-        PDPageContentStream contentStream = new PDPageContentStream(state.document, appearance,
-                xFormObject.getStream().createOutputStream(COSName.FLATE_DECODE));
-        contentStream.saveGraphicsState();
-        PDExtendedGraphicsState gfxState = new PDExtendedGraphicsState();
-        gfxState.setNonStrokingAlphaConstant(1f);
-        gfxState.setStrokingAlphaConstant(1f);
-        contentStream.setGraphicsStateParameters(gfxState);
-        contentStream.setNonStrokingColor(patternColor);
-        contentStream.addRect(0, 0, bbox.getWidth(), bbox.getHeight());
-        contentStream.fill();
-        contentStream.restoreGraphicsState();
-        contentStream.close();
-
-        /*
-         * And now apply it as mask
-         */
-        COSDictionary group = new COSDictionary();
-        group.setItem(COSName.S, COSName.TRANSPARENCY);
-        group.setItem(COSName.CS, COSName.DEVICEGRAY);
-        group.setItem(COSName.TYPE, COSName.GROUP);
-        xFormObject.getCOSObject().setItem(COSName.GROUP, group);
-        state.resources.add(xFormObject);
-
-        state.ensureExtendedState();
-        state.pdExtendedGraphicsState.setAlphaSourceFlag(false);
-        state.pdExtendedGraphicsState.setNonStrokingAlphaConstant(null);
-        state.pdExtendedGraphicsState.setStrokingAlphaConstant(null);
-
-        COSDictionary mask = new COSDictionary();
-        mask.setItem(COSName.G, xFormObject);
-        mask.setItem(COSName.S, COSName.LUMINOSITY);
-        mask.setItem(COSName.TYPE, COSName.MASK);
-
-        state.dictExtendedState.setItem(COSName.SMASK, mask);
-    }
-
     private void applyTexturePaint(TexturePaint texturePaint, PaintApplierState state)
             throws IOException
     {
@@ -1170,6 +1096,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
             this.alphaGrayscaleColors = alphaGrayscaleColors;
         }
 
+        private final static boolean USE_PATTERN = false;
+
         @Override
         public PDShading applyMasking(PaintApplierState state, PDShading shading) throws IOException
         {
@@ -1183,6 +1111,12 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
             xFormObject.setBBox(bbox);
             xFormObject.setFormType(1);
 
+            PDShadingPattern pattern = new PDShadingPattern();
+            pattern.setShading(translatedShading);
+            COSName tilingPatternName = xFormObject.getResources().add(pattern);
+            PDPattern patternCS = new PDPattern(null);
+            PDColor patternColor = new PDColor(tilingPatternName, patternCS);
+
             PDPageContentStream contentStream = new PDPageContentStream(state.document, appearance,
                     xFormObject.getStream().createOutputStream(COSName.FLATE_DECODE));
             contentStream.saveGraphicsState();
@@ -1191,7 +1125,15 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
             gfxState.setStrokingAlphaConstant(1f);
             contentStream.setGraphicsStateParameters(gfxState);
             contentStream.addRect(0, 0, bbox.getWidth(), bbox.getHeight());
-            contentStream.shadingFill(translatedShading);
+            if (!USE_PATTERN)
+            {
+                contentStream.shadingFill(translatedShading);
+            }
+            else
+            {
+                contentStream.setNonStrokingColor(patternColor);
+                contentStream.fill();
+            }
             contentStream.restoreGraphicsState();
             contentStream.close();
 
