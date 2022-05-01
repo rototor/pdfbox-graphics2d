@@ -974,6 +974,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 
     private boolean needBoundsKeyFrameEntry(float[] fractions)
     {
+        if (fractions == null)
+            return false;
         return Math.abs(fractions[0]) > EPSILON;
     }
 

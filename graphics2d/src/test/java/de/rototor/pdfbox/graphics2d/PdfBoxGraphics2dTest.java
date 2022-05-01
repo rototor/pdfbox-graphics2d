@@ -149,6 +149,31 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase
                 gfx.draw(new Rectangle.Float(200, 120, 50, 100));
             }
         });
+        exportGraphic("simple", "transparentgradients_inverse", new GraphicsExporter()
+        {
+            @Override
+            public void draw(Graphics2D gfx)
+            {
+                gfx.setPaint(new GradientPaint(300, 250, new Color(128, 128, 255, 128), 0, 0,
+                        new Color(0xFF, 11, 11, 5)));
+                gfx.fillRect(0, 0, 300, 250);
+
+                LinearGradientPaint linearGradientPaint = new LinearGradientPaint(100, 200, 0, 0,
+                        new float[] { 0.0f, .2f, 1f },
+                        new Color[] { new Color(255, 255, 255), new Color(255, 255, 136, 128),
+                                new Color(85, 255, 255, 0) });
+                gfx.setPaint(linearGradientPaint);
+                gfx.fill(new Rectangle.Float(10, 10, 100, 50));
+                gfx.fill(new Rectangle.Float(120, 10, 50, 50));
+                gfx.fill(new Rectangle.Float(200, 10, 50, 100));
+
+                gfx.setColor(Color.BLACK);
+                gfx.draw(new Rectangle.Float(10, 10, 100, 50));
+                gfx.draw(new Rectangle.Float(120, 10, 50, 50));
+                gfx.draw(new Rectangle.Float(200, 10, 50, 100));
+
+            }
+        });
     }
 
     @Test
