@@ -94,10 +94,43 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase
                 gfx.fill(new Rectangle.Float(10, 10, 100, 50));
                 gfx.fill(new Rectangle.Float(120, 10, 50, 50));
                 gfx.fill(new Rectangle.Float(200, 10, 50, 100));
+
                 RadialGradientPaint radialGradientPaint = new RadialGradientPaint(200, 200, 200,
                         new float[] { 0.0f, .2f, .4f, .9f, 1f },
                         new Color[] { Color.YELLOW, Color.GREEN, Color.RED, Color.BLUE,
                                 Color.GRAY });
+                gfx.setPaint(radialGradientPaint);
+                gfx.fill(new Rectangle.Float(10, 120, 100, 50));
+                gfx.fill(new Rectangle.Float(120, 120, 50, 50));
+                gfx.fill(new Rectangle.Float(200, 120, 50, 100));
+            }
+        });
+    }
+
+    @Test
+    public void testTransparentGradients()
+    {
+        exportGraphic("simple", "transparentgradients", new GraphicsExporter()
+        {
+            @Override
+            public void draw(Graphics2D gfx)
+            {
+                gfx.setColor(new Color(0x222222));
+                gfx.fillRect(0, 0, 500, 500);
+                LinearGradientPaint linearGradientPaint = new LinearGradientPaint(0, 0, 100, 200,
+                        new float[] { 0.0f, .2f, 1f },
+                        new Color[] { new Color(255, 255, 255), new Color(255, 255, 136, 128),
+                                new Color(85, 255, 255, 0) });
+                gfx.setPaint(linearGradientPaint);
+                gfx.fill(new Rectangle.Float(10, 10, 100, 50));
+                gfx.fill(new Rectangle.Float(120, 10, 50, 50));
+                gfx.fill(new Rectangle.Float(200, 10, 50, 100));
+
+                RadialGradientPaint radialGradientPaint = new RadialGradientPaint(200, 200, 200,
+                        new float[] { 0.0f, .2f, 1f },
+                        new Color[] { new Color(255, 255, 255), new Color(255, 255, 136, 128),
+                                new Color(85, 255, 255, 0) });
+
                 gfx.setPaint(radialGradientPaint);
                 gfx.fill(new Rectangle.Float(10, 120, 100, 50));
                 gfx.fill(new Rectangle.Float(120, 120, 50, 50));
@@ -392,24 +425,28 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase
         });
     }
 
-	@Test
-	public void testLineWithRotation() {
-		exportGraphic("simple", "lineWithRotation", new GraphicsExporter() {
-			@Override
-			public void draw(Graphics2D gfx) {
-				gfx.setStroke(new BasicStroke(5f));
+    @Test
+    public void testLineWithRotation()
+    {
+        exportGraphic("simple", "lineWithRotation", new GraphicsExporter()
+        {
+            @Override
+            public void draw(Graphics2D gfx)
+            {
+                gfx.setStroke(new BasicStroke(5f));
 
-				float centerX = 200;
-				float centerY = 200;
+                float centerX = 200;
+                float centerY = 200;
 
-				gfx.translate(centerX, centerY);
-				for (int i = 0; i < 360; i += 10) {
-					gfx.rotate(10 / 360f * Math.PI * 2);
-					gfx.setColor(debugColors[(i / 10) % debugColors.length]);
-					gfx.draw(new Line2D.Double(0, 0, 50, 0));
-				}
-			}
-		});
-	}
+                gfx.translate(centerX, centerY);
+                for (int i = 0; i < 360; i += 10)
+                {
+                    gfx.rotate(10 / 360f * Math.PI * 2);
+                    gfx.setColor(debugColors[(i / 10) % debugColors.length]);
+                    gfx.draw(new Line2D.Double(0, 0, 50, 0));
+                }
+            }
+        });
+    }
 
 }
