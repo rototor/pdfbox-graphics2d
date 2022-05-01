@@ -92,7 +92,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         state.composite = env.getComposite();
         state.pdExtendedGraphicsState = null;
         state.env = env;
-        state.colorMapperEnv = env.getGraphics2D().colorMapperEnv;;
+        state.colorMapperEnv = env.getGraphics2D().colorMapperEnv;
         state.tf = tf;
         state.nestedTransform = null;
         PDShading shading = applyPaint(paint, state);
@@ -107,8 +107,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
     {
         PDPageContentStream contentStream = state.contentStream;
         IPdfBoxGraphics2DColorMapper colorMapper = state.colorMapper;
-		contentStream.setStrokingColor(colorMapper.mapColor(color, state.colorMapperEnv));
-		contentStream.setNonStrokingColor(colorMapper.mapColor(color, state.colorMapperEnv));
+        contentStream.setStrokingColor(colorMapper.mapColor(color, state.colorMapperEnv));
+        contentStream.setNonStrokingColor(colorMapper.mapColor(color, state.colorMapperEnv));
 
         int alpha = color.getAlpha();
         if (alpha < 255)
@@ -138,11 +138,11 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 				state.pdExtendedGraphicsState.setOverprintMode(1.0f);
                 /*
                  * Till a fixed version of PDFBOX for PDFBOX-5361 is available,
-                 * we make do this workaround
+                 * we do this workaround
                  */
                 state.dictExtendedState.setItem(COSName.OPM, COSInteger.get(1));
-				state.pdExtendedGraphicsState.setNonStrokingOverprintControl(true);
-				state.pdExtendedGraphicsState.setStrokingOverprintControl(true);
+                state.pdExtendedGraphicsState.setNonStrokingOverprintControl(true);
+                state.pdExtendedGraphicsState.setStrokingOverprintControl(true);
             }
         }
     }
@@ -189,12 +189,12 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         else if (paint instanceof ShadingPaint)
         {
             // PDFBox paint, we can import the shading directly
-            return shadingCache
-                    .makeUnqiue(importPDFBoxShadingPaint((ShadingPaint<?>) paint, state));
+            return shadingCache.makeUnqiue(
+                    importPDFBoxShadingPaint((ShadingPaint<?>) paint, state));
         }
         else
         {
-            System.err.printf("Don't know paint %s" , paint.getClass().getName());
+            System.err.printf("Don't know paint %s", paint.getClass().getName());
         }
 
         return null;
@@ -214,8 +214,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         PDShading shading = paint.getShading();
 
         state.contentStream.transform(matrix);
-        return PDShading.create((COSDictionary) pdfCloneUtility
-                .cloneForNewDocument(shading.getCOSObject()));
+        return PDShading.create(
+                (COSDictionary) pdfCloneUtility.cloneForNewDocument(shading.getCOSObject()));
     }
 
     /*
@@ -261,9 +261,9 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         }
         catch (Exception e)
         {
-            System.err
-                    .printf("PdfBoxGraphics2DPaintApplier error while drawing Batik PatternPaint %s",
-                            e.getMessage());
+            System.err.printf(
+                    "PdfBoxGraphics2DPaintApplier error while drawing Batik PatternPaint %s",
+                    e.getMessage());
             return;
         }
         pdfBoxGraphics2D.dispose();
@@ -296,7 +296,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         }
         catch (Exception e)
         {
-            System.err.printf("PdfBoxGraphics2DPaintApplier error while drawing Tiling Paint %s", e.getMessage());
+            System.err.printf("PdfBoxGraphics2DPaintApplier error while drawing Tiling Paint %s",
+                    e.getMessage());
         }
     }
 
@@ -387,6 +388,16 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
      * Very small number, everything smaller than this is zero for us.
      */
     private static final double EPSILON = 0.00001;
+
+    static boolean haveColorsTransparency(Color[] colors)
+    {
+        for (Color c : colors)
+        {
+            if (c.getAlpha() != 255)
+                return true;
+        }
+        return false;
+    }
 
     private PDShading buildLinearGradientShading(Paint paint, PaintApplierState state)
             throws IOException
@@ -536,10 +547,9 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
     {
         PDShadingType3 shading = new PDShadingType3(new COSDictionary());
         Color[] colors = getPropertyValue(paint, "getColors");
-        Color firstColor = colors[0];
-		PDColor firstColorMapped = state.colorMapper.mapColor(firstColor, state.colorMapperEnv);
-        applyAsStrokingColor(firstColor, state);
         float[] fractions = getPropertyValue(paint, "getFractions");
+        PDColor firstColorMapped = mapFirstColorOfGradient(state, colors);
+
         PDFunctionType3 type3 = buildType3Function(colors, fractions, state);
         shading.setAntiAlias(true);
         shading.setShadingType(PDShading.SHADING_TYPE2);
@@ -547,6 +557,15 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         shading.setFunction(type3);
         shading.setExtend(setupExtends());
         return shading;
+    }
+
+    private PDColor mapFirstColorOfGradient(PaintApplierState state, Color[] colors)
+            throws IOException
+    {
+        Color firstColor = colors[0];
+        PDColor firstColorMapped = state.colorMapper.mapColor(firstColor, state.colorMapperEnv);
+        applyAsStrokingColor(firstColor, state);
+        return firstColorMapped;
     }
 
     private COSArray setupExtends()
@@ -642,9 +661,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
          * Reflection to access the fields of both these classes.
          */
         Color[] colors = getPropertyValue(paint, "getColors");
-        Color firstColor = colors[0];
-		PDColor firstColorMapped = state.colorMapper.mapColor(firstColor, state.colorMapperEnv);
-        applyAsStrokingColor(firstColor, state);
+        PDColor firstColorMapped = mapFirstColorOfGradient(state, colors);
 
         /*
          * When doing a shading paint, we need to always walk the shape first.
@@ -687,9 +704,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
             throws IOException
     {
         Color[] colors = new Color[] { gradientPaint.getColor1(), gradientPaint.getColor2() };
-        Color firstColor = colors[0];
-		PDColor firstColorMapped = state.colorMapper.mapColor(firstColor, state.colorMapperEnv);
-        applyAsStrokingColor(firstColor, state);
+        PDColor firstColorMapped = mapFirstColorOfGradient(state, colors);
 
         /*
          * When doing a shading paint, we need to always walk the shape first.
@@ -844,8 +859,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         for (int i = 1; i < colors.size(); i++)
         {
             Color color = colors.get(i);
-			PDColor prevPdColor = state.colorMapper.mapColor(prevColor, state.colorMapperEnv);
-			PDColor pdColor = state.colorMapper.mapColor(color, state.colorMapperEnv);
+            PDColor prevPdColor = state.colorMapper.mapColor(prevColor, state.colorMapperEnv);
+            PDColor pdColor = state.colorMapper.mapColor(color, state.colorMapperEnv);
             COSArray c0 = new COSArray();
             COSArray c1 = new COSArray();
             for (float component : prevPdColor.getComponents())
