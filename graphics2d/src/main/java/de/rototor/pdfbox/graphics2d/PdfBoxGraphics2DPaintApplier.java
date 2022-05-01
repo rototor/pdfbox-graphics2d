@@ -575,12 +575,6 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         if (haveColorsTransparency(colors))
         {
             PdfBoxGraphics2DColor[] alphaGrayscaleColors = mapAlphaToGrayscale(colors);
-            Point2D startPoint = clonePoint(
-                    (Point2D.Double) getPropertyValue(paint, "getStartPoint"));
-            Point2D endPoint = clonePoint((Point2D.Double) getPropertyValue(paint, "getEndPoint"));
-            LinearGradientPaint alphaPaint = new LinearGradientPaint(startPoint, endPoint,
-                    fractions, alphaGrayscaleColors, getCycleMethod(paint));
-            createAndApplyGradientTransparencyMask(alphaPaint, state);
             state.shadingMaskModifier = new CreateAlphaShadingMask(fractions, alphaGrayscaleColors);
         }
 
@@ -701,18 +695,6 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         Point2D focusPoint = clonePoint((Point2D) getPropertyValue(paint, "getFocusPoint"));
         float radius = getPropertyValue(paint, "getRadius");
 
-        if (haveColorsTransparency(colors))
-        {
-            PdfBoxGraphics2DColor[] alphaGrayscaleColors = mapAlphaToGrayscale(colors);
-            RadialGradientPaint alphaPaint = new RadialGradientPaint(centerPoint, radius,
-                    focusPoint, fractions, alphaGrayscaleColors, getCycleMethod(paint));
-            Point2D startPoint = new Point2D.Double(centerPoint.getX() - radius,
-                    centerPoint.getY() - radius);
-            Point2D endPoint = new Point2D.Double(centerPoint.getX() + radius,
-                    centerPoint.getY() + radius);
-            createAndApplyGradientTransparencyMask(alphaPaint, state);
-        }
-
         /*
          * When doing a shading paint, we need to always walk the shape first.
          */
@@ -781,9 +763,6 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         if (haveColorsTransparency(colors))
         {
             PdfBoxGraphics2DColor[] alphaGrayscaleColors = mapAlphaToGrayscale(colors);
-            GradientPaint alphaPaint = new GradientPaint(startPoint, alphaGrayscaleColors[0],
-                    endPoint, alphaGrayscaleColors[1]);
-            createAndApplyGradientTransparencyMask(alphaPaint, state);
             state.shadingMaskModifier = new CreateAlphaShadingMask(null, alphaGrayscaleColors);
         }
 
@@ -1179,7 +1158,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 
     private final class CreateAlphaShadingMask implements ShadingMaskModifier
     {
-        private float[] fractions;
+        private final float[] fractions;
         private final PdfBoxGraphics2DColor[] alphaGrayscaleColors;
 
         public CreateAlphaShadingMask(float[] fractions,
@@ -1194,62 +1173,48 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         {
             PDShading translatedShading = createMaskShading(state, shading);
 
-            if (true)
-            {
-                PDRectangle bbox = state.env.getGraphics2D().bbox;
-                PDAppearanceStream appearance = new PDAppearanceStream(state.document);
-                PDFormXObject xFormObject;
-                xFormObject = appearance;
-                xFormObject.setResources(new PDResources());
-                xFormObject.setBBox(bbox);
-                xFormObject.setFormType(1);
+            PDRectangle bbox = state.env.getGraphics2D().bbox;
+            PDAppearanceStream appearance = new PDAppearanceStream(state.document);
+            PDFormXObject xFormObject;
+            xFormObject = appearance;
+            xFormObject.setResources(new PDResources());
+            xFormObject.setBBox(bbox);
+            xFormObject.setFormType(1);
 
-                if (false)
-                {
-                    PDShadingPattern pattern = new PDShadingPattern();
-                    pattern.setShading(translatedShading);
-                    COSName tilingPatternName = xFormObject.getResources().add(pattern);
-                    PDColor patternColor = new PDColor(tilingPatternName, PDDeviceGray.INSTANCE);
-                }
+            PDPageContentStream contentStream = new PDPageContentStream(state.document, appearance,
+                    xFormObject.getStream().createOutputStream(COSName.FLATE_DECODE));
+            contentStream.saveGraphicsState();
+            PDExtendedGraphicsState gfxState = new PDExtendedGraphicsState();
+            gfxState.setNonStrokingAlphaConstant(1f);
+            gfxState.setStrokingAlphaConstant(1f);
+            contentStream.setGraphicsStateParameters(gfxState);
+            contentStream.addRect(0, 0, bbox.getWidth(), bbox.getHeight());
+            contentStream.shadingFill(translatedShading);
+            contentStream.restoreGraphicsState();
+            contentStream.close();
 
-                PDPageContentStream contentStream = new PDPageContentStream(state.document,
-                        appearance,
-                        xFormObject.getStream().createOutputStream(COSName.FLATE_DECODE));
-                contentStream.saveGraphicsState();
-                PDExtendedGraphicsState gfxState = new PDExtendedGraphicsState();
-                gfxState.setNonStrokingAlphaConstant(1f);
-                gfxState.setStrokingAlphaConstant(1f);
-                contentStream.setGraphicsStateParameters(gfxState);
-                //contentStream.setNonStrokingColor(patternColor);
-                contentStream.addRect(0, 0, bbox.getWidth(), bbox.getHeight());
-                contentStream.shadingFill(translatedShading);
-                contentStream.restoreGraphicsState();
-                contentStream.close();
+            /*
+             * And now apply it as mask
+             */
+            COSDictionary group = new COSDictionary();
+            group.setItem(COSName.S, COSName.TRANSPARENCY);
+            group.setItem(COSName.CS, COSName.DEVICEGRAY);
+            group.setItem(COSName.TYPE, COSName.GROUP);
+            xFormObject.getCOSObject().setItem(COSName.GROUP, group);
+            state.resources.add(xFormObject);
 
-                /*
-                 * And now apply it as mask
-                 */
-                COSDictionary group = new COSDictionary();
-                group.setItem(COSName.S, COSName.TRANSPARENCY);
-                group.setItem(COSName.CS, COSName.DEVICEGRAY);
-                group.setItem(COSName.TYPE, COSName.GROUP);
-                xFormObject.getCOSObject().setItem(COSName.GROUP, group);
-                state.resources.add(xFormObject);
+            state.ensureExtendedState();
+            state.pdExtendedGraphicsState.setAlphaSourceFlag(false);
+            state.pdExtendedGraphicsState.setNonStrokingAlphaConstant(null);
+            state.pdExtendedGraphicsState.setStrokingAlphaConstant(null);
 
-                state.ensureExtendedState();
-                state.pdExtendedGraphicsState.setAlphaSourceFlag(false);
-                state.pdExtendedGraphicsState.setNonStrokingAlphaConstant(null);
-                state.pdExtendedGraphicsState.setStrokingAlphaConstant(null);
+            COSDictionary mask = new COSDictionary();
+            mask.setItem(COSName.G, xFormObject);
+            mask.setItem(COSName.S, COSName.LUMINOSITY);
+            mask.setItem(COSName.TYPE, COSName.MASK);
 
-                COSDictionary mask = new COSDictionary();
-                mask.setItem(COSName.G, xFormObject);
-                mask.setItem(COSName.S, COSName.LUMINOSITY);
-                mask.setItem(COSName.TYPE, COSName.MASK);
+            state.dictExtendedState.setItem(COSName.SMASK, mask);
 
-                state.dictExtendedState.setItem(COSName.SMASK, mask);
-
-                return shading;
-            }
             return shading;
         }
 
