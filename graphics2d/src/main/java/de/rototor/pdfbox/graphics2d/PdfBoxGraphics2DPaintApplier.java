@@ -350,6 +350,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
             blendMode = COSName.NORMAL;
             break;
         case AlphaComposite.SRC_OVER:
+            //noinspection ConstantConditions
             blendMode = COSName.COMPATIBLE;
             break;
         case AlphaComposite.XOR:
@@ -360,6 +361,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         case AlphaComposite.DST_ATOP:
             break;
         case AlphaComposite.SRC_ATOP:
+            //noinspection ConstantConditions
             blendMode = COSName.COMPATIBLE;
             break;
         case AlphaComposite.DST_IN:
