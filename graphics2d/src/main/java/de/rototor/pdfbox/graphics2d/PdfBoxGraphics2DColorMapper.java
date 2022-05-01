@@ -36,7 +36,7 @@ public class PdfBoxGraphics2DColorMapper implements IPdfBoxGraphics2DColorMapper
 			return new PDColor(new float[] { c, m, y, k }, PDDeviceCMYK.INSTANCE);
 		}
 
-		// Our universial color carrier.
+		// Our universal color carrier.
 		if (color instanceof IPdfBoxGraphics2DColor)
 			return ((IPdfBoxGraphics2DColor) color).toPDColor();
 
