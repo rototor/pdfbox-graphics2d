@@ -10,6 +10,7 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.common.function.PDFunctionType3;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColorSpace;
+import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceGray;
 import org.apache.pdfbox.pdmodel.graphics.color.PDPattern;
 import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
@@ -120,22 +121,21 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
             Float strokingAlphaConstant = state.pdExtendedGraphicsState.getStrokingAlphaConstant();
             if (strokingAlphaConstant == null)
                 strokingAlphaConstant = 1f;
-            state.pdExtendedGraphicsState
-                    .setStrokingAlphaConstant(strokingAlphaConstant * (alpha / 255f));
-            Float nonStrokingAlphaConstant = state.pdExtendedGraphicsState
-                    .getNonStrokingAlphaConstant();
+            state.pdExtendedGraphicsState.setStrokingAlphaConstant(
+                    strokingAlphaConstant * (alpha / 255f));
+            Float nonStrokingAlphaConstant = state.pdExtendedGraphicsState.getNonStrokingAlphaConstant();
             if (nonStrokingAlphaConstant == null)
                 nonStrokingAlphaConstant = 1f;
-            state.pdExtendedGraphicsState
-                    .setNonStrokingAlphaConstant(nonStrokingAlphaConstant * (alpha / 255f));
+            state.pdExtendedGraphicsState.setNonStrokingAlphaConstant(
+                    nonStrokingAlphaConstant * (alpha / 255f));
         }
 
-		if (color instanceof IPdfBoxGraphics2DColor)
-		{
-			if (((IPdfBoxGraphics2DColor) color).isOverprint())
-			{
-				state.ensureExtendedState();
-				state.pdExtendedGraphicsState.setOverprintMode(1.0f);
+        if (color instanceof IPdfBoxGraphics2DColor)
+        {
+            if (((IPdfBoxGraphics2DColor) color).isOverprint())
+            {
+                state.ensureExtendedState();
+                state.pdExtendedGraphicsState.setOverprintMode(1.0f);
                 /*
                  * Till a fixed version of PDFBOX for PDFBOX-5361 is available,
                  * we do this workaround
@@ -489,8 +489,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         // will display it another.
         float calculatedX = (float) Math.min(startPoint.getX(), endPoint.getX());
         float calculatedY = (float) Math.max(1.0f, Math.max(startPoint.getY(), endPoint.getY()));
-        float calculatedWidth = Math
-                .max(1.0f, Math.abs((float) (endPoint.getX() - startPoint.getX())));
+        float calculatedWidth = Math.max(1.0f,
+                Math.abs((float) (endPoint.getX() - startPoint.getX())));
         float negativeHeight =
                 -1.0f * Math.max(1.0f, Math.abs((float) (endPoint.getY() - startPoint.getY())));
 
@@ -700,11 +700,38 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         return shading;
     }
 
+    static PdfBoxGraphics2DColor mapAlphaToGrayscale(Color c)
+    {
+        return new PdfBoxGraphics2DColor(
+                new PDColor(new float[] { (c.getAlpha() / 255f) }, PDDeviceGray.INSTANCE));
+    }
+
+    static Color[] mapAlphaToGrayscale(Color[] colors)
+    {
+        Color[] ret = new Color[colors.length];
+        for (int i = 0; i < ret.length; i++)
+        {
+            ret[i] = mapAlphaToGrayscale(colors[i]);
+        }
+        return ret;
+    }
+
     private PDShading buildGradientShading(GradientPaint gradientPaint, PaintApplierState state)
             throws IOException
     {
+        Point2D startPoint = gradientPaint.getPoint1();
+        Point2D endPoint = gradientPaint.getPoint2();
+
         Color[] colors = new Color[] { gradientPaint.getColor1(), gradientPaint.getColor2() };
         PDColor firstColorMapped = mapFirstColorOfGradient(state, colors);
+
+        if (haveColorsTransparency(colors))
+        {
+            Color[] alphaGrayscaleColors = mapAlphaToGrayscale(colors);
+            GradientPaint alphaPaint = new GradientPaint(startPoint, alphaGrayscaleColors[0],
+                    endPoint, alphaGrayscaleColors[1]);
+            createGradientTransparencyMask(alphaPaint, state, startPoint, endPoint);
+        }
 
         /*
          * When doing a shading paint, we need to always walk the shape first.
@@ -717,9 +744,6 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         float[] fractions = new float[] { 0, 1 };
         PDFunctionType3 type3 = buildType3Function(colors, fractions, state);
 
-        Point2D startPoint = gradientPaint.getPoint1();
-        Point2D endPoint = gradientPaint.getPoint2();
-
         state.tf.transform(startPoint, startPoint);
         state.tf.transform(endPoint, endPoint);
 
@@ -728,6 +752,45 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         shading.setFunction(type3);
         shading.setExtend(setupExtends());
         return shading;
+    }
+
+    private void createGradientTransparencyMask(Paint alphaPaint, PaintApplierState state,
+            Point2D startPoint, Point2D endPoint) throws IOException
+    {
+        double width = Math.max(1, Math.abs(startPoint.getX() - endPoint.getX()));
+        double height = Math.max(1, Math.abs(startPoint.getY() - endPoint.getY()));
+
+        /*
+         * Paint the mask into a XForm
+         */
+        PdfBoxGraphics2D alphaMaskGfx = new PdfBoxGraphics2D(state.document, (float) width,
+                (float) height);
+        alphaMaskGfx.setPaint(alphaPaint);
+        alphaMaskGfx.fill(
+                new Rectangle2D.Double(startPoint.getX(), startPoint.getY(), endPoint.getX(),
+                        endPoint.getY()));
+        alphaMaskGfx.dispose();
+
+        /*
+         * And now apply it as mask
+         */
+        PDFormXObject xFormObject = alphaMaskGfx.getXFormObject();
+        COSDictionary group = new COSDictionary();
+        group.setItem(COSName.S, COSName.TRANSPARENCY);
+        group.setItem(COSName.CS, COSName.DEVICEGRAY);
+        group.setItem(COSName.TYPE, COSName.GROUP);
+        xFormObject.getCOSObject().setItem(COSName.GROUP, group);
+
+        state.ensureExtendedState();
+        state.pdExtendedGraphicsState.setAlphaSourceFlag(true);
+        state.pdExtendedGraphicsState.setNonStrokingAlphaConstant(null);
+        state.pdExtendedGraphicsState.setStrokingAlphaConstant(null);
+
+        COSDictionary mask = new COSDictionary();
+        mask.setItem(COSName.G, xFormObject);
+        mask.setItem(COSName.S, COSName.LUMINOSITY);
+        mask.setItem(COSName.TYPE, COSName.MASK);
+        state.dictExtendedState.setItem(COSName.SMASK, mask);
     }
 
     private void applyTexturePaint(TexturePaint texturePaint, PaintApplierState state)
@@ -755,8 +818,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         PDPageContentStream imageContentStream = new PDPageContentStream(state.document, appearance,
                 ((COSStream) pattern.getCOSObject()).createOutputStream());
         BufferedImage texturePaintImage = texturePaint.getImage();
-        PDImageXObject imageXObject = state.imageEncoder
-                .encodeImage(state.document, imageContentStream, texturePaintImage);
+        PDImageXObject imageXObject = state.imageEncoder.encodeImage(state.document,
+                imageContentStream, texturePaintImage);
 
         float ratioW = (float) ((anchorRect.getWidth()) / texturePaintImage.getWidth());
         float ratioH = (float) ((anchorRect.getHeight()) / texturePaintImage.getHeight());

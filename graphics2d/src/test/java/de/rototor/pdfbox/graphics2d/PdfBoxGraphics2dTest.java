@@ -115,8 +115,8 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase
             @Override
             public void draw(Graphics2D gfx)
             {
-                gfx.setPaint(new GradientPaint(0, 0, new Color(128, 128, 128, 128), 300, 250,
-                        new Color(11, 11, 11, 5)));
+                gfx.setPaint(new GradientPaint(0, 0, new Color(128, 128, 255, 128), 300, 250,
+                        new Color(0xFF, 11, 11, 5)));
                 gfx.fillRect(0, 0, 300, 250);
 
                 LinearGradientPaint linearGradientPaint = new LinearGradientPaint(0, 0, 100, 200,
