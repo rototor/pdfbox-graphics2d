@@ -128,6 +128,11 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase
                 gfx.fill(new Rectangle.Float(120, 10, 50, 50));
                 gfx.fill(new Rectangle.Float(200, 10, 50, 100));
 
+                gfx.setColor(Color.BLACK);
+                gfx.draw(new Rectangle.Float(10, 10, 100, 50));
+                gfx.draw(new Rectangle.Float(120, 10, 50, 50));
+                gfx.draw(new Rectangle.Float(200, 10, 50, 100));
+
                 RadialGradientPaint radialGradientPaint = new RadialGradientPaint(200, 200, 200,
                         new float[] { 0.0f, .2f, 1f },
                         new Color[] { new Color(255, 255, 255), new Color(255, 255, 136, 128),
@@ -137,6 +142,11 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase
                 gfx.fill(new Rectangle.Float(10, 120, 100, 50));
                 gfx.fill(new Rectangle.Float(120, 120, 50, 50));
                 gfx.fill(new Rectangle.Float(200, 120, 50, 100));
+
+                gfx.setColor(Color.BLACK);
+                gfx.draw(new Rectangle.Float(10, 120, 100, 50));
+                gfx.draw(new Rectangle.Float(120, 120, 50, 50));
+                gfx.draw(new Rectangle.Float(200, 120, 50, 100));
             }
         });
     }

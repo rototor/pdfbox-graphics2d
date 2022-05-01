@@ -662,6 +662,22 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
          */
         Color[] colors = getPropertyValue(paint, "getColors");
         PDColor firstColorMapped = mapFirstColorOfGradient(state, colors);
+        float[] fractions = getPropertyValue(paint, "getFractions");
+        Point2D centerPoint = clonePoint((Point2D) getPropertyValue(paint, "getCenterPoint"));
+        Point2D focusPoint = clonePoint((Point2D) getPropertyValue(paint, "getFocusPoint"));
+        float radius = getPropertyValue(paint, "getRadius");
+
+        if (haveColorsTransparency(colors))
+        {
+            Color[] alphaGrayscaleColors = mapAlphaToGrayscale(colors);
+            RadialGradientPaint alphaPaint = new RadialGradientPaint(centerPoint, radius,
+                    focusPoint, fractions, alphaGrayscaleColors, getCycleMethod(paint));
+            Point2D startPoint = new Point2D.Double(centerPoint.getX() - radius,
+                    centerPoint.getY() - radius);
+            Point2D endPoint = new Point2D.Double(centerPoint.getX() + radius,
+                    centerPoint.getY() + radius);
+            createAndApplyGradientTransparencyMask(alphaPaint, state, startPoint, endPoint);
+        }
 
         /*
          * When doing a shading paint, we need to always walk the shape first.
@@ -672,15 +688,11 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         shading.setAntiAlias(true);
         shading.setShadingType(PDShading.SHADING_TYPE3);
         shading.setColorSpace(firstColorMapped.getColorSpace());
-        float[] fractions = getPropertyValue(paint, "getFractions");
-        Point2D centerPoint = clonePoint((Point2D) getPropertyValue(paint, "getCenterPoint"));
-        Point2D focusPoint = clonePoint((Point2D) getPropertyValue(paint, "getFocusPoint"));
         AffineTransform gradientTransform = getPropertyValue(paint, "getTransform");
         state.tf.concatenate(gradientTransform);
         state.tf.transform(centerPoint, centerPoint);
         state.tf.transform(focusPoint, focusPoint);
 
-        float radius = getPropertyValue(paint, "getRadius");
         radius = (float) Math.abs(radius * state.tf.getScaleX());
 
         COSArray coords = new COSArray();
@@ -730,7 +742,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
             Color[] alphaGrayscaleColors = mapAlphaToGrayscale(colors);
             GradientPaint alphaPaint = new GradientPaint(startPoint, alphaGrayscaleColors[0],
                     endPoint, alphaGrayscaleColors[1]);
-            createGradientTransparencyMask(alphaPaint, state, startPoint, endPoint);
+            createAndApplyGradientTransparencyMask(alphaPaint, state, startPoint, endPoint);
         }
 
         /*
@@ -754,9 +766,15 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         return shading;
     }
 
-    private void createGradientTransparencyMask(Paint alphaPaint, PaintApplierState state,
+    private void createAndApplyGradientTransparencyMask(Paint alphaPaint, PaintApplierState state,
             Point2D startPoint, Point2D endPoint) throws IOException
     {
+        startPoint = new Point2D.Double(startPoint.getX(),startPoint.getY());
+        endPoint = new Point2D.Double(endPoint.getX(),endPoint.getY());
+
+        state.tf.transform(startPoint, startPoint);
+        state.tf.transform(endPoint, endPoint);
+
         double width = Math.max(1, Math.abs(startPoint.getX() - endPoint.getX()));
         double height = Math.max(1, Math.abs(startPoint.getY() - endPoint.getY()));
 
@@ -766,9 +784,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         PdfBoxGraphics2D alphaMaskGfx = new PdfBoxGraphics2D(state.document, (float) width,
                 (float) height);
         alphaMaskGfx.setPaint(alphaPaint);
-        alphaMaskGfx.fill(
-                new Rectangle2D.Double(startPoint.getX(), startPoint.getY(), endPoint.getX(),
-                        endPoint.getY()));
+        alphaMaskGfx.fillRect(0, 0, (int) (width + 1), (int) (height + 1));
         alphaMaskGfx.dispose();
 
         /*
@@ -782,7 +798,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         xFormObject.getCOSObject().setItem(COSName.GROUP, group);
 
         state.ensureExtendedState();
-        state.pdExtendedGraphicsState.setAlphaSourceFlag(true);
+        state.pdExtendedGraphicsState.setAlphaSourceFlag(false);
         state.pdExtendedGraphicsState.setNonStrokingAlphaConstant(null);
         state.pdExtendedGraphicsState.setStrokingAlphaConstant(null);
 
