@@ -581,8 +581,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
             LinearGradientPaint alphaPaint = new LinearGradientPaint(startPoint, endPoint,
                     fractions, alphaGrayscaleColors, getCycleMethod(paint));
             createAndApplyGradientTransparencyMask(alphaPaint, state);
-            state.shadingMaskModifier = new CreateAlphaShadingMask(
-                    needBoundsKeyFrameEntry(fractions), alphaGrayscaleColors);
+            state.shadingMaskModifier = new CreateAlphaShadingMask(fractions, alphaGrayscaleColors);
         }
 
         PDFunctionType3 type3 = buildType3Function(colors, fractions, state);
@@ -748,8 +747,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         if (haveColorsTransparency(colors))
         {
             PdfBoxGraphics2DColor[] alphaGrayscaleColors = mapAlphaToGrayscale(colors);
-            state.shadingMaskModifier = new CreateAlphaShadingMask(
-                    needBoundsKeyFrameEntry(fractions), alphaGrayscaleColors);
+            state.shadingMaskModifier = new CreateAlphaShadingMask(fractions, alphaGrayscaleColors);
         }
 
         return state.shadingMaskModifier.applyMasking(state, shading);
@@ -786,7 +784,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
             GradientPaint alphaPaint = new GradientPaint(startPoint, alphaGrayscaleColors[0],
                     endPoint, alphaGrayscaleColors[1]);
             createAndApplyGradientTransparencyMask(alphaPaint, state);
-            state.shadingMaskModifier = new CreateAlphaShadingMask(false, alphaGrayscaleColors);
+            state.shadingMaskModifier = new CreateAlphaShadingMask(null, alphaGrayscaleColors);
         }
 
         /*
@@ -1181,13 +1179,13 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 
     private final class CreateAlphaShadingMask implements ShadingMaskModifier
     {
-        private final boolean firstColorStopFake;
+        private float[] fractions;
         private final PdfBoxGraphics2DColor[] alphaGrayscaleColors;
 
-        public CreateAlphaShadingMask(boolean firstColorStopFake,
+        public CreateAlphaShadingMask(float[] fractions,
                 PdfBoxGraphics2DColor[] alphaGrayscaleColors)
         {
-            this.firstColorStopFake = firstColorStopFake;
+            this.fractions = fractions;
             this.alphaGrayscaleColors = alphaGrayscaleColors;
         }
 
@@ -1302,7 +1300,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
                  */
                 final float alpha0;
                 final float alpha1;
-                if (firstColorStopFake)
+                if (needBoundsKeyFrameEntry(fractions))
                 {
                     if (0 == colorIdx)
                     {
@@ -1323,7 +1321,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 
                     PdfBoxGraphics2DColor clr = alphaGrayscaleColors[colorIdx];
                     alpha0 = clr.toPDColor().getComponents()[0];
-                    clr = alphaGrayscaleColors[colorIdx + 1];
+                    if (colorIdx + 1 < alphaGrayscaleColors.length)
+                        clr = alphaGrayscaleColors[colorIdx + 1];
                     alpha1 = clr.toPDColor().getComponents()[0];
                     colorIdx++;
                 }
