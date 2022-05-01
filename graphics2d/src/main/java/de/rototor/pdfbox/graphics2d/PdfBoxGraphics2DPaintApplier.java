@@ -1124,6 +1124,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
             gfxState.setNonStrokingAlphaConstant(1f);
             gfxState.setStrokingAlphaConstant(1f);
             contentStream.setGraphicsStateParameters(gfxState);
+            //contentStream.transform(new Matrix(state.tf));
             contentStream.addRect(0, 0, bbox.getWidth(), bbox.getHeight());
             if (!USE_PATTERN)
             {
