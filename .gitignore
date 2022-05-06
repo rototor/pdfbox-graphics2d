@@ -4,3 +4,4 @@ graphics2d.iml
 /parent.iml
 /extended-tests/extended-tests.iml
 /pdfboxgraphics2d-parent.iml
+*.swp

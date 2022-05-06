@@ -15,6 +15,7 @@
  */
 package de.rototor.pdfbox.graphics2d;
 
+import de.rototor.pdfbox.graphics2d.IPdfBoxGraphics2DColorMapper.IColorMapperEnv;
 import de.rototor.pdfbox.graphics2d.IPdfBoxGraphics2DDrawControl.IDrawControlEnv;
 import de.rototor.pdfbox.graphics2d.IPdfBoxGraphics2DFontTextDrawer.IFontTextDrawerEnv;
 import de.rototor.pdfbox.graphics2d.IPdfBoxGraphics2DPaintApplier.IPaintEnv;
@@ -41,8 +42,22 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
-import java.awt.geom.*;
-import java.awt.image.*;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Arc2D;
+import java.awt.geom.Area;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Line2D;
+import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Path2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.PathIterator;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
+import java.awt.image.BufferedImageOp;
+import java.awt.image.ImageObserver;
+import java.awt.image.RenderedImage;
+import java.awt.image.WritableRaster;
 import java.awt.image.renderable.RenderableImage;
 import java.io.IOException;
 import java.text.AttributedCharacterIterator;
@@ -77,7 +92,7 @@ public class PdfBoxGraphics2D extends Graphics2D
     private Shape clipShape;
     private Color backgroundColor;
     private final CopyInfo copyInfo;
-    private final PDRectangle bbox;
+    final PDRectangle bbox;
 
     /**
      * Set a new color mapper.
@@ -93,7 +108,7 @@ public class PdfBoxGraphics2D extends Graphics2D
     /**
      * Set a new image encoder
      *
-     * @param imageEncoder the image encoder, which encodes a image as PDImageXForm.
+     * @param imageEncoder the image encoder, which encodes an image as PDImageXForm.
      */
     @SuppressWarnings({ "unused" })
     public void setImageEncoder(IPdfBoxGraphics2DImageEncoder imageEncoder)
@@ -106,7 +121,7 @@ public class PdfBoxGraphics2D extends Graphics2D
      * from the {@link IPdfBoxGraphics2DPaintApplier} and just extend the paint
      * mapping for custom paint.
      * <p>
-     * If the paint you map is a paint from a standard library and you can implement
+     * If the paint you map is a paint from a standard library, and you can implement
      * the mapping using reflection please feel free to send a pull request to
      * extend the default paint mapper.
      *
@@ -225,6 +240,10 @@ public class PdfBoxGraphics2D extends Graphics2D
         this.document = document;
         this.bbox = bbox;
 
+        renderingHints = new HashMap<RenderingHints.Key, Object>();
+        renderingHints.put(RenderingHints.KEY_FRACTIONALMETRICS,
+                RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+
         PDAppearanceStream appearance = new PDAppearanceStream(document);
         xFormObject = appearance;
         xFormObject.setResources(new PDResources());
@@ -252,9 +271,26 @@ public class PdfBoxGraphics2D extends Graphics2D
 
     }
 
-    /**
-     * @return the PDAppearanceStream which resulted in this graphics
-     */
+	/**
+	 * Sometimes you need to access the PDResources and add special resources to it
+	 * for some stuff (e.g. patterns of embedded PDFs or simmilar). For that you
+	 * need the PDResources associated with the XForm.
+	 *
+	 * It's identlical with getXFormObject().getResources(), with the difference
+	 * beeing that you can access it while the Graphics2D is not yet disposed.
+	 *
+	 * @return the PDResources of the resulting XForm
+	 */
+    public PDResources getResources()
+	{
+        return xFormObject.getResources();
+    }
+
+	/**
+	 * *AFTER* you have disposed() this Graphics2D you can access the XForm
+	 *
+	 * @return the PDFormXObject which resulted in this graphics
+	 */
     @SuppressWarnings("WeakerAccess")
     public PDFormXObject getXFormObject()
     {
@@ -440,12 +476,14 @@ public class PdfBoxGraphics2D extends Graphics2D
 
             if (shapeToDraw != null)
             {
-                walkShape(shapeToDraw);
-                PDShading pdShading = applyPaint(shapeToDraw);
-                if (pdShading != null)
-                    applyShadingAsColor(pdShading);
-
+                PaintApplyResult result = applyPaint(shapeToDraw);
                 applyStroke(stroke);
+
+                if (result.shading != null)
+                    applyShadingAsColor(result.shading);
+
+                if (!result.hasShapeBeenWalked)
+                    walkShape(shapeToDraw);
 
                 contentStream.stroke();
                 hasPathOnStream = false;
@@ -460,6 +498,11 @@ public class PdfBoxGraphics2D extends Graphics2D
             throwException(e);
         }
     }
+
+    /**
+     * Interal debugflag to see if an unkown stroke is mapped
+     */
+    private final static boolean ENABLE_DEBUG_UNKOWN_STROKE = false;
 
     /**
      * Internal usage only!
@@ -488,18 +531,34 @@ public class PdfBoxGraphics2D extends Graphics2D
             }
 
             AffineTransform tf = getCurrentEffectiveTransform();
+            float lineWidth = calculateTransformedLength(basicStroke.getLineWidth(), tf);
 
-            double scaleX = tf.getScaleX();
-            contentStream.setLineWidth((float) Math.abs(basicStroke.getLineWidth() * scaleX));
+            contentStream.setLineWidth(lineWidth);
+
             float[] dashArray = basicStroke.getDashArray();
             if (dashArray != null)
             {
                 for (int i = 0; i < dashArray.length; i++)
-                    dashArray[i] = (float) Math.abs(dashArray[i] * scaleX);
+                    dashArray[i] = calculateTransformedLength(dashArray[i], tf);
+
                 contentStream.setLineDashPattern(dashArray,
-                        (float) Math.abs(basicStroke.getDashPhase() * scaleX));
+                    calculateTransformedLength(basicStroke.getDashPhase(), tf));
             }
         }
+        else if (strokeToApply != null)
+        {
+            if (ENABLE_DEBUG_UNKOWN_STROKE)
+                System.out.println("PDFBoxGraphics2D: Can't handle Stroke " + strokeToApply);
+        }
+    }
+
+    private float calculateTransformedLength(float length, AffineTransform tf) {
+        // Represent stroke width as a horizontal line from origin to basicStroke.LineWidth.
+        Point2D.Float lengthVector = new Point2D.Float(length, 0);
+        // Apply the current transform to the horizontal line.
+        tf.deltaTransform(lengthVector, lengthVector);
+        // Calculate the length of the transformed line. This is the new, adjusted length.
+        return (float) Math.sqrt(lengthVector.x * lengthVector.x + lengthVector.y * lengthVector.y);
     }
 
     private AffineTransform getCurrentEffectiveTransform()
@@ -534,6 +593,11 @@ public class PdfBoxGraphics2D extends Graphics2D
 
     public void drawString(String str, float x, float y)
     {
+        /*
+         * Ignore empty strings, they can't be attributed. And are invisible anyway.
+         */
+        if (str.isEmpty())
+            return;
         AttributedString attributedString = new AttributedString(str);
         attributedString.addAttribute(TextAttribute.FONT, font);
         drawString(attributedString.getIterator(), x, y);
@@ -570,7 +634,7 @@ public class PdfBoxGraphics2D extends Graphics2D
         {
             if (bgcolor != null)
             {
-                contentStream.setNonStrokingColor(colorMapper.mapColor(contentStream, bgcolor));
+                contentStream.setNonStrokingColor(colorMapper.mapColor(bgcolor, colorMapperEnv));
                 walkShape(new Rectangle(x, y, width, height));
                 contentStream.fill();
             }
@@ -649,7 +713,7 @@ public class PdfBoxGraphics2D extends Graphics2D
              */
             if (bgcolor != null)
             {
-                contentStream.setNonStrokingColor(colorMapper.mapColor(contentStream, bgcolor));
+                contentStream.setNonStrokingColor(colorMapper.mapColor( bgcolor, colorMapperEnv));
                 walkShape(new Rectangle(dx1, dy1, width, height));
                 contentStream.fill();
             }
@@ -700,8 +764,8 @@ public class PdfBoxGraphics2D extends Graphics2D
             /*
              * If we can draw the text using fonts, we do this
              */
-            if (fontTextDrawer
-                    .canDrawText((AttributedCharacterIterator) iterator.clone(), fontDrawerEnv))
+            if (fontTextDrawer.canDrawText((AttributedCharacterIterator) iterator.clone(),
+                    fontDrawerEnv))
             {
                 drawStringUsingText(iterator, x, y);
             }
@@ -783,9 +847,9 @@ public class PdfBoxGraphics2D extends Graphics2D
         @Override
         public void applyPaint(Paint paint, Shape shapeToDraw) throws IOException
         {
-            PDShading pdShading = PdfBoxGraphics2D.this.applyPaint(paint, shapeToDraw);
-            if (pdShading != null)
-                applyShadingAsColor(pdShading);
+            PaintApplyResult result = PdfBoxGraphics2D.this.applyPaint(paint, shapeToDraw);
+            if (result.shading != null)
+                applyShadingAsColor(result.shading);
         }
 
         @Override
@@ -809,6 +873,7 @@ public class PdfBoxGraphics2D extends Graphics2D
         @Override
         public Graphics2D getCalculationGraphics()
         {
+            calcGfx.addRenderingHints(renderingHints);
             return calcGfx;
         }
 
@@ -852,9 +917,8 @@ public class PdfBoxGraphics2D extends Graphics2D
 
             if (shapeToFill != null)
             {
-                boolean useEvenOdd = walkShape(shapeToFill);
-                PDShading shading = applyPaint(shapeToFill);
-                if (shading != null)
+                PaintApplyResult result = applyPaint(shapeToFill);
+                if (result.shading != null)
                 {
                     /*
                      * NB: the shading fill doesn't work with shapes with zero or negative
@@ -867,18 +931,20 @@ public class PdfBoxGraphics2D extends Graphics2D
                          * But we apply the shading as color, we usually want to avoid that because it
                          * creates another nested XForm for that ...
                          */
-                        applyShadingAsColor(shading);
-                        fill(useEvenOdd);
+                        applyShadingAsColor(result.shading);
+                        walkAndFillFromApplyPaintResult(shapeToFill, result);
                     }
                     else
                     {
+                        boolean useEvenOdd = result.hasShapeBeenWalked ? result.useEvenOdd : walkShape(
+                                shapeToFill);
                         internalClip(useEvenOdd);
-                        contentStream.shadingFill(shading);
+                        contentStream.shadingFill(result.shading);
                     }
                 }
                 else
                 {
-                    fill(useEvenOdd);
+                    walkAndFillFromApplyPaintResult(shapeToFill, result);
                 }
                 hasPathOnStream = false;
             }
@@ -891,6 +957,21 @@ public class PdfBoxGraphics2D extends Graphics2D
         {
             throwException(e);
         }
+    }
+
+    private void walkAndFillFromApplyPaintResult(Shape shapeToFill, PaintApplyResult result)
+            throws IOException
+    {
+        if (result.hasShapeBeenWalked)
+            fill(result.useEvenOdd);
+        else
+            walkAndFillShape(shapeToFill);
+    }
+
+    private void walkAndFillShape(Shape shapeToFill) throws IOException
+    {
+        boolean useEvenOdd = walkShape(shapeToFill);
+        fill(useEvenOdd);
     }
 
     private void fill(boolean useEvenOdd) throws IOException
@@ -934,19 +1015,44 @@ public class PdfBoxGraphics2D extends Graphics2D
         contentStream.setStrokingColor(patternColor);
     }
 
-    private PDShading applyPaint(Shape shapeToDraw) throws IOException
+    private PaintApplyResult applyPaint(Shape shapeToDraw) throws IOException
     {
         return applyPaint(paint, shapeToDraw);
     }
 
     private final PaintEnvImpl paintEnv = new PaintEnvImpl();
+    final IColorMapperEnv colorMapperEnv = new IColorMapperEnv() {
+        @Override
+        public PDPageContentStream getContentStream() {
+            return contentStream;
+        }
 
-    private PDShading applyPaint(Paint paintToApply, Shape shapeToDraw) throws IOException
+        @Override
+        public PDResources getResources() {
+            return PdfBoxGraphics2D.this.getResources();
+        }
+    };
+
+    private static class PaintApplyResult
+    {
+        PDShading shading;
+        boolean hasShapeBeenWalked;
+        boolean useEvenOdd;
+    }
+
+    private final PaintApplyResult paintApplyResult = new PaintApplyResult();
+
+    private PaintApplyResult applyPaint(Paint paintToApply, Shape shapeToDraw) throws IOException
     {
         AffineTransform tf = new AffineTransform(baseTransform);
         tf.concatenate(transform);
         paintEnv.shapeToDraw = shapeToDraw;
-        return paintApplier.applyPaint(paintToApply, contentStream, tf, paintEnv);
+        paintEnv.hasShapeBeenWalked = false;
+        paintApplyResult.shading = paintApplier.applyPaint(paintToApply, contentStream, tf,
+                paintEnv);
+        paintApplyResult.hasShapeBeenWalked = paintEnv.hasShapeBeenWalked;
+        paintApplyResult.useEvenOdd = paintEnv.useEvenOdd;
+        return paintApplyResult;
     }
 
     public boolean hit(Rectangle rect, Shape s, boolean onStroke)
@@ -974,7 +1080,7 @@ public class PdfBoxGraphics2D extends Graphics2D
         this.stroke = stroke;
     }
 
-    private Map<RenderingHints.Key, Object> renderingHints = new HashMap<RenderingHints.Key, Object>();
+    private final Map<RenderingHints.Key, Object> renderingHints;
 
     public void setRenderingHint(RenderingHints.Key hintKey, Object hintValue)
     {
@@ -1028,51 +1134,49 @@ public class PdfBoxGraphics2D extends Graphics2D
         }
         catch (IOException e)
         {
-            throw new RuntimeException(e);
+            throwException(e);
+            return null;
         }
     }
 
-	/**
-	 * Draw on the Graphics2D and enclose the drawing command with a BMC/EMC content
-	 * marking pair. See the PDF Spec about "Marked Content" for details.
-	 * 
-	 * @param tagName
-	 *            A COSName for to tag the marked content
-	 * @param drawer
-	 *            is called with a (child) graphics to draw on. Please do *not*
-	 *            dispose() this graphics. Just draw on it. Any state changes on the given graphics will be reset after the
-     *            drawing is finished
-	 */
-    public void drawInMarkedContentSequence(COSName tagName, IPdfBoxGraphics2DMarkedContentDrawer drawer)
+    /**
+     * Draw on the Graphics2D and enclose the drawing command with a BMC/EMC content
+     * marking pair. See the PDF Spec about "Marked Content" for details.
+     *
+     * @param tagName A COSName for to tag the marked content
+     * @param drawer  is called with a (child) graphics to draw on. Please do *not*
+     *                dispose() this graphics. Just draw on it. Any state changes on the given graphics will be reset after the
+     *                drawing is finished
+     */
+    public void drawInMarkedContentSequence(COSName tagName,
+            IPdfBoxGraphics2DMarkedContentDrawer drawer)
     {
-		try
+        try
         {
-			contentStream.beginMarkedContent(tagName);
+            contentStream.beginMarkedContent(tagName);
             PdfBoxGraphics2D child = create();
             drawer.draw(child);
             child.dispose();
             contentStream.endMarkedContent();
-		}
-		catch (IOException e)
+        }
+        catch (IOException e)
         {
-			throw new RuntimeException(e);
-		}
+            throwException(e);
+        }
     }
 
-	/**
-	 * Draw on the Graphics2D and enclose the drawing command with a BDC/EMC content
-	 * marking pair. See the PDF Spec about "Marked Content" for details.
-	 *
-	 * @param tagName
-	 *            A COSName for to tag the marked content
-	 * @param properties
-	 *            The properties to put by the marked sequence
-	 * @param drawer
-	 *            is called with a (child) graphics to draw on. Please do *not*
-	 *            dispose() this graphics. Just draw on it. Any state changes on the
-	 *            given graphics will be reset after the drawing is finished
-	 */
-    public void drawInMarkedContentSequence(COSName tagName, PDPropertyList properties, IPdfBoxGraphics2DMarkedContentDrawer drawer)
+    /**
+     * Draw on the Graphics2D and enclose the drawing command with a BDC/EMC content
+     * marking pair. See the PDF Spec about "Marked Content" for details.
+     *
+     * @param tagName    A COSName for to tag the marked content
+     * @param properties The properties to put by the marked sequence
+     * @param drawer     is called with a (child) graphics to draw on. Please do *not*
+     *                   dispose() this graphics. Just draw on it. Any state changes on the
+     *                   given graphics will be reset after the drawing is finished
+     */
+    public void drawInMarkedContentSequence(COSName tagName, PDPropertyList properties,
+            IPdfBoxGraphics2DMarkedContentDrawer drawer)
     {
         try
         {
@@ -1084,10 +1188,9 @@ public class PdfBoxGraphics2D extends Graphics2D
         }
         catch (IOException e)
         {
-            throw new RuntimeException(e);
+            throwException(e);
         }
     }
-
 
     public PdfBoxGraphics2D create(int x, int y, int width, int height)
     {
@@ -1145,11 +1248,11 @@ public class PdfBoxGraphics2D extends Graphics2D
         }
         catch (IOException e)
         {
-            throw new RuntimeException(e);
+            return throwException(e);
         }
         catch (FontFormatException e)
         {
-            throw new RuntimeException(e);
+            return throwException(e);
         }
     }
 
@@ -1210,6 +1313,11 @@ public class PdfBoxGraphics2D extends Graphics2D
     }
 
     /**
+     * Internal Debug flag.
+     */
+    private final static boolean ENABLE_DEBUG_INTERNAL_CLIP = false;
+
+    /**
      * Perform a clip, but only if we really have an active clipping path
      *
      * @param useEvenOdd true when we should use the evenOdd rule.
@@ -1223,6 +1331,13 @@ public class PdfBoxGraphics2D extends Graphics2D
             else
                 contentStream.clip();
             hasPathOnStream = false;
+        }
+        else
+        {
+            if (ENABLE_DEBUG_INTERNAL_CLIP)
+            {
+                System.out.println("No Clip to fill: " + useEvenOdd);
+            }
         }
     }
 
@@ -1252,7 +1367,7 @@ public class PdfBoxGraphics2D extends Graphics2D
      * closed?
      * <p>
      * We need this flag to avoid to clip twice if both the plaint applyer needs to
-     * clip and we have some clipping. If at the end we try to clip with an empty
+     * clip, and we have some clipping. If at the end we try to clip with an empty
      * path, then Acrobat Reader does not like that and draws nothing.
      */
     private boolean hasPathOnStream = false;
@@ -1351,7 +1466,12 @@ public class PdfBoxGraphics2D extends Graphics2D
         return sb.toString();
     }
 
-    private void throwException(Exception e)
+    /**
+     * Internal helper function
+     *
+     * @param e exception to rethrow
+     */
+    static <T> T throwException(Exception e)
     {
         throw new RuntimeException(e);
     }
@@ -1525,12 +1645,25 @@ public class PdfBoxGraphics2D extends Graphics2D
 
     private class PaintEnvImpl implements IPaintEnv
     {
-        public Shape shapeToDraw;
+        private Shape shapeToDraw;
+        private boolean hasShapeBeenWalked;
+        private boolean useEvenOdd;
 
         @Override
         public Shape getShapeToDraw()
         {
             return shapeToDraw;
+        }
+
+        @Override
+        public void ensureShapeIsWalked() throws IOException
+        {
+            if (shapeToDraw == null)
+                return;
+            if (hasShapeBeenWalked)
+                return;
+            hasShapeBeenWalked = true;
+            useEvenOdd = walkShape(shapeToDraw);
         }
 
         @Override

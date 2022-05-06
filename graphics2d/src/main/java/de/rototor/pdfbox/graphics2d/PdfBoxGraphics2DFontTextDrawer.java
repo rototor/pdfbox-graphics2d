@@ -524,7 +524,8 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
             {
                 try
                 {
-                    return (int) (pdFont.getStringWidth(str) / 1000 * f.getSize2D());
+                    float width = pdFont.getStringWidth(str) / 1000 * f.getSize2D();
+                    return (int) (width + .5f);
                 }
                 catch (IOException e)
                 {

@@ -51,14 +51,8 @@ class PdfBoxGraphics2DTestBase
             // noinspection ResultOfMethodCallIgnored
             parentDir.mkdirs();
 
-            int scale = 2;
-            BufferedImage image = new BufferedImage(400 * scale, 400 * scale,
-                    BufferedImage.TYPE_4BYTE_ABGR);
-            Graphics2D imageGraphics = image.createGraphics();
-            imageGraphics.scale(scale, scale);
-            exporter.draw(imageGraphics);
-            imageGraphics.dispose();
-            ImageIO.write(image, "PNG", new File(parentDir, name + ".png"));
+            int scale = 4;
+            exportAsPNG(name, exporter, parentDir, scale);
 
             for (Mode m : Mode.values())
             {
@@ -79,17 +73,17 @@ class PdfBoxGraphics2DTestBase
                 {
                 case FontTextIfPossible:
                     fontTextDrawer = new PdfBoxGraphics2DFontTextDrawer();
-                    registerFots(fontTextDrawer);
+                    registerFonts(fontTextDrawer);
                     break;
                 case DefaultFontText:
                 {
                     fontTextDrawer = new PdfBoxGraphics2DFontTextDrawerDefaultFonts();
-                    registerFots(fontTextDrawer);
+                    registerFonts(fontTextDrawer);
                     break;
                 }
                 case ForceFontText:
                     fontTextDrawer = new PdfBoxGraphics2DFontTextForcedDrawer();
-                    registerFots(fontTextDrawer);
+                    registerFonts(fontTextDrawer);
                     fontTextDrawer.registerFont("Arial", pdArial);
                     break;
                 case DefaultVectorized:
@@ -127,7 +121,19 @@ class PdfBoxGraphics2DTestBase
         }
     }
 
-    private void registerFots(PdfBoxGraphics2DFontTextDrawer fontTextDrawer)
+    protected void exportAsPNG(String name, GraphicsExporter exporter, File parentDir, int scale)
+            throws IOException, FontFormatException
+    {
+        BufferedImage image = new BufferedImage(400 * scale, 400 * scale,
+                BufferedImage.TYPE_4BYTE_ABGR);
+        Graphics2D imageGraphics = image.createGraphics();
+        imageGraphics.scale(scale, scale);
+        exporter.draw(imageGraphics);
+        imageGraphics.dispose();
+        ImageIO.write(image, "PNG", new File(parentDir, name + ".png"));
+    }
+
+    private void registerFonts(PdfBoxGraphics2DFontTextDrawer fontTextDrawer)
     {
         fontTextDrawer.registerFont(new File(
                 "src/test/resources/de/rototor/pdfbox/graphics2d/DejaVuSerifCondensed.ttf"));

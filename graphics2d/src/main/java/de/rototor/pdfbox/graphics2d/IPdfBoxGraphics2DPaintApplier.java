@@ -79,5 +79,13 @@ public interface IPdfBoxGraphics2DPaintApplier
          * returned if no shape is known.
          */
         Shape getShapeToDraw();
+
+        /**
+         * Call this to ensure that the current shape has been walked on the content stream. You are
+         * not allowed to do any graphics state changes after this, as this would be illegal in PDF.
+         * (But most PDF reader render this fine anyway...)<br>
+         * This mostly only needed for ShadedFills
+         */
+        void ensureShapeIsWalked() throws IOException;
     }
 }

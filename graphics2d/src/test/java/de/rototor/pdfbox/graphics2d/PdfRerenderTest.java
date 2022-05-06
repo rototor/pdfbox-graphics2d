@@ -34,8 +34,13 @@ public class PdfRerenderTest
     {
         rerenderPDF("heart.pdf");
         rerenderPDF("barChart.pdf");
-        rerenderPDF("compuserver_msn_Ford_Focus.pdf");
         rerenderPDF("patternfill.pdf");
+    }
+
+    @Test
+    public void testPDFRerenderFordFocus() throws IOException
+    {
+        rerenderPDF("compuserver_msn_Ford_Focus.pdf");
     }
 
     @Test
@@ -71,8 +76,8 @@ public class PdfRerenderTest
 
                 PDFRenderer pdfRenderer = new PDFRenderer(sourceDoc);
                 float targetDPI = 300;
-                BufferedImage bufferedImage = pdfRenderer
-                        .renderImage(sourceDoc.getPages().indexOf(sourcePage), targetDPI / 72.0f);
+                BufferedImage bufferedImage = pdfRenderer.renderImage(
+                        sourceDoc.getPages().indexOf(sourcePage), targetDPI / 72.0f);
 
                 PDImageXObject image;
                 if (lossless)
