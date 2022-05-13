@@ -662,7 +662,14 @@ public class PdfBoxGraphics2D extends Graphics2D
         if (xform != null)
             tf.concatenate((AffineTransform) xform.clone());
 
-        PDImageXObject pdImage = imageEncoder.encodeImage(document, contentStream, img);
+        HashMap<Image,PDImageXObject> seenImages = (HashMap) renderingHints.get(RenderingHint.IMAGE_SHARING_MAP);
+        PDImageXObject pdImage = seenImages != null ? seenImages.get(img) : null;
+        if (pdImage == null)
+        {
+            pdImage = imageEncoder.encodeImage(document, contentStream, img);
+            if (seenImages != null) seenImages.put(img, pdImage);
+        }
+        
         try
         {
             contentStreamSaveState();
@@ -1706,6 +1713,23 @@ public class PdfBoxGraphics2D extends Graphics2D
         public Color getXORMode()
         {
             return xorColor;
+        }
+    }
+
+    public static class RenderingHint extends RenderingHints.Key
+    {
+        public static final RenderingHint IMAGE_SHARING_MAP = new RenderingHint(1);
+        public RenderingHint(int key)
+        {
+            super (key);
+        }
+        public boolean isCompatibleValue(Object o)
+        {
+            switch (intKey())
+            {
+                case 1: return o instanceof HashMap/*<Image,PDImageXObject>*/;
+                default: return true;
+            }
         }
     }
 }

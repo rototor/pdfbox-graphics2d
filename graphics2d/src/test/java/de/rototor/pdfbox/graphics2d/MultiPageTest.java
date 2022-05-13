@@ -5,6 +5,7 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.util.Matrix;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtilities;
@@ -34,6 +35,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import javax.imageio.ImageIO;
 
 public class MultiPageTest {
 	@Test
@@ -43,13 +46,18 @@ public class MultiPageTest {
 		parentDir.mkdirs();
 		File targetPDF = new File(parentDir, "multipage.pdf");
 		PDDocument document = new PDDocument();
+        HashMap<Image, PDImageXObject> seenImages = new HashMap();
+        Image pageLogo = ImageIO.read(
+                        MultiPageTest.class.getResourceAsStream("Rose-ProPhoto.jpg"));
 		for (int i = 0; i < 6; i++) {
 			PDPage page = new PDPage(PDRectangle.A4);
 			document.addPage(page);
 
 			PDPageContentStream contentStream = new PDPageContentStream(document, page);
 			PdfBoxGraphics2D pdfBoxGraphics2D = new PdfBoxGraphics2D(document, 800, 400);
+            pdfBoxGraphics2D.setRenderingHint(PdfBoxGraphics2D.RenderingHint.IMAGE_SHARING_MAP, seenImages);
 			drawOnGraphics(pdfBoxGraphics2D, i);
+            pdfBoxGraphics2D.drawImage(pageLogo, 0, 0, 75, 50, null);
 			pdfBoxGraphics2D.dispose();
 
 			PDFormXObject appearanceStream = pdfBoxGraphics2D.getXFormObject();
