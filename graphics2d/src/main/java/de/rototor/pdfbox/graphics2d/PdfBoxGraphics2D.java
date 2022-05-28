@@ -258,6 +258,7 @@ public class PdfBoxGraphics2D extends Graphics2D
             this.fontTextDrawer = parentGfx.fontTextDrawer;
             this.imageEncoder = parentGfx.imageEncoder;
             this.paintApplier = parentGfx.paintApplier;
+            this.drawControl = parentGfx.drawControl;
         }
 
         baseTransform = new AffineTransform();
@@ -271,26 +272,26 @@ public class PdfBoxGraphics2D extends Graphics2D
 
     }
 
-	/**
-	 * Sometimes you need to access the PDResources and add special resources to it
-	 * for some stuff (e.g. patterns of embedded PDFs or simmilar). For that you
-	 * need the PDResources associated with the XForm.
-	 *
-	 * It's identlical with getXFormObject().getResources(), with the difference
-	 * beeing that you can access it while the Graphics2D is not yet disposed.
-	 *
-	 * @return the PDResources of the resulting XForm
-	 */
+    /**
+     * Sometimes you need to access the PDResources and add special resources to it
+     * for some stuff (e.g. patterns of embedded PDFs or simmilar). For that you
+     * need the PDResources associated with the XForm.
+     * <p>
+     * It's identlical with getXFormObject().getResources(), with the difference
+     * beeing that you can access it while the Graphics2D is not yet disposed.
+     *
+     * @return the PDResources of the resulting XForm
+     */
     public PDResources getResources()
-	{
+    {
         return xFormObject.getResources();
     }
 
-	/**
-	 * *AFTER* you have disposed() this Graphics2D you can access the XForm
-	 *
-	 * @return the PDFormXObject which resulted in this graphics
-	 */
+    /**
+     * *AFTER* you have disposed() this Graphics2D you can access the XForm
+     *
+     * @return the PDFormXObject which resulted in this graphics
+     */
     @SuppressWarnings("WeakerAccess")
     public PDFormXObject getXFormObject()
     {
@@ -542,7 +543,7 @@ public class PdfBoxGraphics2D extends Graphics2D
                     dashArray[i] = calculateTransformedLength(dashArray[i], tf);
 
                 contentStream.setLineDashPattern(dashArray,
-                    calculateTransformedLength(basicStroke.getDashPhase(), tf));
+                        calculateTransformedLength(basicStroke.getDashPhase(), tf));
             }
         }
         else if (strokeToApply != null)
@@ -552,7 +553,8 @@ public class PdfBoxGraphics2D extends Graphics2D
         }
     }
 
-    private float calculateTransformedLength(float length, AffineTransform tf) {
+    private float calculateTransformedLength(float length, AffineTransform tf)
+    {
         // Represent stroke width as a horizontal line from origin to basicStroke.LineWidth.
         Point2D.Float lengthVector = new Point2D.Float(length, 0);
         // Apply the current transform to the horizontal line.
@@ -713,7 +715,7 @@ public class PdfBoxGraphics2D extends Graphics2D
              */
             if (bgcolor != null)
             {
-                contentStream.setNonStrokingColor(colorMapper.mapColor( bgcolor, colorMapperEnv));
+                contentStream.setNonStrokingColor(colorMapper.mapColor(bgcolor, colorMapperEnv));
                 walkShape(new Rectangle(dx1, dy1, width, height));
                 contentStream.fill();
             }
@@ -1021,14 +1023,17 @@ public class PdfBoxGraphics2D extends Graphics2D
     }
 
     private final PaintEnvImpl paintEnv = new PaintEnvImpl();
-    final IColorMapperEnv colorMapperEnv = new IColorMapperEnv() {
+    final IColorMapperEnv colorMapperEnv = new IColorMapperEnv()
+    {
         @Override
-        public PDPageContentStream getContentStream() {
+        public PDPageContentStream getContentStream()
+        {
             return contentStream;
         }
 
         @Override
-        public PDResources getResources() {
+        public PDResources getResources()
+        {
             return PdfBoxGraphics2D.this.getResources();
         }
     };
