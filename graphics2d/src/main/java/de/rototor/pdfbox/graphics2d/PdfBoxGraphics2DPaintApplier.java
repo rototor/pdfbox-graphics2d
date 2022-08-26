@@ -100,6 +100,13 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
             assert pdExtendedGraphicsState != null;
         }
 
+        /**
+         * Setup a mask for the next fill/stroke operation
+         *
+         * @param image       the mask image. It will be used to generate a grayscale image, that
+         *                    will directly map to the alpha channel.
+         * @param boundingBox The bounding box of the masking. I.e. where to apply the mask
+         */
         protected void setupLuminosityMasking(BufferedImage image, PDRectangle boundingBox)
                 throws IOException
         {
@@ -108,10 +115,23 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         }
 
         /**
+         * Setup a mask for the next fill/stroke operation. It will use the BBox of the
+         * formXObject.
+         *
+         * @param formXObject the mask form. It will be used to generate a grayscale image, that
+         *                    will directly map to the alpha channel.
+         */
+        protected void setupLuminosityMasking(PDFormXObject formXObject) throws IOException
+        {
+            setupLuminosityMasking(formXObject, formXObject.getBBox());
+        }
+
+        /**
          * Setup a mask for the next fill/stroke operation.
          *
          * @param maskXObject a PDXObject (form or image) which generates a grayscale image for the masking.
-         *                    This is an alhpa mask
+         *                    This image will directly map to the alpha channel.
+         * @param boundingBox The bounding box of the masking. I.e. where to apply the mask
          */
         protected void setupLuminosityMasking(PDXObject maskXObject, PDRectangle boundingBox)
                 throws IOException
@@ -227,6 +247,9 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         }
     }
 
+    /**
+     * Apply paint and graphic state
+     */
     protected PDShading applyPaint(Paint paint, PaintApplierState state) throws IOException
     {
         applyComposite(state);
