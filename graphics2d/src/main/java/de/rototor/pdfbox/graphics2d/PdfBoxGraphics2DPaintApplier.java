@@ -62,8 +62,12 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         final static IdentityShadingMaskModifier INSTANCE = new IdentityShadingMaskModifier();
     }
 
+    /**
+     * Internal State of the PaintApplyer. Allows derived classes to
+     * change some states.
+     */
     @SuppressWarnings("WeakerAccess")
-    protected static class PaintApplierState
+    public static class PaintApplierState
     {
         protected PDDocument document;
         protected PDPageContentStream contentStream;
@@ -80,7 +84,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         private COSDictionary dictExtendedState;
         private IPaintEnv env;
         private IPdfBoxGraphics2DColorMapper.IColorMapperEnv colorMapperEnv;
-        public AffineTransform tf;
+        AffineTransform tf;
         /**
          * This transform is only set, when we apply a nested
          * paint (e.g. a TilingPattern's paint)
@@ -107,7 +111,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
          *                    will directly map to the alpha channel.
          * @param boundingBox The bounding box of the masking. I.e. where to apply the mask
          */
-        protected void setupLuminosityMasking(BufferedImage image, PDRectangle boundingBox)
+        public void setupLuminosityMasking(BufferedImage image, PDRectangle boundingBox)
                 throws IOException
         {
             PDImageXObject pdMask = LosslessFactory.createFromImage(document, image);
@@ -121,7 +125,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
          * @param formXObject the mask form. It will be used to generate a grayscale image, that
          *                    will directly map to the alpha channel.
          */
-        protected void setupLuminosityMasking(PDFormXObject formXObject) throws IOException
+        public void setupLuminosityMasking(PDFormXObject formXObject) throws IOException
         {
             setupLuminosityMasking(formXObject, formXObject.getBBox());
         }
@@ -133,7 +137,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
          *                    This image will directly map to the alpha channel.
          * @param boundingBox The bounding box of the masking. I.e. where to apply the mask
          */
-        protected void setupLuminosityMasking(PDXObject maskXObject, PDRectangle boundingBox)
+        public void setupLuminosityMasking(PDXObject maskXObject, PDRectangle boundingBox)
                 throws IOException
         {
             ensureExtendedState();

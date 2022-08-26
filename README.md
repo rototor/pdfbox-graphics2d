@@ -54,7 +54,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.39</version>
+	<version>0.40</version>
 </dependency>
 ```
 
@@ -323,6 +323,11 @@ graphs
 (which are draw using Graphics2D using this library) with &lt;object&gt; HTML tags.
 
 ## Changes
+
+Version 0.40:
+
+- Messed up the access permissions for `PdfBoxGraphics2DPaintApplier.PaintApplierState::setupLuminosityMasking`. They are
+  now accessible. 
 
 Version 0.39:
 
