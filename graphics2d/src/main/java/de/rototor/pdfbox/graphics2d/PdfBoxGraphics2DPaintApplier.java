@@ -7,12 +7,16 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.common.COSObjectable;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.common.PDStream;
 import org.apache.pdfbox.pdmodel.common.function.PDFunctionType3;
+import org.apache.pdfbox.pdmodel.graphics.PDXObject;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColorSpace;
 import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceGray;
 import org.apache.pdfbox.pdmodel.graphics.color.PDPattern;
 import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
+import org.apache.pdfbox.pdmodel.graphics.form.PDTransparencyGroup;
+import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.graphics.pattern.PDShadingPattern;
 import org.apache.pdfbox.pdmodel.graphics.pattern.PDTilingPattern;
@@ -95,6 +99,62 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
             }
             assert pdExtendedGraphicsState != null;
         }
+
+        protected void setupLuminosityMasking(BufferedImage image, PDRectangle boundingBox)
+                throws IOException
+        {
+            PDImageXObject pdMask = LosslessFactory.createFromImage(document, image);
+            setupLuminosityMasking(pdMask, boundingBox);
+        }
+
+        /**
+         * Setup a mask for the next fill/stroke operation.
+         *
+         * @param maskXObject a PDXObject (form or image) which generates a grayscale image for the masking.
+         *                    This is an alhpa mask
+         */
+        protected void setupLuminosityMasking(PDXObject maskXObject, PDRectangle boundingBox)
+                throws IOException
+        {
+            ensureExtendedState();
+            pdExtendedGraphicsState.setAlphaSourceFlag(false);
+            pdExtendedGraphicsState.setNonStrokingAlphaConstant(null);
+            pdExtendedGraphicsState.setStrokingAlphaConstant(null);
+
+            PDTransparencyGroup groupXForm = new PDTransparencyGroup(document);
+            groupXForm.setResources(new PDResources());
+            COSDictionary groupDict = new COSDictionary();
+            groupDict.setItem(COSName.S, COSName.TRANSPARENCY);
+            groupDict.setItem(COSName.CS, COSName.DEVICEGRAY);
+            groupDict.setItem(COSName.TYPE, COSName.GROUP);
+            groupXForm.getCOSObject().setItem(COSName.GROUP, groupDict);
+            groupXForm.setBBox(boundingBox);
+            groupXForm.setFormType(1);
+            resources.add(groupXForm);
+
+            PDPageContentStream grpContentStream = new PDPageContentStream(document, groupXForm,
+                    groupXForm.getStream().createOutputStream(COSName.FLATE_DECODE));
+            if (maskXObject instanceof PDFormXObject)
+            {
+                grpContentStream.drawForm((PDFormXObject) maskXObject);
+            }
+            else if (maskXObject instanceof PDImageXObject)
+            {
+                Matrix matrix = new Matrix();
+                PDImageXObject imageXObject = (PDImageXObject) maskXObject;
+                matrix.scale(boundingBox.getWidth(), boundingBox.getHeight());
+                grpContentStream.drawImage(imageXObject, matrix);
+            }
+
+            grpContentStream.close();
+
+            COSDictionary mask = new COSDictionary();
+            mask.setItem(COSName.G, groupXForm);
+            mask.setItem(COSName.S, COSName.LUMINOSITY);
+            mask.setItem(COSName.TYPE, COSName.MASK);
+
+            dictExtendedState.setItem(COSName.SMASK, mask);
+        }
     }
 
     private final ExtGStateCache extGStateCache = new ExtGStateCache();
@@ -167,7 +227,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         }
     }
 
-    private PDShading applyPaint(Paint paint, PaintApplierState state) throws IOException
+    protected PDShading applyPaint(Paint paint, PaintApplierState state) throws IOException
     {
         applyComposite(state);
 
