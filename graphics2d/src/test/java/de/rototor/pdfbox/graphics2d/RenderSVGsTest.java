@@ -29,6 +29,7 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase
     @Test
     public void testSVGs() throws IOException
     {
+        renderSVG("focalpoint_radial_sample.svg", 100);
         renderSVG("tux_colored.svg", 0.3);
         renderSVG("tux.svg", 0.3);
         renderSVG("barChart.svg", 0.45);

@@ -486,4 +486,80 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase
         });
     }
 
+    @Test
+    public void testRadialFocialPointTransparency()
+    {
+        exportGraphic("simple", "radialFocialPointTransparency", new GraphicsExporter()
+        {
+            @Override
+            public void draw(Graphics2D gfx)
+            {
+                drawFocialRadialWithTransparency(gfx, 100, 100, 100);
+                drawFocialRadialWithTransparency(gfx, 200, 200, 20);
+                drawFocialRadialWithTransparency(gfx, 250, 200, 150);
+            }
+        });
+    }
+
+    @Test
+    public void testRadialFocialPointSolid()
+    {
+        exportGraphic("simple", "radialFocialPointSolid", new GraphicsExporter()
+        {
+            @Override
+            public void draw(Graphics2D gfx)
+            {
+                drawFocialRadialSolid(gfx, 100, 100, 100);
+                drawFocialRadialSolid(gfx, 200, 200, 20);
+                drawFocialRadialSolid(gfx, 250, 200, 150);
+            }
+        });
+    }
+
+    private static void drawFocialRadialWithTransparency(Graphics2D g2d, float x, float y,
+            int diameter)
+    {
+        Composite cRestore = g2d.getComposite();
+        AffineTransform tRestore = g2d.getTransform();
+        g2d.translate(x, y);
+        g2d.setColor(Color.RED);
+        g2d.fillOval(0, 0, diameter, diameter);
+
+        // Setup radial gradient
+        Point2D center = new Point2D.Float(diameter / 2f, diameter / 2f);
+        float radius = diameter / 2f;
+        Point2D focus = new Point2D.Float((int) (diameter * .3), (int) (diameter * .3));
+        float[] dist = { 0.0f, .75f, 1f };
+        Color c = Color.WHITE;
+        Color transparent = new Color(c.getRed(), c.getGreen(), c.getBlue(), 0);
+        Color[] colors = { c, transparent, Color.BLACK };
+        RadialGradientPaint p = new RadialGradientPaint(center, radius, focus, dist, colors,
+                MultipleGradientPaint.CycleMethod.NO_CYCLE);
+        g2d.setPaint(p);
+        g2d.fillOval(0, 0, diameter, diameter);
+
+        g2d.setComposite(cRestore);
+        g2d.setTransform(tRestore);
+    }
+
+    private static void drawFocialRadialSolid(Graphics2D g2d, float x, float y, int diameter)
+    {
+        Composite cRestore = g2d.getComposite();
+        AffineTransform tRestore = g2d.getTransform();
+        g2d.translate(x, y);
+
+        // Setup radial gradient
+        Point2D center = new Point2D.Float(diameter / 2f, diameter / 2f);
+        float radius = diameter / 2f;
+        Point2D focus = new Point2D.Float((int) (diameter * .3), (int) (diameter * .3));
+        float[] dist = { 0.0f, .75f, 1f };
+        Color[] colors = { Color.RED, Color.WHITE, Color.BLACK };
+        RadialGradientPaint p = new RadialGradientPaint(center, radius, focus, dist, colors,
+                MultipleGradientPaint.CycleMethod.NO_CYCLE);
+        g2d.setPaint(p);
+        g2d.fillOval(0, 0, diameter, diameter);
+
+        g2d.setComposite(cRestore);
+        g2d.setTransform(tRestore);
+    }
 }
