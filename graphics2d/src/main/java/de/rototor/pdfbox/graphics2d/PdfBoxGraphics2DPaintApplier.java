@@ -800,11 +800,11 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 
         COSArray coords = new COSArray();
 
-        coords.add(new COSFloat((float) centerPoint.getX()));
-        coords.add(new COSFloat((float) centerPoint.getY()));
-        coords.add(new COSFloat(0));
         coords.add(new COSFloat((float) focusPoint.getX()));
         coords.add(new COSFloat((float) focusPoint.getY()));
+        coords.add(new COSFloat(0));
+        coords.add(new COSFloat((float) centerPoint.getX()));
+        coords.add(new COSFloat((float) centerPoint.getY()));
         coords.add(new COSFloat(radius));
         shading.setCoords(coords);
 
