@@ -1481,6 +1481,7 @@ public class PdfBoxGraphics2D extends Graphics2D
         throw new RuntimeException(e);
     }
 
+    @Override
     public void copyArea(int x, int y, int width, int height, int dx, int dy)
     {
         /*
@@ -1489,14 +1490,22 @@ public class PdfBoxGraphics2D extends Graphics2D
         throw new IllegalStateException("copyArea() not possible!");
     }
 
+    @Override
     public void drawLine(int x1, int y1, int x2, int y2)
     {
         draw(new Line2D.Double(x1, y1, x2, y2));
     }
 
+    @Override
     public void fillRect(int x, int y, int width, int height)
     {
         fill(new Rectangle(x, y, width, height));
+    }
+
+    @Override
+    public void drawRect(int x, int y, int width, int height)
+    {
+        draw(new Rectangle(x, y, width, height));
     }
 
     public void clearRect(int x, int y, int width, int height)
