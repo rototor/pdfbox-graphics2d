@@ -324,6 +324,9 @@ graphs
 
 ## Changes
 
+Version 0.42 (not yet released):
+- Upgraded PDFBox to 2.0.27
+
 Version 0.41:
 - #45 Copy & paste error in drawImage() call forwarding. sy1 should be passed for sy1, not sy2... Thanks @fransbouwmans for pointing this out. This affected one 
   specifc drawImage() overload. 
