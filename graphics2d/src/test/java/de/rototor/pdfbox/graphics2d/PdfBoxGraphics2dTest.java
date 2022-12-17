@@ -304,6 +304,29 @@ public class PdfBoxGraphics2dTest extends PdfBoxGraphics2DTestBase
     }
 
     @Test
+    public void testImageInterpolation()
+    {
+        exportGraphic("imageenc", "imageinterpolation", new GraphicsExporter()
+        {
+            @Override
+            public void draw(Graphics2D gfx) throws IOException
+            {
+                BufferedImage img2 = ImageIO.read(
+                        PdfBoxGraphics2dTest.class.getResourceAsStream("pixeltest.png"));
+                gfx.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                        RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                gfx.drawImage(img2, 30, 10, 75, 50, null);
+                gfx.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                        RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                gfx.drawImage(img2, 30, 90, 75, 50, null);
+                gfx.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+                gfx.drawImage(img2, 30, 160, 75, 50, null);
+            }
+        });
+    }
+
+    @Test
     public void testEvenOddRules()
     {
 

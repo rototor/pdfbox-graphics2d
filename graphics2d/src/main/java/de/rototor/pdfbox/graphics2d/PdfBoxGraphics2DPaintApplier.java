@@ -1,13 +1,19 @@
 package de.rototor.pdfbox.graphics2d;
 
-import org.apache.pdfbox.cos.*;
+import org.apache.pdfbox.cos.COSArray;
+import org.apache.pdfbox.cos.COSBase;
+import org.apache.pdfbox.cos.COSBoolean;
+import org.apache.pdfbox.cos.COSDictionary;
+import org.apache.pdfbox.cos.COSFloat;
+import org.apache.pdfbox.cos.COSInteger;
+import org.apache.pdfbox.cos.COSName;
+import org.apache.pdfbox.cos.COSStream;
 import org.apache.pdfbox.multipdf.PDFCloneUtility;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.common.COSObjectable;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.common.PDStream;
 import org.apache.pdfbox.pdmodel.common.function.PDFunctionType3;
 import org.apache.pdfbox.pdmodel.graphics.PDXObject;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
@@ -34,8 +40,11 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 
 /**
  * Default paint mapper.
@@ -84,6 +93,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         private COSDictionary dictExtendedState;
         private IPaintEnv env;
         private IPdfBoxGraphics2DColorMapper.IColorMapperEnv colorMapperEnv;
+        private IPdfBoxGraphics2DImageEncoder.IPdfBoxGraphics2DImageEncoderEnv imageEncoderEnv;
         AffineTransform tf;
         /**
          * This transform is only set, when we apply a nested
@@ -198,6 +208,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         state.pdExtendedGraphicsState = null;
         state.env = env;
         state.colorMapperEnv = env.getGraphics2D().colorMapperEnv;
+        state.imageEncoderEnv = env.getGraphics2D().imageEncoderEnv;
         state.tf = tf;
         state.nestedTransform = null;
         PDShading shading = applyPaint(paint, state);
@@ -900,7 +911,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
                 ((COSStream) pattern.getCOSObject()).createOutputStream());
         BufferedImage texturePaintImage = texturePaint.getImage();
         PDImageXObject imageXObject = state.imageEncoder.encodeImage(state.document,
-                imageContentStream, texturePaintImage);
+                imageContentStream, texturePaintImage, state.imageEncoderEnv);
 
         float ratioW = (float) ((anchorRect.getWidth()) / texturePaintImage.getWidth());
         float ratioH = (float) ((anchorRect.getHeight()) / texturePaintImage.getHeight());

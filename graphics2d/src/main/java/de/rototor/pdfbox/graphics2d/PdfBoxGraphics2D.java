@@ -655,6 +655,18 @@ public class PdfBoxGraphics2D extends Graphics2D
         return drawImage(img, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, null, observer);
     }
 
+    final IPdfBoxGraphics2DImageEncoder.IPdfBoxGraphics2DImageEncoderEnv imageEncoderEnv = new IPdfBoxGraphics2DImageEncoder.IPdfBoxGraphics2DImageEncoderEnv()
+    {
+        @Override
+        public ImageInterpolation getImageInterpolation()
+        {
+            Object renderingHint = getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+            if (renderingHint == RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR)
+                return ImageInterpolation.NearestNeigbor;
+            return ImageInterpolation.Interpolate;
+        }
+    };
+
     public boolean drawImage(Image img, AffineTransform xform, ImageObserver obs)
     {
         checkNoCopyActive();
@@ -664,7 +676,8 @@ public class PdfBoxGraphics2D extends Graphics2D
         if (xform != null)
             tf.concatenate((AffineTransform) xform.clone());
 
-        PDImageXObject pdImage = imageEncoder.encodeImage(document, contentStream, img);
+        PDImageXObject pdImage = imageEncoder.encodeImage(document, contentStream, img,
+                imageEncoderEnv);
         try
         {
             contentStreamSaveState();
@@ -672,10 +685,6 @@ public class PdfBoxGraphics2D extends Graphics2D
             tf.translate(0, imgHeight);
             tf.scale(1, -1);
             contentStream.transform(new Matrix(tf));
-
-            Object keyInterpolation = renderingHints.get(RenderingHints.KEY_INTERPOLATION);
-            if (RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR.equals(keyInterpolation))
-                pdImage.setInterpolate(false);
 
             if (composite != null)
             {

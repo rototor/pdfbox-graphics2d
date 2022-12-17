@@ -14,8 +14,8 @@ pages and change certain aspects. E.g.
 [change the color mapping and perform an overfill](graphics2d/src/test/java/de/rototor/pdfbox/graphics2d/PdfRerenderTest.java).
 Now also it's possible to setup masking of all draw()/fill() calls. Think of this like an
 additional clipping, just that this supports bitmap images and complete complex drawings (XForm's)
-as alpha masks. See 
-[here](https://github.com/rototor/pdfbox-graphics2d/blob/master/graphics2d/src/test/java/de/rototor/pdfbox/graphics2d/TestMaskedDraws.java) 
+as alpha masks. See
+[here](https://github.com/rototor/pdfbox-graphics2d/blob/master/graphics2d/src/test/java/de/rototor/pdfbox/graphics2d/TestMaskedDraws.java)
 how that works.
 
 The following features are supported:
@@ -325,16 +325,26 @@ graphs
 ## Changes
 
 Version 0.42 (not yet released):
+
 - Upgraded PDFBox to 2.0.27
+- [#46](https://github.com/rototor/pdfbox-graphics2d/issues/46): Also override drawRect() and use a
+  Rectangle with drawShape(). Thanks @fransbouwmans for the report.
+- [#40](https://github.com/rototor/pdfbox-graphics2d/issues/40): Correctly implement image
+  interpolation and respect the chosen interpolation when caching an image. NOTE: This is a 
+  API breaking change on the IPdfBoxGraphics2DImageEncoder. So if you have implemeted this interface
+  you need to adapt to the new signature (env parameter).
 
 Version 0.41:
-- #45 Copy & paste error in drawImage() call forwarding. sy1 should be passed for sy1, not sy2... Thanks @fransbouwmans for pointing this out. This affected one 
-  specifc drawImage() overload. 
- 
+
+- #45 Copy & paste error in drawImage() call forwarding. sy1 should be passed for sy1, not sy2...
+  Thanks @fransbouwmans for pointing this out. This affected one
+  specifc drawImage() overload.
+
 Version 0.40:
 
-- Messed up the access permissions for `PdfBoxGraphics2DPaintApplier.PaintApplierState::setupLuminosityMasking`. They are
-  now accessible. 
+- Messed up the access permissions
+  for `PdfBoxGraphics2DPaintApplier.PaintApplierState::setupLuminosityMasking`. They are
+  now accessible.
 
 Version 0.39:
 
