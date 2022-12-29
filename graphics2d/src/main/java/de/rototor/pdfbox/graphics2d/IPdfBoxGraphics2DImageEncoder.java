@@ -24,17 +24,43 @@ import java.awt.*;
 /**
  * Encode and compress an image as PDImageXObject
  */
-public interface IPdfBoxGraphics2DImageEncoder {
-	/**
-	 * Encode the given image into the a PDImageXObject
-	 * 
-	 * @param document
-	 *            the PDF document
-	 * @param contentStream
-	 *            the content stream of the page
-	 * @param image
-	 *            the image to encode
-	 * @return the encoded image
-	 */
-	PDImageXObject encodeImage(PDDocument document, PDPageContentStream contentStream, Image image);
+public interface IPdfBoxGraphics2DImageEncoder
+{
+    /**
+     * Environment for image encoding
+     */
+    interface IPdfBoxGraphics2DImageEncoderEnv
+    {
+
+        /*
+         * What kind of image interpolations are possible?
+         */
+        enum ImageInterpolation
+        {
+            /*
+             * "Pixel Art" rendering.
+             */
+            NearestNeigbor,  //
+            /*
+             * Interpolate the image. What algorithmus is used depends on the PDF viewer.
+             */
+            Interpolate
+        }
+
+        /**
+         * @return the RenderingHints.KEY_INTERPOLATION value mapped to the Interpolation enum
+         */
+        ImageInterpolation getImageInterpolation();
+    }
+
+    /**
+     * Encode the given image into the a PDImageXObject
+     *
+     * @param document      the PDF document
+     * @param contentStream the content stream of the page
+     * @param image         the image to encode
+     * @return the encoded image
+     */
+    PDImageXObject encodeImage(PDDocument document, PDPageContentStream contentStream, Image image,
+            IPdfBoxGraphics2DImageEncoderEnv env);
 }

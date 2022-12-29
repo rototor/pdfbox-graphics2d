@@ -1,0 +1,16 @@
+<svg viewBox="0,0,70,70" style="stroke-dasharray:none; shape-rendering:auto; font-family:'Dialog'; text-rendering:auto; fill-opacity:1; color-interpolation:auto; color-rendering:auto; font-size:12px; fill:black; stroke:black; image-rendering:auto; stroke-miterlimit:10; stroke-linecap:square; stroke-linejoin:miter; font-style:normal; stroke-width:1; stroke-dashoffset:0; font-weight:normal; stroke-opacity:1;" xmlns="http://www.w3.org/2000/svg" contentScriptType="text/ecmascript" preserveAspectRatio="xMidYMid meet" xmlns:xlink="http://www.w3.org/1999/xlink" zoomAndPan="magnify" version="1.0" contentStyleType="text/css">
+    <defs id="genericDefs"/>
+    <g>
+        <defs id="defs1">
+            <radialGradient xmlns:xlink="http://www.w3.org/1999/xlink" id="gradient1" style="color-interpolation:sRGB;" gradientUnits="userSpaceOnUse" spreadMethod="pad" xlink:show="other" xlink:type="simple" r="25.0" cx="25.0" cy="25.0" fx="15.0" fy="15.0" xlink:actuate="onLoad">
+                <stop style="stop-color:white;" offset="0%"/>
+                <stop style="stop-opacity:0; stop-color:rgb(255,255,255);" offset="75%"/>
+                <stop style="stop-color:black;" offset="100%"/>
+            </radialGradient>
+        </defs>
+        <g style="fill:red; font-size:16px; font-family:'Roboto-GMM'; stroke:red;">
+            <circle r="25" style="stroke:none;" cx="25" cy="25"/>
+            <circle r="25" style="fill:url(#gradient1); stroke:none;" cx="25" cy="25"/>
+        </g>
+    </g>
+</svg>

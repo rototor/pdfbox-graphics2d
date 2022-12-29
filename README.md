@@ -10,11 +10,13 @@ Graphics2D Bridge for Apache PDFBox. This is the PDFBox 3.0 branch.
 Using this library you can use any Graphics2D API based SVG / graph / chart library to embed those
 graphics as vector
 drawing in a PDF. In combination with PDFBox PDFRenderer/PageDrawer you can also "rerender" PDF
-pages and change certain
-aspects
-(
-e.g. [change the color mapping and perform an overfill](graphics2d/src/test/java/de/rototor/pdfbox/graphics2d/PdfRerenderTest.java))
-.
+pages and change certain aspects. E.g.
+[change the color mapping and perform an overfill](graphics2d/src/test/java/de/rototor/pdfbox/graphics2d/PdfRerenderTest.java).
+Now also it's possible to setup masking of all draw()/fill() calls. Think of this like an
+additional clipping, just that this supports bitmap images and complete complex drawings (XForm's)
+as alpha masks. See
+[here](https://github.com/rototor/pdfbox-graphics2d/blob/master/graphics2d/src/test/java/de/rototor/pdfbox/graphics2d/TestMaskedDraws.java)
+how that works.
 
 The following features are supported:
 
@@ -30,7 +32,7 @@ The following features are supported:
       restrictions:
         - ```GradientPaint``` always generates acyclic gradients.
     - ```TexturePaint```.
-- Drawing text. By default all text is drawn as vector shapes, so no fonts are embedded. RTL
+- Drawing text. By default, all text is drawn as vector shapes, so no fonts are embedded. RTL
   languages are supported.
   It's possible to use fonts, but this loses some features (especially RTL support)
   and you must provide the TTF files of the fonts if the default PDF fonts are not enough.
@@ -321,8 +323,43 @@ graphs
 
 ## Changes
 
+Version 0.42:
+
+- Upgraded PDFBox to 2.0.27
+- [#46](https://github.com/rototor/pdfbox-graphics2d/issues/46): Also override drawRect() and use a
+  Rectangle with drawShape(). Thanks @fransbouwmans for the report.
+- [#40](https://github.com/rototor/pdfbox-graphics2d/issues/40): Correctly implement image
+  interpolation and respect the chosen interpolation when caching an image. NOTE: This is a 
+  API breaking change on the IPdfBoxGraphics2DImageEncoder. So if you have implemented this interface
+  you need to adapt to the new signature (env parameter).
+
+Version 0.41:
+
+- #45 Copy & paste error in drawImage() call forwarding. sy1 should be passed for sy1, not sy2...
+  Thanks @fransbouwmans for pointing this out. This affected one
+  specifc drawImage() overload.
+
+Version 0.40:
+
+- Messed up the access permissions
+  for `PdfBoxGraphics2DPaintApplier.PaintApplierState::setupLuminosityMasking`. They are
+  now accessible.
+
+Version 0.39:
+
+- Extended the `PdfBoxGraphics2DPaintApplier` to allow overriding
+  `PdfBoxGraphics2DPaintApplier::applyPaint(Paint, PdfBoxGraphics2DPaintApplier.PaintApplierState)`.
+- Made a `PdfBoxGraphics2DPaintApplier.PaintApplierState::setupLuminosityMasking`, which allows to
+  setup a masking for the next fill / draw operations. You can mask all fill / draw operations using
+  a bitmap or XForm based mask.
+- Initial basic support for opacity in gradients. At the moment this does not correctly work for
+  every case. More work is needed here. Thanks @iocoker for bringing this
+  up. ([#37](https://github.com/rototor/pdfbox-graphics2d/issues/37))
+
 Version 0.38:
-- Fix for line width of stroks in the case there is a rotation transform on the Graphics2D. Thanks @jonmccracken-wf for 
+
+- Fix for line width of stroks in the case there is a rotation transform on the Graphics2D. Thanks
+  @jonmccracken-wf for
   reporting and fixing this bug ([#36](https://github.com/rototor/pdfbox-graphics2d/pull/36))
 - Upgrade to PDFBox 2.0.26
 

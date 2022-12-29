@@ -15,11 +15,14 @@ import org.apache.pdfbox.pdmodel.PDResources;
 import org.apache.pdfbox.pdmodel.common.COSObjectable;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.common.function.PDFunctionType3;
+import org.apache.pdfbox.pdmodel.graphics.PDXObject;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColorSpace;
 import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceGray;
 import org.apache.pdfbox.pdmodel.graphics.color.PDPattern;
 import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
+import org.apache.pdfbox.pdmodel.graphics.form.PDTransparencyGroup;
+import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.graphics.pattern.PDShadingPattern;
 import org.apache.pdfbox.pdmodel.graphics.pattern.PDTilingPattern;
@@ -68,8 +71,12 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         final static IdentityShadingMaskModifier INSTANCE = new IdentityShadingMaskModifier();
     }
 
+    /**
+     * Internal State of the PaintApplyer. Allows derived classes to
+     * change some states.
+     */
     @SuppressWarnings("WeakerAccess")
-    protected static class PaintApplierState
+    public static class PaintApplierState
     {
         protected PDDocument document;
         protected PDPageContentStream contentStream;
@@ -86,7 +93,8 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         private COSDictionary dictExtendedState;
         private IPaintEnv env;
         private IPdfBoxGraphics2DColorMapper.IColorMapperEnv colorMapperEnv;
-        public AffineTransform tf;
+        private IPdfBoxGraphics2DImageEncoder.IPdfBoxGraphics2DImageEncoderEnv imageEncoderEnv;
+        AffineTransform tf;
         /**
          * This transform is only set, when we apply a nested
          * paint (e.g. a TilingPattern's paint)
@@ -104,6 +112,82 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
                 pdExtendedGraphicsState = new PDExtendedGraphicsState(this.dictExtendedState);
             }
             assert pdExtendedGraphicsState != null;
+        }
+
+        /**
+         * Setup a mask for the next fill/stroke operation
+         *
+         * @param image       the mask image. It will be used to generate a grayscale image, that
+         *                    will directly map to the alpha channel.
+         * @param boundingBox The bounding box of the masking. I.e. where to apply the mask
+         */
+        public void setupLuminosityMasking(BufferedImage image, PDRectangle boundingBox)
+                throws IOException
+        {
+            PDImageXObject pdMask = LosslessFactory.createFromImage(document, image);
+            setupLuminosityMasking(pdMask, boundingBox);
+        }
+
+        /**
+         * Setup a mask for the next fill/stroke operation. It will use the BBox of the
+         * formXObject.
+         *
+         * @param formXObject the mask form. It will be used to generate a grayscale image, that
+         *                    will directly map to the alpha channel.
+         */
+        public void setupLuminosityMasking(PDFormXObject formXObject) throws IOException
+        {
+            setupLuminosityMasking(formXObject, formXObject.getBBox());
+        }
+
+        /**
+         * Setup a mask for the next fill/stroke operation.
+         *
+         * @param maskXObject a PDXObject (form or image) which generates a grayscale image for the masking.
+         *                    This image will directly map to the alpha channel.
+         * @param boundingBox The bounding box of the masking. I.e. where to apply the mask
+         */
+        public void setupLuminosityMasking(PDXObject maskXObject, PDRectangle boundingBox)
+                throws IOException
+        {
+            ensureExtendedState();
+            pdExtendedGraphicsState.setAlphaSourceFlag(false);
+            pdExtendedGraphicsState.setNonStrokingAlphaConstant(null);
+            pdExtendedGraphicsState.setStrokingAlphaConstant(null);
+
+            PDAppearanceStream groupXForm = new PDAppearanceStream(document);
+            groupXForm.setResources(new PDResources());
+            COSDictionary groupDict = new COSDictionary();
+            groupDict.setItem(COSName.S, COSName.TRANSPARENCY);
+            groupDict.setItem(COSName.CS, COSName.DEVICEGRAY);
+            groupDict.setItem(COSName.TYPE, COSName.GROUP);
+            groupXForm.getCOSObject().setItem(COSName.GROUP, groupDict);
+            groupXForm.setBBox(boundingBox);
+            groupXForm.setFormType(1);
+            resources.add(groupXForm);
+
+            PDPageContentStream grpContentStream = new PDPageContentStream(document, groupXForm,
+                    groupXForm.getStream().createOutputStream(COSName.FLATE_DECODE));
+            if (maskXObject instanceof PDFormXObject)
+            {
+                grpContentStream.drawForm((PDFormXObject) maskXObject);
+            }
+            else if (maskXObject instanceof PDImageXObject)
+            {
+                Matrix matrix = new Matrix();
+                PDImageXObject imageXObject = (PDImageXObject) maskXObject;
+                matrix.scale(boundingBox.getWidth(), boundingBox.getHeight());
+                grpContentStream.drawImage(imageXObject, matrix);
+            }
+
+            grpContentStream.close();
+
+            COSDictionary mask = new COSDictionary();
+            mask.setItem(COSName.G, groupXForm);
+            mask.setItem(COSName.S, COSName.LUMINOSITY);
+            mask.setItem(COSName.TYPE, COSName.MASK);
+
+            dictExtendedState.setItem(COSName.SMASK, mask);
         }
     }
 
@@ -124,6 +208,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         state.pdExtendedGraphicsState = null;
         state.env = env;
         state.colorMapperEnv = env.getGraphics2D().colorMapperEnv;
+        state.imageEncoderEnv = env.getGraphics2D().imageEncoderEnv;
         state.tf = tf;
         state.nestedTransform = null;
         PDShading shading = applyPaint(paint, state);
@@ -172,7 +257,10 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         }
     }
 
-    private PDShading applyPaint(Paint paint, PaintApplierState state) throws IOException
+    /**
+     * Apply paint and graphic state
+     */
+    protected PDShading applyPaint(Paint paint, PaintApplierState state) throws IOException
     {
         applyComposite(state);
 
@@ -720,11 +808,11 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
 
         COSArray coords = new COSArray();
 
-        coords.add(new COSFloat((float) centerPoint.getX()));
-        coords.add(new COSFloat((float) centerPoint.getY()));
-        coords.add(new COSFloat(0));
         coords.add(new COSFloat((float) focusPoint.getX()));
         coords.add(new COSFloat((float) focusPoint.getY()));
+        coords.add(new COSFloat(0));
+        coords.add(new COSFloat((float) centerPoint.getX()));
+        coords.add(new COSFloat((float) centerPoint.getY()));
         coords.add(new COSFloat(radius));
         shading.setCoords(coords);
 
@@ -820,7 +908,7 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
                 ((COSStream) pattern.getCOSObject()).createOutputStream());
         BufferedImage texturePaintImage = texturePaint.getImage();
         PDImageXObject imageXObject = state.imageEncoder.encodeImage(state.document,
-                imageContentStream, texturePaintImage);
+                imageContentStream, texturePaintImage, state.imageEncoderEnv);
 
         float ratioW = (float) ((anchorRect.getWidth()) / texturePaintImage.getWidth());
         float ratioH = (float) ((anchorRect.getHeight()) / texturePaintImage.getHeight());
