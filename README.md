@@ -54,7 +54,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.41</version>
+	<version>0.42</version>
 </dependency>
 ```
 
@@ -324,14 +324,14 @@ graphs
 
 ## Changes
 
-Version 0.42 (not yet released):
+Version 0.42:
 
 - Upgraded PDFBox to 2.0.27
 - [#46](https://github.com/rototor/pdfbox-graphics2d/issues/46): Also override drawRect() and use a
   Rectangle with drawShape(). Thanks @fransbouwmans for the report.
 - [#40](https://github.com/rototor/pdfbox-graphics2d/issues/40): Correctly implement image
   interpolation and respect the chosen interpolation when caching an image. NOTE: This is a 
-  API breaking change on the IPdfBoxGraphics2DImageEncoder. So if you have implemeted this interface
+  API breaking change on the IPdfBoxGraphics2DImageEncoder. So if you have implemented this interface
   you need to adapt to the new signature (env parameter).
 
 Version 0.41:
