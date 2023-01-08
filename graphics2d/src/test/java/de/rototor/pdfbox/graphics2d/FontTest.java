@@ -2,6 +2,7 @@ package de.rototor.pdfbox.graphics2d;
 
 import java.awt.*;
 import java.awt.font.TextAttribute;
+import java.awt.geom.AffineTransform;
 import java.io.IOException;
 import java.text.AttributedString;
 
@@ -13,7 +14,7 @@ public class FontTest extends PdfBoxGraphics2DTestBase
     public void testAntonioFont() throws IOException, FontFormatException
     {
         final Font antonioRegular = Font.createFont(Font.TRUETYPE_FONT,
-                PdfBoxGraphics2dTest.class.getResourceAsStream("antonio/Antonio-Regular.ttf"))
+                        PdfBoxGraphics2dTest.class.getResourceAsStream("antonio/Antonio-Regular.ttf"))
                 .deriveFont(15f);
         exportGraphic("fonts", "antonio", new GraphicsExporter()
         {
@@ -31,7 +32,7 @@ public class FontTest extends PdfBoxGraphics2DTestBase
     public void testStyledAttributeIterator() throws IOException, FontFormatException
     {
         final Font antonioRegular = Font.createFont(Font.TRUETYPE_FONT,
-                PdfBoxGraphics2dTest.class.getResourceAsStream("antonio/Antonio-Regular.ttf"))
+                        PdfBoxGraphics2dTest.class.getResourceAsStream("antonio/Antonio-Regular.ttf"))
                 .deriveFont(15f);
         exportGraphic("fonts", "attributed_text", new GraphicsExporter()
         {
@@ -59,12 +60,42 @@ public class FontTest extends PdfBoxGraphics2DTestBase
 
                 Font font = new Font("SansSerif", Font.PLAIN, 12);
                 Font font2 = Font.createFont(Font.TRUETYPE_FONT,
-                        PdfBoxGraphics2dTest.class.getResourceAsStream("DejaVuSerifCondensed.ttf"))
+                                PdfBoxGraphics2dTest.class.getResourceAsStream("DejaVuSerifCondensed.ttf"))
                         .deriveFont(13f);
                 str.addAttribute(TextAttribute.FONT, font);
                 gfx.drawString(str.getIterator(), 10, 100);
                 str.addAttribute(TextAttribute.FONT, font2);
                 gfx.drawString(str.getIterator(), 10, 150);
+            }
+        });
+    }
+
+    @Test
+    public void testTransformedFont() throws IOException, FontFormatException
+    {
+        final Font antonioRegular = Font.createFont(Font.TRUETYPE_FONT,
+                        PdfBoxGraphics2dTest.class.getResourceAsStream("antonio/Antonio-Regular.ttf"))
+                .deriveFont(15f);
+        exportGraphic("fonts", "transformed", new GraphicsExporter()
+        {
+            @Override
+            public void draw(Graphics2D gfx) throws IOException, FontFormatException
+            {
+                AffineTransform affineTransform = antonioRegular.getTransform();
+                affineTransform.rotate(Math.toRadians(-90), 0, 0);
+                Font rotatedFont = antonioRegular.deriveFont(affineTransform);
+                gfx.setColor(Color.BLACK);
+                gfx.setFont(rotatedFont);
+                gfx.drawString("Some sample text", 50, 150);
+
+                AffineTransform saveTF = gfx.getTransform();
+                AffineTransform at = AffineTransform.getTranslateInstance(100, 150);
+                at.rotate(Math.toRadians(-90), 0, 0);
+                gfx.setColor(Color.RED);
+                gfx.setFont(antonioRegular);
+                gfx.setTransform(at);
+                gfx.drawString("Some sample text", 0, 0);
+                gfx.setTransform(saveTF);
             }
         });
     }
