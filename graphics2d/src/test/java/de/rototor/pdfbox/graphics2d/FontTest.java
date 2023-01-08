@@ -99,4 +99,41 @@ public class FontTest extends PdfBoxGraphics2DTestBase
             }
         });
     }
+
+    @Test
+    public void testFanceTransformedFont() throws IOException, FontFormatException
+    {
+        final Font antonioRegular = Font.createFont(Font.TRUETYPE_FONT,
+                        PdfBoxGraphics2dTest.class.getResourceAsStream("antonio/Antonio-Regular.ttf"))
+                .deriveFont(15f);
+        exportGraphic("fonts", "fancyTransformed", new GraphicsExporter()
+        {
+            @Override
+            public void draw(Graphics2D gfx) throws IOException, FontFormatException
+            {
+                AffineTransform affineTransform = antonioRegular.getTransform();
+                affineTransform.shear(Math.toRadians(45), Math.toRadians(-45));
+                Font rotatedFont = antonioRegular.deriveFont(affineTransform);
+                gfx.setColor(Color.BLACK);
+                gfx.setFont(rotatedFont);
+                gfx.drawString("Sheared Text", 50, 150);
+
+                affineTransform = antonioRegular.getTransform();
+                affineTransform.rotate(Math.toRadians(45), Math.toRadians(-45));
+                rotatedFont = antonioRegular.deriveFont(affineTransform);
+                gfx.setColor(Color.BLUE);
+                gfx.setFont(rotatedFont);
+                gfx.drawString("Rotated Text", 150, 150);
+
+                affineTransform = antonioRegular.getTransform();
+                affineTransform.rotate(Math.toRadians(45), Math.toRadians(-45));
+                affineTransform.shear(Math.toRadians(45), Math.toRadians(-45));
+                rotatedFont = antonioRegular.deriveFont(affineTransform);
+                gfx.setColor(Color.GREEN);
+                gfx.setFont(rotatedFont);
+                gfx.drawString("Shear & Rotated Text", 50, 250);
+
+            }
+        });
+    }
 }
