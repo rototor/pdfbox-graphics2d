@@ -36,6 +36,8 @@ import java.io.*;
 import java.text.AttributedCharacterIterator;
 import java.text.CharacterIterator;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.*;
 
 /**
@@ -47,6 +49,9 @@ import java.util.*;
  */
 public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontTextDrawer, Closeable
 {
+
+    private static final Logger logger = Logger.getLogger(PdfBoxGraphics2DFontTextDrawer.class.getName());
+
     /**
      * Close / delete all resources associated with this drawer. This mainly means
      * deleting all temporary files. You can not use this object after a call to
@@ -412,8 +417,8 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
                 }
 
                 if (iae != null)
-                    System.err.println("PDFBoxGraphics: Can not map text " + text + " with font "
-                            + attributeFont.getFontName() + ": " + iae.getMessage());
+                    logger.log(Level.SEVERE, "PDFBoxGraphics: Can not map text " + text + 
+                            " with font " + attributeFont.getFontName() + ": " + iae.getMessage(), iae);
             }
         }
         contentStream.endText();
