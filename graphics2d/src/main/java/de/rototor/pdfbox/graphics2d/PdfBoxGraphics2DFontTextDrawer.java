@@ -50,7 +50,7 @@ import java.util.*;
 public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontTextDrawer, Closeable
 {
 
-    private static final Logger logger = Logger.getLogger(PdfBoxGraphics2DFontTextDrawer.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(PdfBoxGraphics2DFontTextDrawer.class.getName());
 
     /**
      * Close / delete all resources associated with this drawer. This mainly means
@@ -417,7 +417,7 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
                 }
 
                 if (iae != null)
-                    logger.log(Level.SEVERE, "PDFBoxGraphics: Can not map text " + text + 
+                    LOGGER.log(Level.SEVERE, "PDFBoxGraphics: Can not map text " + text + 
                             " with font " + attributeFont.getFontName() + ": " + iae.getMessage(), iae);
             }
         }
