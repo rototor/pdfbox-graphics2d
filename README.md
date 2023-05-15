@@ -324,6 +324,12 @@ graphs
 
 ## Changes
 
+Version 0.43 (not yet released):
+
+- Upgraded PDFBox to 2.0.28
+- [#50](https://github.com/rototor/pdfbox-graphics2d/issues/50): Use the Java logger API instead of System.err.
+Thanks @pmds-martins for the PR.
+
 Version 0.42:
 
 - Upgraded PDFBox to 2.0.27
