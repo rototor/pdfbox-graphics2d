@@ -311,16 +311,38 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
         boolean run = true;
         while (run)
         {
-
+        	boolean wasAttributeFont = true;
             Font attributeFont = (Font) iterator.getAttribute(TextAttribute.FONT);
-            boolean wasAttributeFont = attributeFont != null;
-            if (attributeFont == null)
-                attributeFont = env.getFont();
-
-            Number fontSize = ((Number) iterator.getAttribute(TextAttribute.SIZE));
-            if (fontSize != null)
-                attributeFont = attributeFont.deriveFont(fontSize.floatValue());
+            if (attributeFont == null) {
+            	attributeFont = env.getFont();
+            	String family = (String) iterator.getAttribute(TextAttribute.FAMILY);
+            	if (family != null) {
+            		int defSize = attributeFont.getSize();
+            		int style = Font.PLAIN;
+            				
+                    Number fontSize = ((Number) iterator.getAttribute(TextAttribute.SIZE));
+                    if (fontSize != null) {
+                        defSize = (int)fontSize.floatValue();
+                    }
+                    Float weight = (Float) iterator.getAttribute(TextAttribute.WEIGHT);
+                    if (weight != null && weight > 1.5) {
+                    	// weight can have many values, TextAttribute.WEIGHT_BOLD = 2.0
+                    	// There may be fonts where the font itself expresses weight
+                    	style |=Font.BOLD;
+                    }
+                    
+                    Float posture = (Float) iterator.getAttribute(TextAttribute.POSTURE);
+                    if (posture != null && TextAttribute.POSTURE_OBLIQUE.equals(posture)) {
+                    	style |= Font.ITALIC;
+                    }
+                    attributeFont = new Font(family, style, defSize);
+            	} else {
+            		wasAttributeFont = false;
+            	}
+            }
             PDFont font = applyFont(attributeFont, env);
+
+            
             Object transform = iterator.getAttribute(TextAttribute.TRANSFORM);
             AffineTransform attributedTransform = null;
             if (transform instanceof AffineTransform)
