@@ -77,7 +77,7 @@ public class FontTest extends PdfBoxGraphics2DTestBase
         final Font antonioRegular = Font.createFont(Font.TRUETYPE_FONT,
                         PdfBoxGraphics2dTest.class.getResourceAsStream("antonio/Antonio-Regular.ttf"))
                 .deriveFont(15f);
-        exportGraphic("fonts", "attributed_text", new GraphicsExporter()
+        exportGraphic("fonts", "attributed_text_sup", new GraphicsExporter()
         {
             @Override
             public void draw(Graphics2D gfx) throws IOException, FontFormatException
