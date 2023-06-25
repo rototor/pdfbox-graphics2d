@@ -6,7 +6,7 @@
 	<description>Graphics2D Bridge for Apache PDFBox</description>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>pdfboxgraphics2d-parent</artifactId>
-	<version>0.43-SNAPSHOT</version>
+	<version>0.44-SNAPSHOT</version>
   	<packaging>pom</packaging>
 	<url>https://github.com/rototor/pdfbox-graphics2d</url>
 
@@ -59,7 +59,7 @@
 		<dependency>
 			<groupId>org.apache.pdfbox</groupId>
 			<artifactId>pdfbox</artifactId>
-			<version>2.0.27</version>
+			<version>2.0.28</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
