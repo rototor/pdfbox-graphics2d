@@ -15,36 +15,6 @@
  */
 package de.rototor.pdfbox.graphics2d;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.FontFormatException;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Paint;
-import java.awt.Rectangle;
-import java.awt.font.FontRenderContext;
-import java.awt.font.LineMetrics;
-import java.awt.font.TextAttribute;
-import java.awt.font.TransformAttribute;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.text.AttributedCharacterIterator;
-import java.text.CharacterIterator;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import org.apache.fontbox.ttf.TrueTypeCollection;
 import org.apache.fontbox.ttf.TrueTypeFont;
 import org.apache.pdfbox.io.IOUtils;
@@ -53,6 +23,22 @@ import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.util.Matrix;
+
+import java.awt.*;
+import java.awt.font.FontRenderContext;
+import java.awt.font.LineMetrics;
+import java.awt.font.TextAttribute;
+import java.awt.font.TransformAttribute;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.io.*;
+import java.text.AttributedCharacterIterator;
+import java.text.CharacterIterator;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.*;
 
 /**
  * Default implementation to draw fonts. You can reuse instances of this class
@@ -64,8 +50,7 @@ import org.apache.pdfbox.util.Matrix;
 public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontTextDrawer, Closeable
 {
 
-    private static final Logger LOGGER = Logger.getLogger(
-            PdfBoxGraphics2DFontTextDrawer.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(PdfBoxGraphics2DFontTextDrawer.class.getName());
 
     /**
      * Close / delete all resources associated with this drawer. This mainly means
