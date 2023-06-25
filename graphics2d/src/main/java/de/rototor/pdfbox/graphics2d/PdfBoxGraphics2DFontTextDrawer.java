@@ -15,6 +15,36 @@
  */
 package de.rototor.pdfbox.graphics2d;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontFormatException;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Paint;
+import java.awt.Rectangle;
+import java.awt.font.FontRenderContext;
+import java.awt.font.LineMetrics;
+import java.awt.font.TextAttribute;
+import java.awt.font.TransformAttribute;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.text.AttributedCharacterIterator;
+import java.text.CharacterIterator;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.apache.fontbox.ttf.TrueTypeCollection;
 import org.apache.fontbox.ttf.TrueTypeFont;
 import org.apache.pdfbox.io.IOUtils;
@@ -23,22 +53,6 @@ import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.util.Matrix;
-
-import java.awt.*;
-import java.awt.font.FontRenderContext;
-import java.awt.font.LineMetrics;
-import java.awt.font.TextAttribute;
-import java.awt.font.TransformAttribute;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import java.io.*;
-import java.text.AttributedCharacterIterator;
-import java.text.CharacterIterator;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.*;
 
 /**
  * Default implementation to draw fonts. You can reuse instances of this class
@@ -266,28 +280,53 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
         void draw(PDPageContentStream stream) throws IOException;
     }
 
-    private static class DrawTextDecorationState
-    {
+	private static class DrawTextDecorationState {
         final List<ITextDecorationDrawer> drawers = new ArrayList<ITextDecorationDrawer>();
-        public Matrix currentMatrix;
-        private final PDPageContentStream contentStream;
-        public Point2D currentPoint;
-        public Point2D deltaPoint = new Point2D.Float(0, 0);
+		private AffineTransform textMatrix;
+		private AffineTransform fontMatrix;
+		private Matrix currentMatrix;
 
-        public DrawTextDecorationState(PDPageContentStream contentStream)
-        {
+        private final PDPageContentStream contentStream;
+
+		public DrawTextDecorationState(PDPageContentStream contentStream) throws IOException {
             this.contentStream = contentStream;
+			textMatrix = new AffineTransform();
+			textMatrix.scale(1, -1);
+			setCurrentTextMatrix(textMatrix);
+		}
+
+		public void setFontMatrix(AffineTransform fontMatrix) throws IOException {
+			this.fontMatrix = fontMatrix;
+			if (this.fontMatrix != null) {
+				AffineTransform newMatrix = new AffineTransform(textMatrix);
+				double yTranslate = fontMatrix.getTranslateY();
+				if (yTranslate != 0) {
+					// as the grid is in inverted in y, the fontmatrix must also be inverted
+					fontMatrix.translate(0, -2 * yTranslate / fontMatrix.getScaleY());
+				}
+				newMatrix.concatenate(fontMatrix);
+				setCurrentTextMatrix(newMatrix);
+			} else {
+				setCurrentTextMatrix(textMatrix);
+			}
         }
 
-        private void setCurrentTextMatrix(AffineTransform newAT) throws IOException
-        {
+		private void setCurrentTextMatrix(AffineTransform newAT) throws IOException {
             Matrix newMatrix = new Matrix(newAT);
-            if (!newMatrix.equals(currentMatrix))
-            {
+			if (!newMatrix.equals(currentMatrix)) {
                 currentMatrix = newMatrix;
                 contentStream.setTextMatrix(currentMatrix);
             }
         }
+
+		public void applyTextWidth(float stringWidth) {
+			double boxWidth = stringWidth;
+			if (fontMatrix != null) {
+				Point2D result = fontMatrix.transform(new Point2D.Double(stringWidth, 0), null);
+				boxWidth = result.getX();
+			}
+			textMatrix.translate(boxWidth, 0.0);
+		}
     }
 
     @Override
@@ -295,101 +334,46 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
             throws IOException, FontFormatException
     {
         PDPageContentStream contentStream = env.getContentStream();
-        DrawTextDecorationState drawState = new DrawTextDecorationState(contentStream);
 
         contentStream.saveGraphicsState();
-
         contentStream.beginText();
 
-        AffineTransform identityTextMatrix = new AffineTransform();
-        identityTextMatrix.scale(1, -1);
-        boolean needMatrixResetToIdentity = true;
-        drawState.currentPoint = new Point2D.Float(0, 0);
+		DrawTextDecorationState drawState = new DrawTextDecorationState(contentStream);
 
         StringBuilder sb = new StringBuilder();
-        drawState.currentMatrix = null;
+
         boolean run = true;
-        while (run)
-        {
-        	boolean wasAttributeFont = true;
+		while (run) {
             Font attributeFont = (Font) iterator.getAttribute(TextAttribute.FONT);
             if (attributeFont == null) {
             	attributeFont = env.getFont();
             	String family = (String) iterator.getAttribute(TextAttribute.FAMILY);
             	if (family != null) {
-            		int defSize = attributeFont.getSize();
-            		int style = Font.PLAIN;
-            				
-                    Number fontSize = ((Number) iterator.getAttribute(TextAttribute.SIZE));
-                    if (fontSize != null) {
-                        defSize = (int)fontSize.floatValue();
+					attributeFont = new Font(iterator.getAttributes());
                     }
-                    Float weight = (Float) iterator.getAttribute(TextAttribute.WEIGHT);
-                    if (weight != null && weight > 1.5) {
-                    	// weight can have many values, TextAttribute.WEIGHT_BOLD = 2.0
-                    	// There may be fonts where the font itself expresses weight
-                    	style |=Font.BOLD;
                     }
                     
-                    Float posture = (Float) iterator.getAttribute(TextAttribute.POSTURE);
-                    if (posture != null && TextAttribute.POSTURE_OBLIQUE.equals(posture)) {
-                    	style |= Font.ITALIC;
-                    }
-                    attributeFont = new Font(family, style, defSize);
-            	} else {
-            		wasAttributeFont = false;
-            	}
-            }
             PDFont font = applyFont(attributeFont, env);
 
-            
             Object transform = iterator.getAttribute(TextAttribute.TRANSFORM);
             AffineTransform attributedTransform = null;
-            if (transform instanceof AffineTransform)
+			if (transform instanceof AffineTransform) {
                 attributedTransform = (AffineTransform) transform;
-            if (transform instanceof TransformAttribute)
+			} else if (transform instanceof TransformAttribute) {
                 attributedTransform = ((TransformAttribute) transform).getTransform();
-
-            boolean attributeFontTransformed = attributeFont.isTransformed();
-            /*
-             * The JDK does not respect transforms on the attribute when we have
-             * a font set.
-             */
-            if ((attributedTransform != null && !wasAttributeFont) || attributeFontTransformed)
-            {
-                AffineTransform tf;
-                if (attributeFontTransformed)
-                    tf = attributeFont.getTransform();
-                else
-                    tf = attributedTransform;
-
-                AffineTransform newAT = AffineTransform.getTranslateInstance(
-                        drawState.currentPoint.getX(), drawState.currentPoint.getY());
-                newAT.concatenate(tf);
-                newAT.scale(1, -1);
-
-                drawState.setCurrentTextMatrix(newAT);
-                needMatrixResetToIdentity = true;
+			} else if (attributeFont.isTransformed()) {
+				attributedTransform = attributeFont.getTransform();
             }
-            else if (needMatrixResetToIdentity)
-            {
-                AffineTransform at = AffineTransform.getTranslateInstance(
-                        drawState.currentPoint.getX(), drawState.currentPoint.getY());
-                at.scale(1, -1);
-                drawState.setCurrentTextMatrix(at);
-                needMatrixResetToIdentity = false;
-            }
+			drawState.setFontMatrix(attributedTransform);
 
             Paint paint = (Paint) iterator.getAttribute(TextAttribute.FOREGROUND);
             if (paint == null)
                 paint = env.getPaint();
 
-            boolean isStrikeThrough = TextAttribute.STRIKETHROUGH_ON.equals(
-                    iterator.getAttribute(TextAttribute.STRIKETHROUGH));
-            boolean isUnderline = TextAttribute.UNDERLINE_ON.equals(
-                    iterator.getAttribute(TextAttribute.UNDERLINE));
-            boolean isLigatures = TextAttribute.LIGATURES_ON.equals(
-                    iterator.getAttribute(TextAttribute.LIGATURES));
+			boolean isStrikeThrough = TextAttribute.STRIKETHROUGH_ON
+					.equals(iterator.getAttribute(TextAttribute.STRIKETHROUGH));
+			boolean isUnderline = TextAttribute.UNDERLINE_ON.equals(iterator.getAttribute(TextAttribute.UNDERLINE));
+			boolean isLigatures = TextAttribute.LIGATURES_ON.equals(iterator.getAttribute(TextAttribute.LIGATURES));
 
             run = iterateRun(iterator, sb);
             String text = sb.toString();
@@ -404,13 +388,10 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
              * display the characters. PDFBox will throw an exception in this case. We will
              * just silently ignore the text and not display it instead.
              */
-            try
-            {
-                showTextOnStream(env, attributeFont, font, isStrikeThrough, isUnderline,
-                        isLigatures, drawState, paint, text);
-            }
-            catch (IllegalArgumentException e)
-            {
+			try {
+				showTextOnStream(env, attributeFont, font, isStrikeThrough, isUnderline, isLigatures, drawState, paint,
+						text);
+			} catch (IllegalArgumentException e) {
                 IllegalArgumentException iae = e;
                 if (font instanceof PDType1Font && !font.isEmbedded())
                 {
@@ -711,21 +692,23 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
         contentStream.showText(text);
 
         final float stringWidth = (font.getStringWidth(text) / 1000f) * attributeFont.getSize2D();
-        if ((isStrikeThrough || isUnderline))
-        {
-            final LineMetrics lineMetrics = attributeFont.getLineMetrics(text,
-                    env.getFontRenderContext());
+        drawState.applyTextWidth(stringWidth);
 
+		if ((isStrikeThrough || isUnderline)) {
+
+			// As attributeFont includes superscript and subscript offsets, they are applied
+			// twice
+			// this is corrected later by subtracting the currentMatrix getTranslateY()
+			final LineMetrics lineMetrics = attributeFont.getLineMetrics(text, env.getFontRenderContext());
             final Matrix currentMatrix = drawState.currentMatrix;
-            final float ourX =
-                    (float) drawState.currentPoint.getX() - currentMatrix.getTranslateX();
-            final float ourY =
-                    (float) drawState.currentPoint.getY() - currentMatrix.getTranslateY();
-            //final float ourX = ;
-            //final float ourY = ;
+			final float startX = 0;
 
-            drawState.drawers.add(new ITextDecorationDrawer()
-            {
+			// the stringWidth is original width (i.e. not scaled for sub/Sup as the matrix
+			// will do this scaling.
+			final float endX = stringWidth;
+			final float ourY = 0F;
+
+			drawState.drawers.add(new ITextDecorationDrawer() {
                 @Override
                 public void draw(PDPageContentStream stream) throws IOException
                 {
@@ -740,51 +723,35 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
                     {
                         env.applyStroke(new BasicStroke(1));
                         env.applyPaint(new Color(0x5F2F13F2),
-                                new Rectangle.Float(ourX, ourY - decent * scale, stringWidth,
-                                        height * scale));
+								new Rectangle.Float(startX, ourY - decent * scale, stringWidth, height * scale));
 
-                        contentStream.addRect(ourX, ourY - decent * scale, stringWidth,
-                                height / scale);
+						contentStream.addRect(startX, ourY - decent * scale, stringWidth, height / scale);
                         contentStream.stroke();
                     }
 
                     env.applyPaint(paint,
-                            new Rectangle.Float(ourX, ourY - decent * scale, stringWidth,
-                                    height * scale));
-                    float baseline = lineMetrics.getBaselineOffsets()[lineMetrics.getBaselineIndex()];
-                    if (isStrikeThrough)
-                    {
+							new Rectangle.Float(startX, ourY - decent * scale, stringWidth, height * scale));
+					if (isStrikeThrough) {
                         env.applyStroke(new BasicStroke(
-                                getSensibleThickness(lineMetrics.getStrikethroughThickness(),
-                                        attributeFont)));
-                        float strikethroughOffset =
-                                scale * (baseline + lineMetrics.getStrikethroughOffset());
-                        contentStream.moveTo(ourX, ourY - strikethroughOffset);
-                        contentStream.lineTo(ourX + stringWidth, ourY - strikethroughOffset);
+								getSensibleThickness(lineMetrics.getStrikethroughThickness(), attributeFont)));
+						float strikethroughOffset = currentMatrix.getTranslateY()
+								- lineMetrics.getStrikethroughOffset();
+						contentStream.moveTo(startX, strikethroughOffset);
+						contentStream.lineTo(endX, strikethroughOffset);
                         contentStream.stroke();
                     }
-                    if (isUnderline)
-                    {
+					if (isUnderline) {
                         env.applyStroke(new BasicStroke(
-                                getSensibleThickness(lineMetrics.getUnderlineThickness(),
-                                        attributeFont)));
-                        float underlineOffset =
-                                scale * (baseline + lineMetrics.getUnderlineOffset());
-                        contentStream.moveTo(ourX, ourY - underlineOffset);
-                        contentStream.lineTo(ourX + stringWidth, ourY - underlineOffset);
+								getSensibleThickness(lineMetrics.getUnderlineThickness(), attributeFont)));
+						float underlineOffset = currentMatrix.getTranslateY() - lineMetrics.getUnderlineOffset();
+						contentStream.moveTo(startX, underlineOffset);
+						contentStream.lineTo(endX, underlineOffset);
                         contentStream.stroke();
                     }
                 }
             });
         }
 
-        Point2D deltaPoint = new Point2D.Double(stringWidth, 0);
-        assert drawState.currentMatrix != null;
-        drawState.currentMatrix.transform(deltaPoint);
-        drawState.deltaPoint = deltaPoint;
-        drawState.currentPoint = new Point2D.Double(
-                drawState.currentPoint.getX() + deltaPoint.getX(),
-                drawState.currentPoint.getY() + deltaPoint.getY());
     }
 
     private float getSensibleThickness(float thickness, Font font)
