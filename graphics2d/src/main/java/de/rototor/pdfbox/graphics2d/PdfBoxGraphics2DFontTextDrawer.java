@@ -723,14 +723,14 @@ public class PdfBoxGraphics2DFontTextDrawer implements IPdfBoxGraphics2DFontText
                     {
                         env.applyStroke(new BasicStroke(1));
                         env.applyPaint(new Color(0x5F2F13F2),
-								new Rectangle.Float(startX, ourY - decent * scale, stringWidth, height * scale));
+new Rectangle2D.Float(startX, ourY - decent * scale, stringWidth, height * scale));
 
 						contentStream.addRect(startX, ourY - decent * scale, stringWidth, height / scale);
                         contentStream.stroke();
                     }
 
                     env.applyPaint(paint,
-							new Rectangle.Float(startX, ourY - decent * scale, stringWidth, height * scale));
+new Rectangle2D.Float(startX, ourY - decent * scale, stringWidth, height * scale));
 					if (isStrikeThrough) {
                         env.applyStroke(new BasicStroke(
 								getSensibleThickness(lineMetrics.getStrikethroughThickness(), attributeFont)));
