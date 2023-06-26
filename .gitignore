@@ -1,5 +1,8 @@
 target
 .idea
+.settings
+.project
+.classpath
 graphics2d.iml
 /parent.iml
 /extended-tests/extended-tests.iml
