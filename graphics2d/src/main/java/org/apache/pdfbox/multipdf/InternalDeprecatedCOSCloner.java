@@ -7,7 +7,7 @@ import java.io.IOException;
 
 /**
  * Temporary Workaround to allow access to the lowlevel functionality
- *
+ * <p>
  * DO NOT USE!!!
  */
 @Deprecated
@@ -23,7 +23,7 @@ public class InternalDeprecatedCOSCloner extends PDFCloneUtility
         super(dest);
     }
 
-    public COSBase cloneForNewDocument(Object base) throws IOException
+    public <TCOSBase extends COSBase> TCOSBase cloneForNewDocument(TCOSBase base) throws IOException
     {
         return super.cloneForNewDocument(base);
     }

@@ -124,14 +124,15 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase
         bctx.setDynamicState(BridgeContext.STATIC);
         GVTBuilder builder = new GVTBuilder();
         final GraphicsNode gvtRoot = builder.build(bctx, document);
-        exportAsPNG(name, new GraphicsExporter() {
+        exportAsPNG(name, new GraphicsExporter()
+        {
             @Override
             public void draw(Graphics2D gfx)
             {
                 gfx.scale(scale, scale);
                 gvtRoot.paint(gfx);
             }
-        }, parentDir, (int) Math.round(scale + 0.5)*2);
+        }, parentDir, (int) Math.round(scale + 0.5) * 2);
 
         try
         {
@@ -147,8 +148,8 @@ public class RenderSVGsTest extends PdfBoxGraphics2DTestBase
 
             PdfBoxGraphics2D pdfBoxGraphics2D = new PdfBoxGraphics2D(pdfDocument, 400, 400);
 
-            ICC_Profile icc_profile = ICC_Profile.getInstance(PDDocument.class.getResourceAsStream(
-                    "/org/apache/pdfbox/resources/icc/ISOcoated_v2_300_bas.icc"));
+            ICC_Profile icc_profile = ICC_Profile.getInstance(
+                    RenderSVGsTest.class.getResourceAsStream("eciCMYK_v2.icc"));
             PdfBoxGraphics2DColorMapper colorMapper = new RGBtoCMYKColorMapper(icc_profile,
                     pdfDocument);
             pdfBoxGraphics2D.setColorMapper(colorMapper);
