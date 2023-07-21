@@ -6,7 +6,7 @@
 	<description>Graphics2D Bridge for Apache PDFBox</description>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>pdfboxgraphics2d-parent</artifactId>
-	<version>3.0.0-beta1-SNAPSHOT</version>
+	<version>3.0.0-beta1</version>
   	<packaging>pom</packaging>
 	<url>https://github.com/rototor/pdfbox-graphics2d</url>
 
@@ -40,7 +40,7 @@
 	<scm>
 		<url>https://github.com/rototor/pdfbox-graphics2d</url>
 		<connection>scm:git:https://github.com/rototor/pdfbox-graphics2d.git</connection>
-		<tag>HEAD</tag>
+		<tag>pdfboxgraphics2d-parent-3.0.0-beta1</tag>
 	</scm>
 
 	<distributionManagement>
