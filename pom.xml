@@ -21,6 +21,7 @@
 
 	<modules>
 		<module>graphics2d</module>
+		<module>extended-tests</module>
 	</modules>
 
 	<developers>
