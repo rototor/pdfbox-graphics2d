@@ -74,7 +74,6 @@ public class FontTest extends PdfBoxGraphics2DTestBase {
 				gfx.setColor(Color.BLACK);
 				gfx.setFont(rotatedFont);
 				gfx.drawString("Some sample text", 50, 150);
-
 				AffineTransform saveTF = gfx.getTransform();
 				AffineTransform at = AffineTransform.getTranslateInstance(100, 150);
 				at.rotate(Math.toRadians(-90), 0, 0);
