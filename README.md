@@ -74,8 +74,8 @@ For PDFBox 3.0.x:
 </dependency>
 ```
 
-This version target Java 8. It should be identical to the 2.0.x version. If not, than thats a bug. The 3.0.x
-version is maintained in the pdfbox-3.0.0 branch. For now, maintance is done in the 2.0.x branch and the merged into the
+This version targets Java 8. It should be identical to the 2.0.x version. If not, than thats a bug. The 3.0.x
+version is maintained in the pdfbox-3.0.0 branch. For now, maintance is done in the 2.0.x branch and the merged into then
 3.0.x branch.
 
 
