@@ -5,10 +5,8 @@ import org.apache.pdfbox.cos.COSBase;
 import org.apache.pdfbox.cos.COSBoolean;
 import org.apache.pdfbox.cos.COSDictionary;
 import org.apache.pdfbox.cos.COSFloat;
-import org.apache.pdfbox.cos.COSInteger;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.cos.COSStream;
-import org.apache.pdfbox.multipdf.InternalDeprecatedCOSCloner;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.PDResources;
@@ -21,7 +19,6 @@ import org.apache.pdfbox.pdmodel.graphics.color.PDColorSpace;
 import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceGray;
 import org.apache.pdfbox.pdmodel.graphics.color.PDPattern;
 import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
-import org.apache.pdfbox.pdmodel.graphics.form.PDTransparencyGroup;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.pdmodel.graphics.pattern.PDShadingPattern;
@@ -322,14 +319,14 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         state.env.ensureShapeIsWalked();
 
         @SuppressWarnings("deprecation")
-        InternalDeprecatedCOSCloner internalDeprecatedCOSCloner = new InternalDeprecatedCOSCloner(
+        InternalCOSCloner internalCOSCloner = new InternalCOSCloner(
                 state.document);
         Matrix matrix = paint.getMatrix();
         PDShading shading = paint.getShading();
 
         state.contentStream.transform(matrix);
 
-        COSDictionary clonedDict = (COSDictionary) internalDeprecatedCOSCloner.cloneForNewDocument(shading.getCOSObject());
+        COSDictionary clonedDict = (COSDictionary) internalCOSCloner.cloneForNewDocument(shading.getCOSObject());
         return PDShading.create(clonedDict);
     }
 
@@ -1261,9 +1258,9 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
         private PDShading createMaskShading(PaintApplierState state, PDShading shading)
                 throws IOException
         {
-        	InternalDeprecatedCOSCloner internalDeprecatedCOSCloner = new InternalDeprecatedCOSCloner(
+        	InternalCOSCloner internalCOSCloner = new InternalCOSCloner(
                 state.document);
-            COSDictionary shadingDictionary = (COSDictionary) internalDeprecatedCOSCloner.cloneForNewDocument(
+            COSDictionary shadingDictionary = (COSDictionary) internalCOSCloner.cloneForNewDocument(
                     shading.getCOSObject());
             COSArray functions = (COSArray) shadingDictionary.getItem(COSName.FUNCTIONS);
             if (functions != null)

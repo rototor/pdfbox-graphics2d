@@ -54,7 +54,7 @@ This library is available through Maven:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>3.0.0</version>
+	<version>3.0.1</version>
 </dependency>
 ```
 
@@ -322,6 +322,18 @@ graphs
 (which are draw using Graphics2D using this library) with &lt;object&gt; HTML tags.
 
 ## Changes
+
+### PDFBox 3.x based version 
+Version 3.0.1:
+- Update to PDFBox 3.0.1
+- Use now protected constructor to access the PDCloneUtility.  [#56](https://github.com/rototor/pdfbox-graphics2d/issues/56)
+
+Version 3.0.0:
+- Initial release based on PDFBox 3.0
+- Same as PDFBox 2.x version, just ported over to the changed PAI.
+
+---
+### PDFBox 2.x based version
 
 Version 0.43:
 
