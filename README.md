@@ -49,6 +49,8 @@ The following features are not supported (yet):
 
 This library is available through Maven:
 
+For PDFBox 2.0.x:
+
 ```xml
 
 <dependency>
@@ -60,6 +62,22 @@ This library is available through Maven:
 
 This library targets Java 1.6 and should work with Java 1.6. But at the moment it is only tested
 with Java 8, Java 11 and Java 17.
+
+For PDFBox 3.0.x:
+
+```xml
+
+<dependency>
+	<groupId>de.rototor.pdfbox</groupId>
+	<artifactId>graphics2d</artifactId>
+	<version>3.0.0</version>
+</dependency>
+```
+
+This version targets Java 8. It should be identical to the 2.0.x version. If not, than thats a bug. The 3.0.x
+version is maintained in the pdfbox-3.0.0 branch. For now, maintance is done in the 2.0.x branch and the merged into then
+3.0.x branch.
+
 
 ## Example Usage
 
