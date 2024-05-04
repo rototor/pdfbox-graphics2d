@@ -2,6 +2,8 @@ package de.rototor.pdfbox.graphics2d;
 
 import java.awt.Color;
 import java.awt.font.TextAttribute;
+import java.awt.font.TransformAttribute;
+import java.awt.geom.AffineTransform;
 import java.text.AttributedCharacterIterator.Attribute;
 import java.text.AttributedString;
 import java.util.ArrayList;
@@ -17,6 +19,7 @@ import java.util.List;
  * u,ins: underline
  * sup: superscript
  * sub: subscript
+ * rot
  */
 public class FormattedString {
 	private final static char ESCAPE_CHAR = '\\';
@@ -59,13 +62,17 @@ public class FormattedString {
 			} else if (mark.startsWith("bg-color=")) {
 				attribute = TextAttribute.BACKGROUND;
 				value = getColorValueFromMark(mark);
+            } else if (mark.startsWith("rot=")) {
+                attribute = TextAttribute.TRANSFORM;
+                float angle = getFloatValueFromMark(mark, 0.0F);
+                value = new TransformAttribute(AffineTransform.getRotateInstance(Math.toRadians(angle)));
 			} else {
 				attribute = null;
 				value = null;
 			}
 		}
 
-		private Color getColorValueFromMark(String tag) {
+        private Color getColorValueFromMark(String tag) {
 			Color color = Color.black;
 			int p = tag.indexOf("=");
 			if (p > 0) {
