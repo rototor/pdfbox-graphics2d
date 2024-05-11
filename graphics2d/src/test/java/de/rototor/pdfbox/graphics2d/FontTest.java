@@ -229,4 +229,80 @@ public class FontTest extends PdfBoxGraphics2DTestBase
             }
         });
     }
+
+    @Test
+    public void testFontFamily() throws IOException, FontFormatException
+    {
+        exportGraphic("fonts", "formatted_attributes", new GraphicsExporter()
+        {
+            @Override
+            public void draw(Graphics2D gfx) throws IOException, FontFormatException
+            {
+                String[] lines = new String[] { //
+                        "Straight text with no tags", "Bold:<b>text</b>, and no bold",
+                        "Italic:<i>text in italic</i>, and continue without",
+                        "Strikethrough:<s>this is strikethrough text</s> followed by <u>underlined text</u>.",
+                        "Superscript: operating temp: 35<sup>celcius</sup>.",
+                        "Subscript: note<sub>see footmark 1</sub> and continue",
+                        "Now change color to <color=red>red</color> and back to black",
+                        "Use size <size=18>large</size> and <size=6>small</size> to normal" };
+                gfx.setColor(Color.BLACK);
+                int y = 20;
+                for (String line : lines)
+                {
+                    FormattedString formattedString = new FormattedString(line);
+                    gfx.drawString(formattedString.getAttributedString().getIterator(), 10, y);
+                    y += 20;
+
+                }
+            }
+        });
+    }
+
+    @Test
+    public void testFontAttributeRotate() throws IOException, FontFormatException
+    {
+        exportGraphic("fonts", "formatted_attributes_with_rotate", new GraphicsExporter()
+        {
+            @Override
+            public void draw(Graphics2D gfx) throws IOException, FontFormatException
+            {
+                String line = "<b>Text</b> is<sup>sup</sup> and <sub>sub</sub> and <size=18>large</size> and <size=6>small</size> to normal";
+                gfx.setColor(Color.BLACK);
+                int y = 150;
+                int x = 150;
+                for (int i = 0; i < 360; i += 60)
+                {
+                    FormattedString formattedString = new FormattedString(line);
+                    AttributedString attributesString = formattedString.getAttributedString();
+                    int length = attributesString.getIterator().getEndIndex();
+
+                    attributesString.addAttribute(TextAttribute.TRANSFORM, new TransformAttribute(
+                            AffineTransform.getRotateInstance(Math.toRadians(i))), 0, length);
+                    gfx.drawString(attributesString.getIterator(), x, y);
+                }
+            }
+        });
+    }
+
+    @Test
+    public void testFontAttributeRotatemarkup() throws IOException, FontFormatException
+    {
+        exportGraphic("fonts", "formatted_attributes_with_rotate-markup", new GraphicsExporter()
+        {
+            @Override
+            public void draw(Graphics2D gfx) throws IOException, FontFormatException
+            {
+                String line = "<b>Text</b><rot=30> is<sup>sup</sup> and <sub>sub</sub> and</rot><rot=60> <size=18>large</size> and <size=6>small</size></rot> to normal";
+                gfx.setColor(Color.BLACK);
+                int y = 50;
+                int x = 10;
+                FormattedString formattedString = new FormattedString(line);
+                AttributedString attributesString = formattedString.getAttributedString();
+                int length = attributesString.getIterator().getEndIndex();
+                gfx.drawString(attributesString.getIterator(), x, y);
+            }
+        });
+    }
+
 }

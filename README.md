@@ -49,16 +49,34 @@ The following features are not supported (yet):
 
 This library is available through Maven:
 
+For PDFBox 2.0.x:
+
 ```xml
 
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>3.0.1</version>
+	<version>0.44</version>
 </dependency>
 ```
 
 This library targets JDK 1.8 and is also tested with JDK 11.
+
+For PDFBox 3.0.x:
+
+```xml
+
+<dependency>
+	<groupId>de.rototor.pdfbox</groupId>
+	<artifactId>graphics2d</artifactId>
+	<version>3.0.2</version>
+</dependency>
+```
+
+This version targets Java 8. It should be identical to the 2.0.x version. If not, than thats a bug. The 3.0.x
+version is maintained in the pdfbox-3.0.0 branch. For now, maintance is done in the 2.0.x branch and the merged into then
+3.0.x branch.
+
 
 ## Example Usage
 
@@ -324,6 +342,9 @@ graphs
 ## Changes
 
 ### PDFBox 3.x based version 
+Version 3.0.2:
+- Update to PDFBox 3.0.2
+
 Version 3.0.1:
 - Update to PDFBox 3.0.1
 - Use now protected constructor to access the PDCloneUtility.  [#56](https://github.com/rototor/pdfbox-graphics2d/issues/56)
@@ -334,6 +355,10 @@ Version 3.0.0:
 
 ---
 ### PDFBox 2.x based version
+
+Version 0.44:
+- Upgraded PDFBox to 2.0.31
+- Added additional font test driver by @fransbouwmans
 
 Version 0.43:
 
