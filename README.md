@@ -56,7 +56,7 @@ For PDFBox 2.0.x:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.43</version>
+	<version>0.44</version>
 </dependency>
 ```
 
@@ -70,7 +70,7 @@ For PDFBox 3.0.x:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>3.0.0</version>
+	<version>3.0.2</version>
 </dependency>
 ```
 
@@ -341,6 +341,10 @@ graphs
 (which are draw using Graphics2D using this library) with &lt;object&gt; HTML tags.
 
 ## Changes
+
+Version 0.44:
+- Upgraded PDFBox to 2.0.31
+- Added additional font test driver by @fransbouwmans
 
 Version 0.43:
 
