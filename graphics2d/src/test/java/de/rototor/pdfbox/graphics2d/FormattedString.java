@@ -23,65 +23,65 @@ import java.util.List;
  */
 public class FormattedString
 {
-    private final static char ESCAPE_CHAR = '\\';
+	private final static char ESCAPE_CHAR = '\\';
 
     private class Markup
     {
-        final int start;
-        final String mark;
-        final Attribute attribute;
-        final Object value;
-        int end = -1;
+		final int start;
+		final String mark;
+		final Attribute attribute;
+		final Object value;
+		int end = -1;
 
         Markup(String mark, int start)
         {
-            this.mark = removeValue(mark);
-            this.start = start;
+			this.mark = removeValue(mark);
+			this.start = start;
             if ("b".equals(mark) || "strong".equals(mark))
             {
-                attribute = TextAttribute.WEIGHT;
-                value = Float.valueOf(2.0F);
+				attribute = TextAttribute.WEIGHT;
+				value = Float.valueOf(2.0F);
             }
             else if ("i".equals(mark) || "em".equals(mark))
             {
-                attribute = TextAttribute.POSTURE;
-                value = TextAttribute.POSTURE_OBLIQUE;
+				attribute = TextAttribute.POSTURE;
+				value = TextAttribute.POSTURE_OBLIQUE;
             }
             else if ("s".equals(mark) || "del".equals(mark))
             {
-                attribute = TextAttribute.STRIKETHROUGH;
-                value = TextAttribute.STRIKETHROUGH_ON;
+				attribute = TextAttribute.STRIKETHROUGH;
+				value = TextAttribute.STRIKETHROUGH_ON;
             }
             else if ("u".equals(mark) || "ins".equals(mark))
             {
-                attribute = TextAttribute.UNDERLINE;
-                value = TextAttribute.UNDERLINE_ON;
+				attribute = TextAttribute.UNDERLINE;
+				value = TextAttribute.UNDERLINE_ON;
             }
             else if ("sup".equals(mark))
             {
-                attribute = TextAttribute.SUPERSCRIPT;
-                value = TextAttribute.SUPERSCRIPT_SUPER;
+				attribute = TextAttribute.SUPERSCRIPT;
+				value = TextAttribute.SUPERSCRIPT_SUPER;
             }
             else if ("sub".equals(mark))
             {
-                attribute = TextAttribute.SUPERSCRIPT;
-                value = TextAttribute.SUPERSCRIPT_SUB;
+				attribute = TextAttribute.SUPERSCRIPT;
+				value = TextAttribute.SUPERSCRIPT_SUB;
             }
             else if (mark.startsWith("size="))
             {
-                float size = getFloatValueFromMark(mark, 10.0F);
-                attribute = TextAttribute.SIZE;
-                value = Float.valueOf(size);
+				float size = getFloatValueFromMark(mark, 10.0F);
+				attribute = TextAttribute.SIZE;
+				value = Float.valueOf(size);
             }
             else if (mark.startsWith("color="))
             {
-                attribute = TextAttribute.FOREGROUND;
-                value = getColorValueFromMark(mark);
+				attribute = TextAttribute.FOREGROUND;
+				value = getColorValueFromMark(mark);
             }
             else if (mark.startsWith("bg-color="))
             {
-                attribute = TextAttribute.BACKGROUND;
-                value = getColorValueFromMark(mark);
+				attribute = TextAttribute.BACKGROUND;
+				value = getColorValueFromMark(mark);
             }
             else if (mark.startsWith("rot="))
             {
@@ -92,121 +92,121 @@ public class FormattedString
             }
             else
             {
-                attribute = null;
-                value = null;
-            }
-        }
+				attribute = null;
+				value = null;
+			}
+		}
 
         private Color getColorValueFromMark(String tag)
         {
-            Color color = Color.black;
-            int p = tag.indexOf("=");
+			Color color = Color.black;
+			int p = tag.indexOf("=");
             if (p > 0)
             {
-                String value = tag.substring(p + 1);
+				String value = tag.substring(p + 1);
                 if (value.startsWith("#"))
                 {
                     try
                     {
-                        int iColor = Integer.parseUnsignedInt(value.substring(1), 16);
-                        color = new Color(iColor);
+						int iColor = Integer.parseUnsignedInt(value.substring(1), 16);
+						color = new Color(iColor);
                     }
                     catch (Exception e)
                     {
-                        // LOGGER
-                    }
+						// LOGGER
+					}
                 }
                 else if ("red".equals(value))
                 {
-                    color = Color.red;
+					color = Color.red;
                 }
                 else if ("green".equals(value))
                 {
-                    color = Color.green;
+					color = Color.green;
                 }
                 else if ("blue".equals(value))
                 {
-                    color = Color.blue;
-                }
-            }
-            return color;
-        }
+					color = Color.blue;
+				}
+			}
+			return color;
+		}
 
         private String removeValue(String mark)
         {
-            int p = mark.indexOf("=");
+			int p = mark.indexOf("=");
             if (p > 0)
             {
-                mark = mark.substring(0, p);
-            }
-            return mark;
-        }
+				mark = mark.substring(0, p);
+			}
+			return mark;
+		}
 
         public float getFloatValueFromMark(String mark, float defaultValue)
         {
-            float value = defaultValue;
-            int p = mark.indexOf("=");
+			float value = defaultValue;
+			int p = mark.indexOf("=");
             if (p > 0)
             {
-                String sValue = mark.substring(p + 1);
+				String sValue = mark.substring(p + 1);
                 try
                 {
-                    value = Float.parseFloat(sValue);
+					value = Float.parseFloat(sValue);
                 }
                 catch (Exception e)
                 {
-                    // LOGGER?
-                }
-            }
-            return value;
-        }
+					// LOGGER?
+				}
+			}
+			return value;
+		}
 
         boolean isClosed()
         {
-            return end >= start;
-        }
-    }
+			return end >= start;
+		}
+	}
 
-    private String formattedString;
-    private List<Markup> markups;
-    private int i;
-    private StringBuilder str;
+	private String formattedString;
+	private List<Markup> markups;
+	private int i;
+	private StringBuilder str;
 
     public FormattedString(String formattedString)
     {
         markups = new ArrayList<Markup>();
-        this.formattedString = formattedString;
-        str = new StringBuilder(formattedString.length());
-        i = 0;
-        boolean escape = false;
+		this.formattedString = formattedString;
+		str = new StringBuilder(formattedString.length());
+		i = 0;
+		boolean escape = false;
         while (i < formattedString.length())
         {
-            char c = formattedString.charAt(i);
-            i++;
+			char c = formattedString.charAt(i);
+			i++;
             if (escape)
             {
-                str.append(c);
-                escape = false;
+				str.append(c);
+				escape = false;
             }
             else if (c == ESCAPE_CHAR)
             {
-                escape = true;
+				escape = true;
             }
             else
             {
                 if (c == '<')
                 {
-                    findMarkup();
+					findMarkup();
                 }
                 else
                 {
-                    // no escape and no start of tag
-                    str.append(c);
-                }
-            }
-        }
-        finalizeMarkups();
-    }
+					// no escape and no start of tag
+					str.append(c);
+				}
+			}
+		}
+		finalizeMarkups();
+	}
 
     private void findMarkup()
     {
@@ -214,75 +214,75 @@ public class FormattedString
         {
             if (formattedString.charAt(i) == '/')
             {
-                i++;
-                String mark = parseTag();
-                closeMark(mark);
+				i++;
+				String mark = parseTag();
+				closeMark(mark);
             }
             else
             {
-                String mark = parseTag();
-                openMark(mark);
-            }
-        }
-    }
+				String mark = parseTag();
+				openMark(mark);
+			}
+		}
+	}
 
     private void openMark(String mark)
     {
         if (mark != null && !mark.isEmpty())
         {
-            markups.add(new Markup(mark, str.length()));
-        }
-    }
+			markups.add(new Markup(mark, str.length()));
+		}
+	}
 
     private void closeMark(String mark)
     {
         for (int j = markups.size() - 1; j >= 0; j--)
         {
-            Markup markup = markups.get(j);
+			Markup markup = markups.get(j);
             if (!markup.isClosed())
             {
                 if (markup.mark.equals(mark))
                 {
-                    markup.end = str.length();
-                    return;
-                }
-            }
-        }
-    }
+					markup.end = str.length();
+					return;
+				}
+			}
+		}
+	}
 
     private String parseTag()
     {
-        String tag = "";
+		String tag = "";
         while (i < formattedString.length())
         {
             if (formattedString.charAt(i) == '>')
             {
-                i++;
-                return tag;
+				i++;
+				return tag;
             }
             else
             {
-                tag += formattedString.charAt(i);
-                i++;
-            }
-        }
-        str.append(tag);
-        return null;
-    }
+				tag += formattedString.charAt(i);
+				i++;
+			}
+		}
+		str.append(tag);
+		return null;
+	}
 
     public AttributedString getAttributedString()
     {
-        AttributedString attributedString = new AttributedString(str.toString());
+		AttributedString attributedString = new AttributedString(str.toString());
         for (Markup markup : markups)
         {
             if (markup.attribute != null)
             {
                 attributedString.addAttribute(markup.attribute, markup.value, markup.start,
                         markup.end);
-            }
-        }
-        return attributedString;
-    }
+			}
+		}
+		return attributedString;
+	}
 
     private void finalizeMarkups()
     {
@@ -290,13 +290,13 @@ public class FormattedString
         {
             if (markup.end < markup.start)
             {
-                markup.end = str.length();
-            }
-        }
-    }
+				markup.end = str.length();
+			}
+		}
+	}
 
     public String getText()
     {
-        return str.toString();
-    }
+		return str.toString();
+	}
 }

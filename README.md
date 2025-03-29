@@ -342,6 +342,9 @@ graphs
 ## Changes
 
 ### PDFBox 3.x based version 
+Version 3.0.3:
+- Update to PDFBox 3.0.4
+- 
 Version 3.0.2:
 - Update to PDFBox 3.0.2
 
@@ -355,6 +358,10 @@ Version 3.0.0:
 
 ---
 ### PDFBox 2.x based version
+
+Version 0.45:
+- Upgraded PDFBox to 2.0.34
+- Partial fix for font text rendering. Thanks to @fransbouwmans. See [#53](https://github.com/rototor/pdfbox-graphics2d/pull/53)
 
 Version 0.44:
 - Upgraded PDFBox to 2.0.31
