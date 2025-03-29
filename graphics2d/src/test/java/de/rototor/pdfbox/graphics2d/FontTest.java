@@ -102,14 +102,20 @@ public class FontTest extends PdfBoxGraphics2DTestBase
                         44);
                 str.addAttribute(TextAttribute.SUPERSCRIPT, TextAttribute.SUPERSCRIPT_SUPER, 36, 40);
 
+                // Draw with default font, the "attributes" are processed as part of the font
                 gfx.drawString(str.getIterator(), 10, 50);
 
                 Font font = new Font("SansSerif", Font.PLAIN, 12);
+                
                 Font font2 = Font.createFont(Font.TRUETYPE_FONT,
                                 PdfBoxGraphics2dTest.class.getResourceAsStream("DejaVuSerifCondensed.ttf"))
                         .deriveFont(13f);
+                
+                // Draw with a specific font, this overrides the "font" attributes like super and subscript.
                 str.addAttribute(TextAttribute.FONT, font);
                 gfx.drawString(str.getIterator(), 10, 100);
+                
+                // Draw with a specific font, this overrides the "font" attributes like super and subscript.
                 str.addAttribute(TextAttribute.FONT, font2);
                 gfx.drawString(str.getIterator(), 10, 150);
             }
