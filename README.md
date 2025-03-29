@@ -56,7 +56,7 @@ For PDFBox 2.0.x:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.44</version>
+	<version>0.45</version>
 </dependency>
 ```
 
@@ -69,7 +69,7 @@ For PDFBox 3.0.x:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>3.0.2</version>
+	<version>3.0.3</version>
 </dependency>
 ```
 
@@ -344,7 +344,8 @@ graphs
 ### PDFBox 3.x based version 
 Version 3.0.3:
 - Update to PDFBox 3.0.4
-- 
+- Add osgi metadata. Thanks to @zspitzer. [#61](https://github.com/rototor/pdfbox-graphics2d/pull/61)
+
 Version 3.0.2:
 - Update to PDFBox 3.0.2
 
