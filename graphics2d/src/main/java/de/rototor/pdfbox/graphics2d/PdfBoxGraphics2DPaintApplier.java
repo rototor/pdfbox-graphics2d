@@ -1310,23 +1310,28 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
                 final float alpha1;
                 if (needBoundsKeyFrameEntry(fractions))
                 {
+                    PdfBoxGraphics2DColor clr;
                     if (0 == colorIdx)
                     {
-                        alpha0 = 1f;
+                        // Use first colors alpha for the inserted keyframe instead of 1f.
+                        // Gradients should only happen between explicitly defined stops.
+                        clr = alphaGrayscaleColors[0];
+                        alpha0 = clr.toPDColor().getComponents()[0];
                     }
                     else
                     {
-                        PdfBoxGraphics2DColor clr = alphaGrayscaleColors[colorIdx - 1];
+                        clr = alphaGrayscaleColors[colorIdx - 1];
                         alpha0 = clr.toPDColor().getComponents()[0];
                     }
-
-                    PdfBoxGraphics2DColor clr = alphaGrayscaleColors[colorIdx];
+                    // In case we have an inserted exit keyframe in addition to an inserted entry keyframe,
+                    // we are already out of colors and will reuse the last color's alpha value.
+                    if (colorIdx < alphaGrayscaleColors.length)
+                        clr = alphaGrayscaleColors[colorIdx];
                     alpha1 = clr.toPDColor().getComponents()[0];
                     colorIdx++;
                 }
                 else
                 {
-
                     PdfBoxGraphics2DColor clr = alphaGrayscaleColors[colorIdx];
                     alpha0 = clr.toPDColor().getComponents()[0];
                     if (colorIdx + 1 < alphaGrayscaleColors.length)
