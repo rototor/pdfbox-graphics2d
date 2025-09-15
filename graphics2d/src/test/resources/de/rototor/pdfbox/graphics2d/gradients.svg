@@ -1,0 +1,268 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+        "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="500" height="1000" viewBox="0 0 3000 4000" version="1.1"
+     xmlns="http://www.w3.org/2000/svg">
+    <desc>Linear and Radial Gradients with and without transparency with and without start/end stop elements</desc>
+
+    <g id="notransparent-linear-gradients">
+        <defs>
+            <linearGradient id="notransp-linear-allkeyframes">
+                <stop offset="0%" stop-color="magenta" />
+                <stop offset="30%" stop-color="blue" />
+                <stop offset="30%" stop-color="orange" />
+                <stop offset="70%" stop-color="magenta" />
+                <stop offset="100%" stop-color="magenta" />
+            </linearGradient>
+
+            <linearGradient id="notransp-linear-nokeystart">
+                <stop offset="30%" stop-color="blue" />
+                <stop offset="30%" stop-color="orange" />
+                <stop offset="70%" stop-color="magenta" />
+                <stop offset="100%" stop-color="magenta" />
+            </linearGradient>
+
+            <linearGradient id="notransp-linear-nokeyend">
+                <stop offset="0%" stop-color="magenta" />
+                <stop offset="30%" stop-color="blue" />
+                <stop offset="30%" stop-color="orange" />
+                <stop offset="70%" stop-color="magenta" />
+            </linearGradient>
+
+            <linearGradient id="notransp-linear-nokeystartend">
+                <stop offset="30%" stop-color="blue" />
+                <stop offset="30%" stop-color="orange" />
+                <stop offset="70%" stop-color="magenta" />
+            </linearGradient>
+        </defs>
+
+        <text x="100" y="30" font-size="36" fill="black">Non-Transparent Linear Gradients</text>
+
+        <line fill="none" stroke="red" stroke-width="10"
+              x1="0" y1="200" x2="800" y2="200" />
+        <rect fill="url(#notransp-linear-allkeyframes)" stroke="black" stroke-width="5"
+              x="100" y="100" width="600" height="200"/>
+
+        <line fill="none" stroke="red" stroke-width="10"
+              x1="0" y1="500" x2="800" y2="500" />
+        <rect fill="url(#notransp-linear-nokeystart)" stroke="black" stroke-width="5"
+              x="100" y="400" width="600" height="200"/>
+
+        <line fill="none" stroke="red" stroke-width="10"
+              x1="0" y1="800" x2="800" y2="800" />
+        <rect fill="url(#notransp-linear-nokeyend)" stroke="black" stroke-width="5"
+              x="100" y="700" width="600" height="200"/>
+
+        <line fill="none" stroke="red" stroke-width="10"
+              x1="0" y1="1100" x2="800" y2="1100" />
+        <rect fill="url(#notransp-linear-nokeystartend)" stroke="black" stroke-width="5"
+              x="100" y="1000" width="600" height="200"/>
+    </g>
+
+
+
+    <g id="transparent-linear-gradients" transform="translate(900,0)">
+        <defs>
+            <linearGradient id="transp-linear-allkeyframes">
+                <stop offset="0%" stop-color="blue" stop-opacity="0.3" />
+                <stop offset="30%" stop-color="blue" />
+                <stop offset="30%" stop-color="orange" />
+                <stop offset="70%" stop-color="magenta" stop-opacity="0.5" />
+                <stop offset="100%" stop-color="magenta" stop-opacity="0.5" />
+            </linearGradient>
+
+            <linearGradient id="transp-linear-nokeystart">
+                <stop offset="30%" stop-color="blue" stop-opacity="0.3" />
+                <stop offset="30%" stop-color="orange" />
+                <stop offset="70%" stop-color="magenta" stop-opacity="0.5" />
+                <stop offset="100%" stop-color="magenta" />
+            </linearGradient>
+
+            <linearGradient id="transp-linear-nokeyend">
+                <stop offset="0%" stop-color="blue" stop-opacity="0.3" />
+                <stop offset="30%" stop-color="blue" />
+                <stop offset="30%" stop-color="orange" />
+                <stop offset="70%" stop-color="magenta" stop-opacity="0.5" />
+            </linearGradient>
+
+            <!-- Unhandled case from issue https://github.com/rototor/pdfbox-graphics2d/issues/60
+            where start and end key are missing in a gradient with transparency -->
+            <linearGradient id="transp-linear-nokeystartend">
+                <stop offset="30%" stop-color="blue" />
+                <stop offset="30%" stop-color="orange" />
+                <stop offset="70%" stop-color="magenta" stop-opacity="0.5" />
+            </linearGradient>
+
+        </defs>
+
+        <text x="100" y="30" font-size="36" fill="black">Transparent Linear Gradients</text>
+
+        <line fill="none" stroke="red" stroke-width="10"
+              x1="0" y1="1100" x2="800" y2="1100" />
+        <rect fill="url(#transp-linear-nokeystartend)" stroke="black" stroke-width="5"
+              x="100" y="1000" width="600" height="200"/>
+
+        <line fill="none" stroke="red" stroke-width="10"
+              x1="0" y1="200" x2="800" y2="200" />
+        <rect fill="url(#transp-linear-allkeyframes)" stroke="black" stroke-width="5"
+              x="100" y="100" width="600" height="200"/>
+
+        <line fill="none" stroke="red" stroke-width="10"
+              x1="0" y1="500" x2="800" y2="500" />
+        <rect fill="url(#transp-linear-nokeystart)" stroke="black" stroke-width="5"
+              x="100" y="400" width="600" height="200"/>
+
+        <line fill="none" stroke="red" stroke-width="10"
+              x1="0" y1="800" x2="800" y2="800" />
+        <rect fill="url(#transp-linear-nokeyend)" stroke="black" stroke-width="5"
+              x="100" y="700" width="600" height="200"/>
+
+    </g>
+
+
+
+    <g id="transparent-linear-gradients-edge-cases" transform="translate(1800,0)">
+        <defs>
+
+            <linearGradient id="transp-linear-singlemidkey">
+                <stop offset="70%" stop-color="orange" stop-opacity="0.5" />
+            </linearGradient>
+
+            <linearGradient id="transp-linear-dobulemidkey">
+                <stop offset="35%" stop-color="orange" stop-opacity="0.1" />
+                <stop offset="65%" stop-color="orange" stop-opacity="0.9" />
+            </linearGradient>
+
+        </defs>
+
+        <text x="100" y="30" font-size="36" fill="black">Transparent Linear Gradients (Edge Cases)</text>
+
+        <line fill="none" stroke="red" stroke-width="10"
+              x1="0" y1="800" x2="800" y2="800" />
+        <rect fill="url(#transp-linear-singlemidkey)" stroke="black" stroke-width="5"
+              x="100" y="700" width="600" height="200"/>
+
+        <line fill="none" stroke="red" stroke-width="10"
+              x1="0" y1="1100" x2="800" y2="1100" />
+        <rect fill="url(#transp-linear-dobulemidkey)" stroke="black" stroke-width="5"
+              x="100" y="1000" width="600" height="200"/>
+
+    </g>
+
+
+
+    <g id="notransparent-radial-gradients" transform="translate(0,1500)">
+        <defs>
+            <radialGradient id="notransp-radial-allkeyframes">
+                <stop offset="0%" stop-color="magenta" />
+                <stop offset="30%" stop-color="blue" />
+                <stop offset="30%" stop-color="orange" />
+                <stop offset="70%" stop-color="magenta" />
+                <stop offset="100%" stop-color="magenta" />
+            </radialGradient>
+
+            <radialGradient id="notransp-radial-nokeystart">
+                <stop offset="30%" stop-color="blue" />
+                <stop offset="30%" stop-color="orange" />
+                <stop offset="70%" stop-color="magenta" />
+                <stop offset="100%" stop-color="magenta" />
+            </radialGradient>
+
+            <radialGradient id="notransp-radial-nokeyend">
+                <stop offset="0%" stop-color="magenta" />
+                <stop offset="30%" stop-color="blue" />
+                <stop offset="30%" stop-color="orange" />
+                <stop offset="70%" stop-color="magenta" />
+            </radialGradient>
+
+            <radialGradient id="notransp-radial-nokeystartend">
+                <stop offset="30%" stop-color="blue" />
+                <stop offset="30%" stop-color="orange" />
+                <stop offset="70%" stop-color="magenta" />
+            </radialGradient>
+        </defs>
+
+        <text x="100" y="30" font-size="36" fill="black">Non-Transparent Radial Gradients</text>
+
+        <line fill="none" stroke="red" stroke-width="10"
+              x1="0" y1="400" x2="800" y2="400" />
+        <circle fill="url(#notransp-radial-allkeyframes)" stroke="black" stroke-width="5"
+                cx="400" cy="400" r="340"/>
+
+        <line fill="none" stroke="red" stroke-width="10"
+              x1="0" y1="1100" x2="800" y2="1100" />
+        <circle fill="url(#notransp-radial-nokeystart)" stroke="black" stroke-width="5"
+              cx="400" cy="1100" r="340"/>
+
+        <line fill="none" stroke="red" stroke-width="10"
+              x1="0" y1="1800" x2="800" y2="1800" />
+        <circle fill="url(#notransp-radial-nokeyend)" stroke="black" stroke-width="5"
+              cx="400" cy="1800" r="340"/>
+
+        <line fill="none" stroke="red" stroke-width="10"
+              x1="0" y1="2500" x2="800" y2="2500" />
+        <circle fill="url(#notransp-radial-nokeystartend)" stroke="black" stroke-width="5"
+                cx="400" cy="2500" r="340"/>
+    </g>
+
+
+
+    <g id="transparent-radial-gradients" transform="translate(900,1500)">
+        <defs>
+            <radialGradient id="transp-radial-allkeyframes">
+                <stop offset="0%" stop-color="magenta" stop-opacity="0.1" />
+                <stop offset="30%" stop-color="blue" />
+                <stop offset="30%" stop-color="orange" />
+                <stop offset="70%" stop-color="magenta" stop-opacity="0.5" />
+                <stop offset="100%" stop-color="magenta" stop-opacity="0.5" />
+            </radialGradient>
+
+            <radialGradient id="transp-radial-nokeystart">
+                <stop offset="30%" stop-color="blue" />
+                <stop offset="30%" stop-color="orange" />
+                <stop offset="70%" stop-color="magenta" stop-opacity="0.5" />
+                <stop offset="100%" stop-color="magenta" stop-opacity="0.5" />
+            </radialGradient>
+
+            <radialGradient id="transp-radial-nokeyend">
+                <stop offset="0%" stop-color="magenta" stop-opacity="0.5" />
+                <stop offset="30%" stop-color="blue" />
+                <stop offset="30%" stop-color="orange" />
+                <stop offset="70%" stop-color="magenta" stop-opacity="0.5" />
+            </radialGradient>
+
+            <!-- Unhandled case from issue https://github.com/rototor/pdfbox-graphics2d/issues/60
+            where start and end key are missing in a gradient with transparency -->
+            <radialGradient id="transp-radial-nokeystartend">
+                <stop offset="30%" stop-color="blue" />
+                <stop offset="30%" stop-color="orange" />
+                <stop offset="70%" stop-color="magenta" stop-opacity="0.5" />
+            </radialGradient>
+
+        </defs>
+
+        <text x="100" y="30" font-size="36" fill="black">Transparent Radial Gradients</text>
+
+        <line fill="none" stroke="red" stroke-width="10"
+              x1="0" y1="400" x2="800" y2="400" />
+        <circle fill="url(#transp-radial-allkeyframes)" stroke="black" stroke-width="5"
+                cx="400" cy="400" r="340"/>
+
+        <line fill="none" stroke="red" stroke-width="10"
+              x1="0" y1="1100" x2="800" y2="1100" />
+        <circle fill="url(#transp-radial-nokeystart)" stroke="black" stroke-width="5"
+                cx="400" cy="1100" r="340"/>
+
+        <line fill="none" stroke="red" stroke-width="10"
+              x1="0" y1="1800" x2="800" y2="1800" />
+        <circle fill="url(#transp-radial-nokeyend)" stroke="black" stroke-width="5"
+                cx="400" cy="1800" r="340"/>
+
+        <line fill="none" stroke="red" stroke-width="10"
+              x1="0" y1="2500" x2="800" y2="2500" />
+        <circle fill="url(#transp-radial-nokeystartend)" stroke="black" stroke-width="5"
+                cx="400" cy="2500" r="340"/>
+
+    </g>
+
+</svg>
