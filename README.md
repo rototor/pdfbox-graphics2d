@@ -367,11 +367,12 @@ Version 3.0.0:
 ### PDFBox 2.x based version
 
 Version 0.46:
+- Upgraded PDFBox to 2.0.34
 - Fix for out of bounds exception on transparent gradient when keyframes are missing on both ends.  
   Thanks to @ganomi. See [#64](https://github.com/rototor/pdfbox-graphics2d/pull/64)
 
 Version 0.45:
-- Upgraded PDFBox to 2.0.34
+- Upgraded PDFBox to 2.0.33
 - Partial fix for font text rendering. Thanks to @fransbouwmans. See [#53](https://github.com/rototor/pdfbox-graphics2d/pull/53)
 
 Version 0.44:
