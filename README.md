@@ -56,7 +56,7 @@ For PDFBox 2.0.x:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>0.44</version>
+	<version>0.46</version>
 </dependency>
 ```
 
@@ -70,7 +70,7 @@ For PDFBox 3.0.x:
 <dependency>
 	<groupId>de.rototor.pdfbox</groupId>
 	<artifactId>graphics2d</artifactId>
-	<version>3.0.2</version>
+	<version>3.0.4</version>
 </dependency>
 ```
 
@@ -343,6 +343,15 @@ graphs
 ## Changes
 
 ### PDFBox 3.x based version 
+Version 3.0.5:
+- Update to PDFBox 3.0.5
+- Fix for out of bounds exception on transparent gradient when keyframes are missing on both ends.  
+  Thanks to @ganomi. See [#64](https://github.com/rototor/pdfbox-graphics2d/pull/64)
+
+Version 3.0.3:
+- Update to PDFBox 3.0.4
+- Add osgi metadata. Thanks to @zspitzer. [#61](https://github.com/rototor/pdfbox-graphics2d/pull/61)
+
 Version 3.0.2:
 - Update to PDFBox 3.0.2
 
@@ -356,6 +365,10 @@ Version 3.0.0:
 
 ---
 ### PDFBox 2.x based version
+
+Version 0.46:
+- Fix for out of bounds exception on transparent gradient when keyframes are missing on both ends.  
+  Thanks to @ganomi. See [#64](https://github.com/rototor/pdfbox-graphics2d/pull/64)
 
 Version 0.45:
 - Upgraded PDFBox to 2.0.34
