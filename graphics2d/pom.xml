@@ -10,7 +10,7 @@
 	<parent>
 		<groupId>de.rototor.pdfbox</groupId>
 		<artifactId>pdfboxgraphics2d-parent</artifactId>
-		<version>3.0.4</version>
+		<version>3.0.5-SNAPSHOT</version>
 	</parent>
 
 
