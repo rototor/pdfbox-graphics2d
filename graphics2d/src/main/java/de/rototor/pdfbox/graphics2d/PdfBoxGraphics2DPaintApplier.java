@@ -536,8 +536,15 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
                  * If the scale is not square, we need to use the object bounding box logic
                  */
                 if (Math.abs(gradientTransform.getScaleX() - gradientTransform.getScaleY())
-                        > EPSILON)
-                    isObjectBoundingBox = true;
+                        > EPSILON){
+                    // Previously this heuristics would put too many gradients into objectBoundingBox mode transformation,
+                    // even though in svg they were defined in userSpaceOnUse mode. (But info is not available here.)
+                    // To fine tune this, we only switch to objectBoundingBox mode if the coordinates are in the 0..1 range.
+                    // All examples of objectBoundingBox gradients I've seen so far also have coordinates in that range.
+                    if (isAbstractCoordinatesInBatikPaint(paint)){
+                        isObjectBoundingBox = true;
+                    }
+                }
             }
         }
 
@@ -556,6 +563,15 @@ public class PdfBoxGraphics2DPaintApplier implements IPdfBoxGraphics2DPaintAppli
             shading = linearGradientUserSpaceOnUseShading(paint, state);
         }
         return state.shadingMaskModifier.applyMasking(state, shading);
+    }
+
+    private boolean isAbstractCoordinatesInBatikPaint(Paint paint){
+        Point2D startPoint = clonePoint((Point2D.Double) getPropertyValue(paint, "getStartPoint"));
+        Point2D endPoint = clonePoint((Point2D.Double) getPropertyValue(paint, "getEndPoint"));
+        return (startPoint.getX() >= 0 && startPoint.getX() <= 1.0
+            && startPoint.getY() >= 0 && startPoint.getY() <= 1.0
+            && endPoint.getX() >= 0 && endPoint.getX() <= 1.0
+            && endPoint.getY() >= 0 && endPoint.getY() <= 1.0);
     }
 
     private PDShading linearGradientObjectBoundingBoxShading(Paint paint, PaintApplierState state)
